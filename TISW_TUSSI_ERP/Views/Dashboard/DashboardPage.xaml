@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:TISW_TUSSI_ERP.ViewModels.Dashboard"
+             x:DataType="viewmodels:DashboardViewModel"
+             x:Class="TISW_TUSSI_ERP.Views.Dashboard.DashboardPage"
+             Title="Dashboard">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="16">
+
+            <Label Text="{Binding NombreUsuarioActual, StringFormat='Bienvenido, {0}'}"
+                   FontSize="22"
+                   FontAttributes="Bold" />
+
+            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="12">
+                <Button Grid.Row="0" Grid.Column="0" Text="Ventas"
+                        Command="{Binding ComandoIrAVentas}" />
+                <Button Grid.Row="0" Grid.Column="1" Text="Compras"
+                        Command="{Binding ComandoIrACompras}" />
+                <Button Grid.Row="1" Grid.Column="0" Text="Inventario"
+                        Command="{Binding ComandoIrAInventario}" />
+                <Button Grid.Row="1" Grid.Column="1" Text="Contabilidad"
+                        Command="{Binding ComandoIrAContabilidad}" />
+            </Grid>
+
+            <Button Text="Cerrar sesión"
+                    Command="{Binding ComandoCerrarSesion}"
+                    BackgroundColor="IndianRed"
+                    TextColor="White" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

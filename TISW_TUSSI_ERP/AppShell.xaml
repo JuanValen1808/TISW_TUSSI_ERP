@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+       xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+       xmlns:dashboard="clr-namespace:TISW_TUSSI_ERP.Views.Dashboard"
+       x:Class="TISW_TUSSI_ERP.AppShell"
+       Title="TUSSI ERP">
+
+    <!-- Ruta principal al entrar al Shell (después del Login) -->
+    <ShellContent
+        Title="Dashboard"
+        Route="DashboardPage"
+        ContentTemplate="{DataTemplate dashboard:DashboardPage}" />
+
+    <!--
+        Cuando cada integrante cree sus páginas dentro de Views/Ventas,
+        Views/Compras, Views/Inventario y Views/Contabilidad, agregan aquí
+        un FlyoutItem apuntando a su página, por ejemplo:
+
+        <FlyoutItem Title="Ventas" Icon="icon_ventas.png">
+            <ShellContent Route="PosTerminalPage"
+                          ContentTemplate="{DataTemplate ventas:PosTerminalPage}" />
+        </FlyoutItem>
+    -->
+
+</Shell>
