@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:TISW_TUSSI_ERP.ViewModels.Auth"
+             xmlns:m="clr-namespace:TISW_TUSSI_ERP.Models.Auth"
+             x:Class="TISW_TUSSI_ERP.Views.Auth.LoginPage"
+             x:DataType="vm:LoginViewModel"
+             NavigationPage.HasNavigationBar="False"
+             BackgroundColor="White"
+             Title="Login">
+
+    <Grid x:Name="Raiz" ColumnDefinitions="*,*">
+
+        <!-- ============ PANEL IZQUIERDO (branding) ============ -->
+        <Grid x:Name="PanelIzquierdo" Grid.Column="0" RowDefinitions="Auto,*,Auto" Padding="40">
+            <Grid.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="#08213B" Offset="0.0" />
+                    <GradientStop Color="#1B5AA6" Offset="1.0" />
+                </LinearGradientBrush>
+            </Grid.Background>
+
+            <HorizontalStackLayout Grid.Row="0" Spacing="12">
+                <Border WidthRequest="40" HeightRequest="40" StrokeThickness="0"
+                        StrokeShape="RoundRectangle 10" BackgroundColor="#33FFFFFF">
+                    <Label Text="✚" TextColor="White" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center" />
+                </Border>
+                <VerticalStackLayout VerticalOptions="Center">
+                    <Label Text="FarmSalud ERP" TextColor="White" FontSize="15" FontAttributes="Bold" />
+                    <Label Text="Ventas · Supply · Contable" TextColor="#B7C7DD" FontSize="10" />
+                </VerticalStackLayout>
+            </HorizontalStackLayout>
+
+            <VerticalStackLayout Grid.Row="2" Spacing="14">
+                <Border HorizontalOptions="Start" BackgroundColor="#26FFFFFF" StrokeThickness="0"
+                        StrokeShape="RoundRectangle 14" Padding="12,5">
+                    <Label Text="●  TRANSACTIONAL UNIFIED ERP" TextColor="White" FontSize="10" FontAttributes="Bold" />
+                </Border>
+                <Label Text="Toda la operación farmacéutica en un solo lugar"
+                       TextColor="White" FontSize="30" FontAttributes="Bold" />
+                <Label Text="Ventas, inventario con trazabilidad de lotes, compras y contabilidad integrada, con control de accesos por perfil."
+                       TextColor="#C9D6E8" FontSize="13" />
+                <VerticalStackLayout Spacing="8" Margin="0,8,0,0">
+                    <Label Text="✔  Punto de venta optimizado para pistola láser" TextColor="#E6EEF8" FontSize="13" />
+                    <Label Text="✔  Trazabilidad de lotes con semáforo de vencimiento" TextColor="#E6EEF8" FontSize="13" />
+                    <Label Text="✔  Asientos contables automáticos por cada movimiento" TextColor="#E6EEF8" FontSize="13" />
+                    <Label Text="✔  Perfiles y permisos (RBAC) por rol de trabajo" TextColor="#E6EEF8" FontSize="13" />
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+        </Grid>
+
+        <!-- ============ PANEL DERECHO (formulario) ============ -->
+        <ScrollView x:Name="PanelDerecho" Grid.Column="1" BackgroundColor="White">
+            <VerticalStackLayout x:Name="Formulario" WidthRequest="420" Spacing="14"
+                                 HorizontalOptions="Center" VerticalOptions="Center" Padding="0,30">
+
+                <Label Text="PORTAL DE ACCESO" TextColor="{StaticResource ErpPrimary}" FontSize="10" FontAttributes="Bold" />
+                <Label Text="Inicia sesión en tu cuenta" Style="{StaticResource ErpTitle}" />
+                <Label Text="Ingresa tus credenciales para entrar al sistema de gestión farmacéutica."
+                       Style="{StaticResource ErpSubtitle}" />
+
+                <VerticalStackLayout Spacing="6" Margin="0,10,0,0">
+                    <Label Text="Correo corporativo" FontSize="12" TextColor="{StaticResource ErpText}" />
+                    <Border Style="{StaticResource ErpInputBox}">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                            <Label Text="✉" TextColor="{StaticResource ErpMuted}" VerticalOptions="Center" />
+                            <Entry Grid.Column="1" Style="{StaticResource ErpEntry}" Keyboard="Email"
+                                   Placeholder="usuario@farmaciasalud.cl" Text="{Binding Email}" />
+                        </Grid>
+                    </Border>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="Contraseña" FontSize="12" TextColor="{StaticResource ErpText}" />
+                    <Border Style="{StaticResource ErpInputBox}">
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                            <Label Text="🔒" TextColor="{StaticResource ErpMuted}" VerticalOptions="Center" />
+                            <Entry Grid.Column="1" Style="{StaticResource ErpEntry}" Placeholder="••••••••"
+                                   IsPassword="{Binding OcultarContrasena}" Text="{Binding Contrasena}"
+                                   ReturnCommand="{Binding ComandoIniciarSesion}" />
+                            <Button Grid.Column="2" Text="👁" BackgroundColor="Transparent" TextColor="{StaticResource ErpMuted}"
+                                    Padding="0" WidthRequest="34" HeightRequest="34"
+                                    Command="{Binding ComandoAlternarContrasena}" />
+                        </Grid>
+                    </Border>
+                </VerticalStackLayout>
+
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <CheckBox IsChecked="{Binding RecordarSesion}" Color="{StaticResource ErpPrimary}" VerticalOptions="Center" />
+                    <Label Grid.Column="1" Text="Recordar mi sesión" FontSize="12" VerticalOptions="Center"
+                           TextColor="{StaticResource ErpText}" />
+                    <Label Grid.Column="2" Text="¿Olvidaste tu contraseña?" FontSize="12" VerticalOptions="Center"
+                           TextColor="{StaticResource ErpPrimary}" FontAttributes="Bold" />
+                </Grid>
+
+                <Label Text="{Binding MensajeError}" IsVisible="{Binding HayError}" TextColor="{StaticResource ErpDanger}" FontSize="12" />
+
+                <Button Text="Iniciar sesión" Style="{StaticResource ErpPrimaryButton}"
+                        Command="{Binding ComandoIniciarSesion}" />
+                <ActivityIndicator IsRunning="{Binding EstaOcupado}" IsVisible="{Binding EstaOcupado}" Color="{StaticResource ErpPrimary}" />
+
+                <!-- Acceso rápido de demostración -->
+                <Border Style="{StaticResource ErpCard}" BackgroundColor="#F8FAFC" Margin="0,8,0,0">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="⚡  Acceso rápido de demostración" FontSize="12" FontAttributes="Bold" TextColor="{StaticResource ErpText}" />
+                        <Label Text="Elige un perfil y las credenciales se completan solas."
+                               FontSize="11" TextColor="{StaticResource ErpMuted}" />
+                        <CollectionView ItemsSource="{Binding Perfiles}" SelectionMode="None" HeightRequest="150">
+                            <CollectionView.ItemsLayout>
+                                <GridItemsLayout Orientation="Vertical" Span="2" HorizontalItemSpacing="8" VerticalItemSpacing="8" />
+                            </CollectionView.ItemsLayout>
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="m:PerfilDemo">
+                                    <Border Style="{StaticResource ErpCard}" Padding="10">
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer CommandParameter="{Binding .}"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LoginViewModel}}, Path=ComandoUsarPerfil}" />
+                                        </Border.GestureRecognizers>
+                                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                                            <Border WidthRequest="32" HeightRequest="32" StrokeThickness="0"
+                                                    StrokeShape="RoundRectangle 16" BackgroundColor="#FDE9C8">
+                                                <Label Text="{Binding Iniciales}" FontSize="10" FontAttributes="Bold"
+                                                       TextColor="#B45309" HorizontalOptions="Center" VerticalOptions="Center" />
+                                            </Border>
+                                            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                                                <Label Text="{Binding Rol}" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource ErpText}" />
+                                                <Label Text="{Binding ClaveTexto}" FontSize="10" TextColor="{StaticResource ErpMuted}" />
+                                            </VerticalStackLayout>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </VerticalStackLayout>
+                </Border>
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>

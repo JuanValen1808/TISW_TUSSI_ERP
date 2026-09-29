@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:ctrl="clr-namespace:TISW_TUSSI_ERP.Views.Shared"
+             x:Class="TISW_TUSSI_ERP.Views.Shared.PageHeader">
+    <Grid x:Name="Raiz" x:DataType="ctrl:PageHeader" RowDefinitions="Auto,1" BackgroundColor="White">
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Padding="24,10">
+            <VerticalStackLayout Spacing="0" VerticalOptions="Center">
+                <Label Text="{Binding Ruta}" FontSize="11" TextColor="{StaticResource ErpMuted}" />
+                <Label Text="{Binding Titulo}" FontSize="17" FontAttributes="Bold" TextColor="{StaticResource ErpText}" />
+            </VerticalStackLayout>
+
+            <HorizontalStackLayout Grid.Column="1" Spacing="10" VerticalOptions="Center">
+                <Border WidthRequest="34" HeightRequest="34" StrokeThickness="0"
+                        StrokeShape="RoundRectangle 17" BackgroundColor="{StaticResource ErpPrimary}">
+                    <Label x:Name="InicialesLabel" TextColor="White" FontSize="12" FontAttributes="Bold"
+                           HorizontalOptions="Center" VerticalOptions="Center" />
+                </Border>
+                <VerticalStackLayout Spacing="0" VerticalOptions="Center">
+                    <Label x:Name="NombreLabel" FontSize="12" FontAttributes="Bold" TextColor="{StaticResource ErpText}" />
+                    <Label x:Name="RolLabel" FontSize="10" TextColor="{StaticResource ErpMuted}" />
+                </VerticalStackLayout>
+            </HorizontalStackLayout>
+        </Grid>
+        <BoxView Grid.Row="1" HeightRequest="1" Color="{StaticResource ErpBorder}" />
+    </Grid>
+</ContentView>

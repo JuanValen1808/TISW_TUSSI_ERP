@@ -1,0 +1,32 @@
+## .NET / MAUI / Visual Studio
+
+[Bb]in/
+[Oo]bj/
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build resultados
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+
+# Archivos de plataformas móviles
+*.apk
+*.aab
+*.ipa
+
+# Rider / ReSharper
+.idea/
+*.DotSettings.user
+
+# macOS
+.DS_Store
+
+# Docker / datos locales (no se versiona la data de MySQL)
+DbScripts/*.log

@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <Color x:Key="ErpPrimary">#1D6FD8</Color>
+    <Color x:Key="ErpPrimarySoft">#E8F1FD</Color>
+    <Color x:Key="ErpNavy">#0B2A4A</Color>
+    <Color x:Key="ErpBg">#F4F6FA</Color>
+    <Color x:Key="ErpBorder">#E3E8EF</Color>
+    <Color x:Key="ErpText">#111827</Color>
+    <Color x:Key="ErpMuted">#6B7280</Color>
+    <Color x:Key="ErpSuccess">#16A34A</Color>
+    <Color x:Key="ErpDanger">#DC2626</Color>
+    <Color x:Key="ErpWarning">#F59E0B</Color>
+
+    <Style x:Key="ErpCard" TargetType="Border">
+        <Setter Property="BackgroundColor" Value="White" />
+        <Setter Property="Stroke" Value="{StaticResource ErpBorder}" />
+        <Setter Property="StrokeThickness" Value="1" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 12" />
+        <Setter Property="Padding" Value="16" />
+    </Style>
+
+    <Style x:Key="ErpInputBox" TargetType="Border">
+        <Setter Property="BackgroundColor" Value="#F8FAFC" />
+        <Setter Property="Stroke" Value="{StaticResource ErpBorder}" />
+        <Setter Property="StrokeThickness" Value="1" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 8" />
+        <Setter Property="Padding" Value="12,0" />
+        <Setter Property="HeightRequest" Value="46" />
+    </Style>
+
+    <Style x:Key="ErpEntry" TargetType="Entry">
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="TextColor" Value="{StaticResource ErpText}" />
+        <Setter Property="PlaceholderColor" Value="{StaticResource ErpMuted}" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="VerticalOptions" Value="Center" />
+    </Style>
+
+    <Style x:Key="ErpTitle" TargetType="Label">
+        <Setter Property="FontSize" Value="24" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="TextColor" Value="{StaticResource ErpText}" />
+    </Style>
+    <Style x:Key="ErpSubtitle" TargetType="Label">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="TextColor" Value="{StaticResource ErpMuted}" />
+    </Style>
+    <Style x:Key="ErpCaption" TargetType="Label">
+        <Setter Property="FontSize" Value="10" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="TextColor" Value="{StaticResource ErpMuted}" />
+    </Style>
+    <Style x:Key="ErpCardTitle" TargetType="Label">
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="TextColor" Value="{StaticResource ErpText}" />
+    </Style>
+    <Style x:Key="ErpKpi" TargetType="Label">
+        <Setter Property="FontSize" Value="26" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="TextColor" Value="{StaticResource ErpText}" />
+    </Style>
+    <Style x:Key="ErpBody" TargetType="Label">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="TextColor" Value="{StaticResource ErpText}" />
+        <Setter Property="VerticalOptions" Value="Center" />
+    </Style>
+
+    <Style x:Key="ErpPrimaryButton" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="{StaticResource ErpPrimary}" />
+        <Setter Property="TextColor" Value="White" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="HeightRequest" Value="44" />
+        <Setter Property="Padding" Value="18,0" />
+    </Style>
+    <Style x:Key="ErpGhostButton" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="White" />
+        <Setter Property="TextColor" Value="{StaticResource ErpText}" />
+        <Setter Property="BorderColor" Value="{StaticResource ErpBorder}" />
+        <Setter Property="BorderWidth" Value="1" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="HeightRequest" Value="40" />
+        <Setter Property="Padding" Value="14,0" />
+    </Style>
+    <Style x:Key="ErpTab" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="TextColor" Value="{StaticResource ErpMuted}" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="CornerRadius" Value="16" />
+        <Setter Property="HeightRequest" Value="32" />
+        <Setter Property="Padding" Value="14,0" />
+    </Style>
+</ResourceDictionary>
