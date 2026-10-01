@@ -71,4 +71,22 @@
 		<PackageReference Include="MySqlConnector" Version="2.6.2" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Compile Update="Views\Ventas\RankingVentasPage.xaml.cs">
+	    <DependentUpon>RankingVentasPage.xaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="Views\Ventas\PosPage.xaml.cs">
+	    <DependentUpon>PosPage.xaml</DependentUpon>
+	  </Compile>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <MauiXaml Update="Views\Ventas\RankingVentasPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\Ventas\PosPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	</ItemGroup>
+
 </Project>

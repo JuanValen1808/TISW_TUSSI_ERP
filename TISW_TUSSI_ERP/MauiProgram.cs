@@ -4,9 +4,11 @@ using TISW_TUSSI_ERP.Services.Navigation;
 using TISW_TUSSI_ERP.ViewModels.Auth;
 using TISW_TUSSI_ERP.ViewModels.Compras;
 using TISW_TUSSI_ERP.ViewModels.Dashboard;
+using TISW_TUSSI_ERP.ViewModels.Ventas;
 using TISW_TUSSI_ERP.Views.Auth;
 using TISW_TUSSI_ERP.Views.Compras;
 using TISW_TUSSI_ERP.Views.Dashboard;
+using TISW_TUSSI_ERP.Views.Ventas;
 
 namespace TISW_TUSSI_ERP
 {
@@ -34,6 +36,7 @@ namespace TISW_TUSSI_ERP
             builder.Services.AddSingleton<NavigationService>();
             builder.Services.AddSingleton<ComprasService>();
             builder.Services.AddSingleton<DashboardService>();
+            builder.Services.AddSingleton<VentasService>();
 
             // Auth
             builder.Services.AddTransient<LoginViewModel>();
@@ -46,6 +49,13 @@ namespace TISW_TUSSI_ERP
             // Compras
             builder.Services.AddTransient<OrdenesCompraViewModel>();
             builder.Services.AddTransient<OrdenesCompraPage>();
+
+            // Ventas
+            builder.Services.AddTransient<PosViewModel>();
+            builder.Services.AddTransient<PosPage>();
+
+            builder.Services.AddTransient<RankingVentasViewModel>();
+            builder.Services.AddTransient<RankingVentasPage>();
 
             return builder.Build();
         }
