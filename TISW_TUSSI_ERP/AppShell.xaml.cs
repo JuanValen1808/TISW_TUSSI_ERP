@@ -15,41 +15,43 @@ public partial class AppShell : Shell
     //  1) agrégala como <ShellContent Route="..."> en AppShell.xaml
     //  2) añade su ruta aquí
     //  3) regístrala en MauiProgram.cs
-    private static readonly HashSet<string> Implementadas = new() { "DashboardPage", "OrdenesCompraPage", "PlanCuentasPage", "LibroDiarioPage", "LibroMayorPage", "BalanceOchoColumnasPage", "EstadoResultadosPage", "MayorCentralizadoPage" }; 
+    private static readonly HashSet<string> Implementadas = new() { "DashboardPage", "OrdenesCompraPage", "PlanCuentasPage", "LibroDiarioPage", "LibroMayorPage", "BalanceOchoColumnasPage", "EstadoResultadosPage", "MayorCentralizadoPage", "CuentasPorCobrarPage", "CuentasPorPagarPage" }; 
 
     private static readonly SeccionMenu[] Secciones =
     {
-        new("PRINCIPAL", new[] { new ItemMenu("📊", "Dashboard", "DashboardPage") }),
+        new("PRINCIPAL", new[] { new ItemMenu("", "Dashboard", "DashboardPage") }),
         new("OPERACIÓN", new[]
         {
-            new ItemMenu("🛒", "Punto de Venta", "PosPage"),
-            new ItemMenu("💵", "Control de Caja", "CajaPage"),
-            new ItemMenu("👥", "Clientes", "ClientesPage"),
+            new ItemMenu("", "Punto de Venta", "PosPage"),
+            new ItemMenu("", "Control de Caja", "CajaPage"),
+            new ItemMenu("", "Clientes", "ClientesPage"),
         }),
         new("INVENTARIOS", new[]
         {
-            new ItemMenu("📦", "Catálogo SKUs", "CatalogoPage"),
-            new ItemMenu("🗂", "Kardex y Lotes", "KardexPage"),
-            new ItemMenu("⚠", "Mermas", "MermasPage"),
+            new ItemMenu("", "Catálogo SKUs", "CatalogoPage"),
+            new ItemMenu("", "Kardex y Lotes", "KardexPage"),
+            new ItemMenu("", "Mermas", "MermasPage"),
         }),
         new("COMPRAS", new[]
         {
-            new ItemMenu("🧾", "Órdenes de Compra", "OrdenesCompraPage"),
-            new ItemMenu("📥", "Recepción Facturas", "RecepcionPage"),
+            new ItemMenu("", "Órdenes de Compra", "OrdenesCompraPage"),
+            new ItemMenu("", "Recepción Facturas", "RecepcionPage"),
         }),
         new("CONTABILIDAD", new[]
         {
-            new ItemMenu("📒", "Libro Diario", "LibroDiarioPage"),
-            new ItemMenu("🧮", "Plan de Cuentas", "PlanCuentasPage"),
-            new ItemMenu("⚖️", "Libro Mayor", "LibroMayorPage"),
-            new ItemMenu("🔍", "Mayor Centralizado", "MayorCentralizadoPage"),
-            new ItemMenu("📊", "Balance 8 Columnas", "BalanceOchoColumnasPage"),
-            new ItemMenu("📈", "Estado de Resultados", "EstadoResultadosPage"),
+            new ItemMenu("", "Libro Diario", "LibroDiarioPage"),
+            new ItemMenu("", "Plan de Cuentas", "PlanCuentasPage"),
+            new ItemMenu("", "Libro Mayor", "LibroMayorPage"),
+            new ItemMenu("", "Mayor Centralizado", "MayorCentralizadoPage"),
+            new ItemMenu("", "Balance 8 Columnas", "BalanceOchoColumnasPage"),
+            new ItemMenu("", "Estado de Resultados", "EstadoResultadosPage"),
+            new ItemMenu("", "Cuentas por Cobrar", "CuentasPorCobrarPage"),
+            new ItemMenu("", "Cuentas por Pagar", "CuentasPorPagarPage"),
         }),
         new("ADMINISTRACIÓN", new[]
         {
-            new ItemMenu("🔐", "Usuarios y Perfiles", "UsuariosPage"),
-            new ItemMenu("⚙", "Configuración", "ConfigPage"),
+            new ItemMenu("", "Usuarios y Perfiles", "UsuariosPage"),
+            new ItemMenu("", "Configuración", "ConfigPage"),
         }),
     };
 
@@ -105,7 +107,7 @@ public partial class AppShell : Shell
             {
                 var texto = new Label
                 {
-                    Text = $"{item.Icono}   {item.Titulo}",
+                    Text = string.IsNullOrEmpty(item.Icono) ? item.Titulo : $"{item.Icono}   {item.Titulo}",
                     FontSize = 13,
                     TextColor = Color.FromArgb("#374151")
                 };

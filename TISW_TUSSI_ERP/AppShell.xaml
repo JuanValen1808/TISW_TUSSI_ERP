@@ -17,7 +17,7 @@
             <HorizontalStackLayout Grid.Row="0" Spacing="10" Padding="8,0,0,12">
                 <Border WidthRequest="36" HeightRequest="36" StrokeThickness="0" StrokeShape="RoundRectangle 9"
                         BackgroundColor="{StaticResource ErpPrimary}">
-                    <Label Text="✚" TextColor="White" FontSize="16" HorizontalOptions="Center" VerticalOptions="Center" />
+                    <Label Text="FS" TextColor="White" FontSize="16" FontAttributes="Bold" HorizontalOptions="Center" VerticalOptions="Center" />
                 </Border>
                 <VerticalStackLayout VerticalOptions="Center">
                     <Label Text="FarmSalud ERP" FontSize="14" FontAttributes="Bold" TextColor="{StaticResource ErpText}" />
@@ -63,4 +63,8 @@
                   ContentTemplate="{DataTemplate contabilidad:EstadoResultadosPage}" />
     <ShellContent Route="MayorCentralizadoPage" Shell.FlyoutItemIsVisible="False"
                   ContentTemplate="{DataTemplate contabilidad:MayorCentralizadoPage}" />
+    <ShellContent Route="CuentasPorCobrarPage" Shell.FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate contabilidad:CuentasPorCobrarPage}" />
+    <ShellContent Route="CuentasPorPagarPage" Shell.FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate contabilidad:CuentasPorPagarPage}" />
 </Shell>

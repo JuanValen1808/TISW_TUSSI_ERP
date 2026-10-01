@@ -63,6 +63,10 @@ namespace TISW_TUSSI_ERP
             builder.Services.AddTransient<EstadoResultadosPage>();
             builder.Services.AddTransient<MayorCentralizadoViewModel>();
             builder.Services.AddTransient<MayorCentralizadoPage>();
+            builder.Services.AddTransient<CuentasPorCobrarViewModel>();
+            builder.Services.AddTransient<CuentasPorCobrarPage>();
+            builder.Services.AddTransient<CuentasPorPagarViewModel>();
+            builder.Services.AddTransient<CuentasPorPagarPage>();
 
             return builder.Build();
         }

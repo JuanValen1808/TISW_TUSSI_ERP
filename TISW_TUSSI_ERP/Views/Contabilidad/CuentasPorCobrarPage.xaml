@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:TISW_TUSSI_ERP.ViewModels.Contabilidad"
+             xmlns:models="clr-namespace:TISW_TUSSI_ERP.Models.Contabilidad"
+             x:Class="TISW_TUSSI_ERP.Views.Contabilidad.CuentasPorCobrarPage"
+             x:DataType="viewmodels:CuentasPorCobrarViewModel"
+             Title="{Binding Titulo}">
+
+    <Grid RowDefinitions="Auto,*">
+        
+        <StackLayout Grid.Row="0" Padding="20">
+            <Label Text="Cuentas por Cobrar" FontSize="24" FontAttributes="Bold" TextColor="{StaticResource Primary}" />
+            <Label Text="Listado de documentos por cobrar a clientes." FontSize="14" TextColor="Gray" Margin="0,5,0,15" />
+            
+            <Grid ColumnDefinitions="*, Auto">
+                <Button Grid.Column="0" Text="Actualizar Datos" 
+                        Command="{Binding CargarDocumentosCommand}"
+                        HorizontalOptions="Start" />
+                
+                <StackLayout Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalOptions="Center">
+                    <Label Text="Total por Cobrar:" FontAttributes="Bold" FontSize="16" VerticalOptions="Center" />
+                    <Label Text="{Binding TotalCobrar, StringFormat='{0:C0}'}" FontAttributes="Bold" FontSize="18" TextColor="{StaticResource Primary}" VerticalOptions="Center" />
+                </StackLayout>
+            </Grid>
+        </StackLayout>
+
+        <RefreshView Grid.Row="1" Command="{Binding CargarDocumentosCommand}" IsRefreshing="{Binding EstaOcupado}">
+            <CollectionView ItemsSource="{Binding Documentos}" Margin="20,0,20,20">
+                <CollectionView.Header>
+                    <Grid ColumnDefinitions="120, 200, 120, 120, 120, 100" Padding="10,5" BackgroundColor="{StaticResource Primary}">
+                        <Label Grid.Column="0" Text="NRO DOC" FontAttributes="Bold" TextColor="White" />
+                        <Label Grid.Column="1" Text="CLIENTE" FontAttributes="Bold" TextColor="White" />
+                        <Label Grid.Column="2" Text="EMISIÓN" FontAttributes="Bold" TextColor="White" />
+                        <Label Grid.Column="3" Text="VENCIMIENTO" FontAttributes="Bold" TextColor="White" />
+                        <Label Grid.Column="4" Text="SALDO" FontAttributes="Bold" TextColor="White" HorizontalTextAlignment="End" />
+                        <Label Grid.Column="5" Text="ESTADO" FontAttributes="Bold" TextColor="White" HorizontalTextAlignment="Center" />
+                    </Grid>
+                </CollectionView.Header>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="models:CuentaPorCobrar">
+                        <Grid ColumnDefinitions="120, 200, 120, 120, 120, 100" Padding="10" BackgroundColor="White">
+                            <Label Grid.Column="0" Text="{Binding NumeroDocumento}" VerticalOptions="Center" FontAttributes="Bold" />
+                            <Label Grid.Column="1" Text="{Binding Cliente}" VerticalOptions="Center" />
+                            <Label Grid.Column="2" Text="{Binding FechaEmision, StringFormat='{0:dd/MM/yyyy}'}" VerticalOptions="Center" TextColor="Gray" />
+                            <Label Grid.Column="3" Text="{Binding FechaVencimiento, StringFormat='{0:dd/MM/yyyy}'}" VerticalOptions="Center" TextColor="Gray" />
+                            <Label Grid.Column="4" Text="{Binding SaldoPendiente, StringFormat='{0:N0}'}" VerticalOptions="Center" HorizontalTextAlignment="End" FontAttributes="Bold" />
+                            
+                            <!-- Indicador de Estado -->
+                            <Border Grid.Column="5" Padding="5,2" HorizontalOptions="Center" VerticalOptions="Center" 
+                                    StrokeShape="RoundRectangle 5" StrokeThickness="0">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding Estado}" Value="Pagado">
+                                        <Setter Property="BackgroundColor" Value="#d4edda" />
+                                    </DataTrigger>
+                                    <DataTrigger TargetType="Border" Binding="{Binding Estado}" Value="Vencido">
+                                        <Setter Property="BackgroundColor" Value="#f8d7da" />
+                                    </DataTrigger>
+                                    <DataTrigger TargetType="Border" Binding="{Binding Estado}" Value="Pendiente">
+                                        <Setter Property="BackgroundColor" Value="#fff3cd" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Label Text="{Binding Estado}" FontSize="12">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding Estado}" Value="Pagado">
+                                            <Setter Property="TextColor" Value="#155724" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Label" Binding="{Binding Estado}" Value="Vencido">
+                                            <Setter Property="TextColor" Value="#721c24" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Label" Binding="{Binding Estado}" Value="Pendiente">
+                                            <Setter Property="TextColor" Value="#856404" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Border>
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </RefreshView>
+
+    </Grid>
+
+</ContentPage>
