@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:TISW_TUSSI_ERP.ViewModels.Contabilidad"
+             xmlns:models="clr-namespace:TISW_TUSSI_ERP.Models.Contabilidad"
+             x:Class="TISW_TUSSI_ERP.Views.Contabilidad.LibroDiarioPage"
+             x:DataType="viewmodels:LibroDiarioViewModel"
+             Title="{Binding Titulo}">
+
+    <Grid RowDefinitions="Auto,*">
+        
+        <StackLayout Grid.Row="0" Padding="20">
+            <Label Text="Libro Diario" FontSize="24" FontAttributes="Bold" TextColor="{StaticResource Primary}" />
+            <Label Text="Registro cronológico de asientos contables." FontSize="14" TextColor="Gray" Margin="0,5,0,15" />
+            
+            <Button Text="Recargar Asientos" 
+                    Command="{Binding CargarAsientosCommand}"
+                    HorizontalOptions="Start" />
+        </StackLayout>
+
+        <RefreshView Grid.Row="1" Command="{Binding CargarAsientosCommand}" IsRefreshing="{Binding EstaOcupado}">
+            <CollectionView ItemsSource="{Binding Asientos}" Margin="20,0,20,20">
+                <CollectionView.Header>
+                    <Grid ColumnDefinitions="100, 150, *, 100" Padding="10,5" BackgroundColor="{StaticResource Primary}">
+                        <Label Grid.Column="0" Text="Nº ASIENTO" FontAttributes="Bold" TextColor="White" />
+                        <Label Grid.Column="1" Text="FECHA" FontAttributes="Bold" TextColor="White" />
+                        <Label Grid.Column="2" Text="GLOSA" FontAttributes="Bold" TextColor="White" />
+                        <Label Grid.Column="3" Text="ORIGEN" FontAttributes="Bold" TextColor="White" />
+                    </Grid>
+                </CollectionView.Header>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="models:LibroDiarioAsiento">
+                        <Grid ColumnDefinitions="100, 150, *, 100" Padding="10" 
+                              BackgroundColor="White">
+                            <Label Grid.Column="0" Text="{Binding NumeroAsiento}" VerticalOptions="Center" FontAttributes="Bold" />
+                            <Label Grid.Column="1" Text="{Binding FechaAsiento, StringFormat='{}{0:dd/MM/yyyy}'}" VerticalOptions="Center" />
+                            <Label Grid.Column="2" Text="{Binding GlosaDescripcion}" VerticalOptions="Center" />
+                            <Label Grid.Column="3" Text="{Binding Origen}" VerticalOptions="Center" TextColor="Gray" />
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </RefreshView>
+
+    </Grid>
+
+</ContentPage>

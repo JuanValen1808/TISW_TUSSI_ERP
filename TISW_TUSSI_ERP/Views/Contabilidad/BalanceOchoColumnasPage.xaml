@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:TISW_TUSSI_ERP.ViewModels.Contabilidad"
+             xmlns:models="clr-namespace:TISW_TUSSI_ERP.Models.Contabilidad"
+             x:Class="TISW_TUSSI_ERP.Views.Contabilidad.BalanceOchoColumnasPage"
+             x:DataType="viewmodels:BalanceOchoColumnasViewModel"
+             Title="{Binding Titulo}">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        
+        <StackLayout Grid.Row="0" Padding="20">
+            <Label Text="Balance de Comprobación y de Saldos" FontSize="24" FontAttributes="Bold" TextColor="{StaticResource Primary}" />
+            <Label Text="Balance tributario de 8 columnas." FontSize="14" TextColor="Gray" Margin="0,5,0,15" />
+            
+            <Button Text="Generar Balance" 
+                    Command="{Binding CargarBalanceCommand}"
+                    HorizontalOptions="Start" />
+        </StackLayout>
+
+        <RefreshView Grid.Row="1" Command="{Binding CargarBalanceCommand}" IsRefreshing="{Binding EstaOcupado}">
+            <ScrollView Orientation="Horizontal">
+                <VerticalStackLayout Margin="20,0,20,10" MinimumWidthRequest="1200">
+                    
+                    <!-- Header Complejo -->
+                    <Grid ColumnDefinitions="100, 200, 100, 100, 100, 100, 100, 100, 100, 100" Padding="5,5" BackgroundColor="{StaticResource Primary}">
+                        <Label Grid.Column="0" Text="CÓDIGO" FontAttributes="Bold" TextColor="White" VerticalOptions="End" />
+                        <Label Grid.Column="1" Text="CUENTA" FontAttributes="Bold" TextColor="White" VerticalOptions="End" />
+                        
+                        <Label Grid.Column="2" Grid.ColumnSpan="2" Text="SUMAS" FontAttributes="Bold" TextColor="White" HorizontalTextAlignment="Center" Margin="0,0,0,15" />
+                        <Label Grid.Column="2" Text="DÉBITOS" FontAttributes="Bold" TextColor="White" HorizontalTextAlignment="End" VerticalOptions="End" />
+                        <Label Grid.Column="3" Text="CRÉDITOS" FontAttributes="Bold" TextColor="White" HorizontalTextAlignment="End" VerticalOptions="End" />
+                        
+                        <Label Grid.Column="4" Grid.ColumnSpan="2" Text="SALDOS" FontAttributes="Bold" TextColor="White" HorizontalTextAlignment="Center" Margin="0,0,0,15" />
+                        <Label Grid.Column="4" Text="DEUDOR" FontAttributes="Bold" TextColor="White" HorizontalTextAlignment="End" VerticalOptions="End" />
+                        <Label Grid.Column="5" Text="ACREEDOR" FontAttributes="Bold" TextColor="White" HorizontalTextAlignment="End" VerticalOptions="End" />
+                        
+                        <Label Grid.Column="6" Grid.ColumnSpan="2" Text="INVENTARIO" FontAttributes="Bold" TextColor="White" HorizontalTextAlignment="Center" Margin="0,0,0,15" />
+                        <Label Grid.Column="6" Text="ACTIVO" FontAttributes="Bold" TextColor="White" HorizontalTextAlignment="End" VerticalOptions="End" />
+                        <Label Grid.Column="7" Text="PASIVO" FontAttributes="Bold" TextColor="White" HorizontalTextAlignment="End" VerticalOptions="End" />
+
+                        <Label Grid.Column="8" Grid.ColumnSpan="2" Text="RESULTADO" FontAttributes="Bold" TextColor="White" HorizontalTextAlignment="Center" Margin="0,0,0,15" />
+                        <Label Grid.Column="8" Text="PÉRDIDA" FontAttributes="Bold" TextColor="White" HorizontalTextAlignment="End" VerticalOptions="End" />
+                        <Label Grid.Column="9" Text="GANANCIA" FontAttributes="Bold" TextColor="White" HorizontalTextAlignment="End" VerticalOptions="End" />
+                    </Grid>
+
+                    <CollectionView ItemsSource="{Binding Items}">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="models:BalanceOchoColumnasItem">
+                                <Grid ColumnDefinitions="100, 200, 100, 100, 100, 100, 100, 100, 100, 100" Padding="5" BackgroundColor="White">
+                                    <Label Grid.Column="0" Text="{Binding CodigoCuenta}" VerticalOptions="Center" FontSize="12" />
+                                    <Label Grid.Column="1" Text="{Binding NombreCuenta}" VerticalOptions="Center" FontAttributes="Bold" FontSize="12" />
+                                    
+                                    <Label Grid.Column="2" Text="{Binding TotalDebe, StringFormat='{}{0:N0}'}" VerticalOptions="Center" HorizontalTextAlignment="End" FontSize="12" />
+                                    <Label Grid.Column="3" Text="{Binding TotalHaber, StringFormat='{}{0:N0}'}" VerticalOptions="Center" HorizontalTextAlignment="End" FontSize="12" />
+                                    
+                                    <Label Grid.Column="4" Text="{Binding SaldoDeudor, StringFormat='{}{0:N0}'}" VerticalOptions="Center" HorizontalTextAlignment="End" FontSize="12" />
+                                    <Label Grid.Column="5" Text="{Binding SaldoAcreedor, StringFormat='{}{0:N0}'}" VerticalOptions="Center" HorizontalTextAlignment="End" FontSize="12" />
+                                    
+                                    <Label Grid.Column="6" Text="{Binding Activo, StringFormat='{}{0:N0}'}" VerticalOptions="Center" HorizontalTextAlignment="End" FontSize="12" />
+                                    <Label Grid.Column="7" Text="{Binding Pasivo, StringFormat='{}{0:N0}'}" VerticalOptions="Center" HorizontalTextAlignment="End" FontSize="12" />
+                                    
+                                    <Label Grid.Column="8" Text="{Binding Perdida, StringFormat='{}{0:N0}'}" VerticalOptions="Center" HorizontalTextAlignment="End" FontSize="12" />
+                                    <Label Grid.Column="9" Text="{Binding Ganancia, StringFormat='{}{0:N0}'}" VerticalOptions="Center" HorizontalTextAlignment="End" FontSize="12" />
+                                </Grid>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+            </ScrollView>
+        </RefreshView>
+
+        <!-- Sección Inferior: Totales y Cuadratura -->
+        <Border Grid.Row="2" BackgroundColor="#F8FAFC" Stroke="{StaticResource ErpBorder}" StrokeShape="Rectangle" Padding="20,10">
+            <ScrollView Orientation="Horizontal">
+                <VerticalStackLayout MinimumWidthRequest="1200">
+                    
+                    <!-- Subtotales -->
+                    <Grid ColumnDefinitions="100, 200, 100, 100, 100, 100, 100, 100, 100, 100" Padding="5,10">
+                        <Label Grid.Column="1" Text="SUBTOTALES:" FontAttributes="Bold" VerticalOptions="Center" HorizontalTextAlignment="End" FontSize="12" />
+                        
+                        <Label Grid.Column="2" Text="{Binding SumDebe, StringFormat='{}{0:N0}'}" FontAttributes="Bold" HorizontalTextAlignment="End" FontSize="12" />
+                        <Label Grid.Column="3" Text="{Binding SumHaber, StringFormat='{}{0:N0}'}" FontAttributes="Bold" HorizontalTextAlignment="End" FontSize="12" />
+                        <Label Grid.Column="4" Text="{Binding SumSaldoDeudor, StringFormat='{}{0:N0}'}" FontAttributes="Bold" HorizontalTextAlignment="End" FontSize="12" />
+                        <Label Grid.Column="5" Text="{Binding SumSaldoAcreedor, StringFormat='{}{0:N0}'}" FontAttributes="Bold" HorizontalTextAlignment="End" FontSize="12" />
+                        <Label Grid.Column="6" Text="{Binding SumActivo, StringFormat='{}{0:N0}'}" FontAttributes="Bold" HorizontalTextAlignment="End" FontSize="12" />
+                        <Label Grid.Column="7" Text="{Binding SumPasivo, StringFormat='{}{0:N0}'}" FontAttributes="Bold" HorizontalTextAlignment="End" FontSize="12" />
+                        <Label Grid.Column="8" Text="{Binding SumPerdida, StringFormat='{}{0:N0}'}" FontAttributes="Bold" HorizontalTextAlignment="End" FontSize="12" />
+                        <Label Grid.Column="9" Text="{Binding SumGanancia, StringFormat='{}{0:N0}'}" FontAttributes="Bold" HorizontalTextAlignment="End" FontSize="12" />
+                    </Grid>
+
+                    <!-- Fila Resultado del Ejercicio -->
+                    <Grid ColumnDefinitions="100, 200, 100, 100, 100, 100, 100, 100, 100, 100" Padding="5,0">
+                        <Label Grid.Column="1" Text="{Binding TextoResultado}" FontAttributes="Bold" TextColor="{StaticResource Primary}" VerticalOptions="Center" HorizontalTextAlignment="End" FontSize="12" />
+                        
+                        <Label Grid.Column="6" Text="{Binding ResultadoEjercicio, StringFormat='{}{0:N0}'}" IsVisible="{Binding EsPerdida}" HorizontalTextAlignment="End" FontSize="12" TextColor="DarkRed" />
+                        <Label Grid.Column="7" Text="{Binding ResultadoEjercicio, StringFormat='{}{0:N0}'}" IsVisible="{Binding EsUtilidad}" HorizontalTextAlignment="End" FontSize="12" TextColor="DarkGreen" />
+                        
+                        <Label Grid.Column="8" Text="{Binding ResultadoEjercicio, StringFormat='{}{0:N0}'}" IsVisible="{Binding EsUtilidad}" HorizontalTextAlignment="End" FontSize="12" TextColor="DarkGreen" />
+                        <Label Grid.Column="9" Text="{Binding ResultadoEjercicio, StringFormat='{}{0:N0}'}" IsVisible="{Binding EsPerdida}" HorizontalTextAlignment="End" FontSize="12" TextColor="DarkRed" />
+                    </Grid>
+
+                    <BoxView HeightRequest="2" Color="Black" Margin="0,5" />
+
+                    <!-- Totales Iguales Finales -->
+                    <Grid ColumnDefinitions="100, 200, 100, 100, 100, 100, 100, 100, 100, 100" Padding="5,5">
+                        <Label Grid.Column="1" Text="TOTALES IGUALES:" FontAttributes="Bold" VerticalOptions="Center" HorizontalTextAlignment="End" FontSize="12" />
+                        
+                        <Label Grid.Column="2" Text="{Binding SumDebe, StringFormat='{}{0:N0}'}" FontAttributes="Bold" HorizontalTextAlignment="End" FontSize="12" />
+                        <Label Grid.Column="3" Text="{Binding SumHaber, StringFormat='{}{0:N0}'}" FontAttributes="Bold" HorizontalTextAlignment="End" FontSize="12" />
+                        <Label Grid.Column="4" Text="{Binding SumSaldoDeudor, StringFormat='{}{0:N0}'}" FontAttributes="Bold" HorizontalTextAlignment="End" FontSize="12" />
+                        <Label Grid.Column="5" Text="{Binding SumSaldoAcreedor, StringFormat='{}{0:N0}'}" FontAttributes="Bold" HorizontalTextAlignment="End" FontSize="12" />
+                        <Label Grid.Column="6" Text="{Binding TotalFinalActivo, StringFormat='{}{0:N0}'}" FontAttributes="Bold" HorizontalTextAlignment="End" FontSize="12" />
+                        <Label Grid.Column="7" Text="{Binding TotalFinalPasivo, StringFormat='{}{0:N0}'}" FontAttributes="Bold" HorizontalTextAlignment="End" FontSize="12" />
+                        <Label Grid.Column="8" Text="{Binding TotalFinalPerdida, StringFormat='{}{0:N0}'}" FontAttributes="Bold" HorizontalTextAlignment="End" FontSize="12" />
+                        <Label Grid.Column="9" Text="{Binding TotalFinalGanancia, StringFormat='{}{0:N0}'}" FontAttributes="Bold" HorizontalTextAlignment="End" FontSize="12" />
+                    </Grid>
+
+                </VerticalStackLayout>
+            </ScrollView>
+        </Border>
+
+    </Grid>
+</ContentPage>

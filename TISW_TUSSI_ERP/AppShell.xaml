@@ -3,6 +3,7 @@
        xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
        xmlns:dashboard="clr-namespace:TISW_TUSSI_ERP.Views.Dashboard"
        xmlns:compras="clr-namespace:TISW_TUSSI_ERP.Views.Compras"
+       xmlns:contabilidad="clr-namespace:TISW_TUSSI_ERP.Views.Contabilidad"
        x:Class="TISW_TUSSI_ERP.AppShell"
        Shell.NavBarIsVisible="False"
        FlyoutBehavior="Locked"
@@ -50,4 +51,16 @@
                   ContentTemplate="{DataTemplate dashboard:DashboardPage}" />
     <ShellContent Route="OrdenesCompraPage" Shell.FlyoutItemIsVisible="False"
                   ContentTemplate="{DataTemplate compras:OrdenesCompraPage}" />
+    <ShellContent Route="PlanCuentasPage" Shell.FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate contabilidad:PlanCuentasPage}" />
+    <ShellContent Route="LibroDiarioPage" Shell.FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate contabilidad:LibroDiarioPage}" />
+    <ShellContent Route="LibroMayorPage" Shell.FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate contabilidad:LibroMayorPage}" />
+    <ShellContent Route="BalanceOchoColumnasPage" Shell.FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate contabilidad:BalanceOchoColumnasPage}" />
+    <ShellContent Route="EstadoResultadosPage" Shell.FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate contabilidad:EstadoResultadosPage}" />
+    <ShellContent Route="MayorCentralizadoPage" Shell.FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate contabilidad:MayorCentralizadoPage}" />
 </Shell>

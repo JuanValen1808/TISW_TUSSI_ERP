@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:TISW_TUSSI_ERP.ViewModels.Contabilidad"
+             xmlns:models="clr-namespace:TISW_TUSSI_ERP.Models.Contabilidad"
+             x:Class="TISW_TUSSI_ERP.Views.Contabilidad.MayorCentralizadoPage"
+             x:DataType="viewmodels:MayorCentralizadoViewModel"
+             Title="{Binding Titulo}">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        
+        <VerticalStackLayout Grid.Row="0" Padding="20">
+            <Label Text="Libro Mayor Centralizado" FontSize="24" FontAttributes="Bold" TextColor="{StaticResource Primary}" />
+            <Label Text="Movimientos detallados y saldo acumulado por cuenta contable." FontSize="14" TextColor="Gray" Margin="0,5,0,15" />
+            
+            <Border BackgroundColor="#F8FAFC" Stroke="{StaticResource ErpBorder}" StrokeShape="RoundRectangle 8" Padding="15">
+                <Grid ColumnDefinitions="*, *, 2*, Auto" ColumnSpacing="15">
+                    
+                    <VerticalStackLayout Grid.Column="0">
+                        <Label Text="Desde:" FontAttributes="Bold" FontSize="12" />
+                        <DatePicker Date="{Binding FechaDesde}" Format="dd/MM/yyyy" />
+                    </VerticalStackLayout>
+                    
+                    <VerticalStackLayout Grid.Column="1">
+                        <Label Text="Hasta:" FontAttributes="Bold" FontSize="12" />
+                        <DatePicker Date="{Binding FechaHasta}" Format="dd/MM/yyyy" />
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Grid.Column="2">
+                        <Label Text="Cuenta Contable:" FontAttributes="Bold" FontSize="12" />
+                        <Picker ItemsSource="{Binding CuentasFiltro}" 
+                                ItemDisplayBinding="{Binding NombreCuenta}"
+                                SelectedItem="{Binding CuentaSeleccionada}" />
+                    </VerticalStackLayout>
+
+                    <Button Grid.Column="3" Text="Buscar" Command="{Binding BuscarCommand}" VerticalOptions="End" />
+                </Grid>
+            </Border>
+        </VerticalStackLayout>
+
+        <RefreshView Grid.Row="1" Command="{Binding BuscarCommand}" IsRefreshing="{Binding EstaOcupado}">
+            <ScrollView Orientation="Horizontal">
+                <VerticalStackLayout Margin="20,0,20,10" MinimumWidthRequest="1000">
+                    <Grid ColumnDefinitions="100, 100, 100, 150, *, 120, 120, 120" Padding="10,5" BackgroundColor="{StaticResource Primary}">
+                        <Label Grid.Column="0" Text="FECHA" FontAttributes="Bold" TextColor="White" />
+                        <Label Grid.Column="1" Text="Nº ASIENTO" FontAttributes="Bold" TextColor="White" />
+                        <Label Grid.Column="2" Text="CÓDIGO" FontAttributes="Bold" TextColor="White" />
+                        <Label Grid.Column="3" Text="CUENTA" FontAttributes="Bold" TextColor="White" />
+                        <Label Grid.Column="4" Text="GLOSA / DETALLE" FontAttributes="Bold" TextColor="White" />
+                        <Label Grid.Column="5" Text="DEBE" FontAttributes="Bold" TextColor="White" HorizontalTextAlignment="End" />
+                        <Label Grid.Column="6" Text="HABER" FontAttributes="Bold" TextColor="White" HorizontalTextAlignment="End" />
+                        <Label Grid.Column="7" Text="SALDO" FontAttributes="Bold" TextColor="White" HorizontalTextAlignment="End" />
+                    </Grid>
+
+                    <CollectionView ItemsSource="{Binding Items}">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="models:MayorCentralizadoItem">
+                                <Grid ColumnDefinitions="100, 100, 100, 150, *, 120, 120, 120" Padding="10,5" BackgroundColor="White">
+                                    <Label Grid.Column="0" Text="{Binding Fecha, StringFormat='{}{0:dd/MM/yyyy}'}" VerticalOptions="Center" FontSize="12" />
+                                    <Label Grid.Column="1" Text="{Binding NumeroAsiento}" VerticalOptions="Center" FontSize="12" FontAttributes="Bold" />
+                                    <Label Grid.Column="2" Text="{Binding CodigoCuenta}" VerticalOptions="Center" FontSize="12" />
+                                    <Label Grid.Column="3" Text="{Binding NombreCuenta}" VerticalOptions="Center" FontSize="12" FontAttributes="Bold" />
+                                    <Label Grid.Column="4" Text="{Binding Glosa}" VerticalOptions="Center" FontSize="12" />
+                                    <Label Grid.Column="5" Text="{Binding Debe, StringFormat='{}{0:N0}'}" VerticalOptions="Center" HorizontalTextAlignment="End" FontSize="12" />
+                                    <Label Grid.Column="6" Text="{Binding Haber, StringFormat='{}{0:N0}'}" VerticalOptions="Center" HorizontalTextAlignment="End" FontSize="12" />
+                                    <Label Grid.Column="7" Text="{Binding SaldoAcumulado, StringFormat='{}{0:N0}'}" VerticalOptions="Center" HorizontalTextAlignment="End" FontSize="12" TextColor="{StaticResource Primary}" FontAttributes="Bold" />
+                                </Grid>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+            </ScrollView>
+        </RefreshView>
+
+        <!-- Totales filtrados -->
+        <Border Grid.Row="2" BackgroundColor="#F8FAFC" Stroke="{StaticResource ErpBorder}" StrokeShape="Rectangle" Padding="20">
+            <ScrollView Orientation="Horizontal">
+                <Grid ColumnDefinitions="100, 100, 100, 150, *, 120, 120, 120" MinimumWidthRequest="1000">
+                    <Label Grid.Column="4" Text="SUMA MOVIMIENTOS EN PERIODO:" FontAttributes="Bold" VerticalOptions="Center" HorizontalTextAlignment="End" FontSize="12" />
+                    <Label Grid.Column="5" Text="{Binding TotalDebeFiltro, StringFormat='{}{0:N0}'}" FontAttributes="Bold" VerticalOptions="Center" HorizontalTextAlignment="End" FontSize="14" />
+                    <Label Grid.Column="6" Text="{Binding TotalHaberFiltro, StringFormat='{}{0:N0}'}" FontAttributes="Bold" VerticalOptions="Center" HorizontalTextAlignment="End" FontSize="14" />
+                </Grid>
+            </ScrollView>
+        </Border>
+
+    </Grid>
+
+</ContentPage>

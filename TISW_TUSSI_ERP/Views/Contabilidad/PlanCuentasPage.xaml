@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:TISW_TUSSI_ERP.ViewModels.Contabilidad"
+             xmlns:models="clr-namespace:TISW_TUSSI_ERP.Models.Contabilidad"
+             x:Class="TISW_TUSSI_ERP.Views.Contabilidad.PlanCuentasPage"
+             x:DataType="viewmodels:PlanCuentasViewModel"
+             Title="{Binding Titulo}">
+
+    <Grid RowDefinitions="Auto,*">
+        
+        <StackLayout Grid.Row="0" Padding="20">
+            <Label Text="Catálogo de Cuentas" FontSize="24" FontAttributes="Bold" TextColor="{StaticResource Primary}" />
+            <Label Text="Listado completo del plan de cuentas contables de la organización." FontSize="14" TextColor="Gray" Margin="0,5,0,15" />
+            
+            <Button Text="Recargar Cuentas" 
+                    Command="{Binding CargarCuentasCommand}"
+                    HorizontalOptions="Start" />
+        </StackLayout>
+
+        <RefreshView Grid.Row="1" Command="{Binding CargarCuentasCommand}" IsRefreshing="{Binding EstaOcupado}">
+            <CollectionView ItemsSource="{Binding Cuentas}" Margin="20,0,20,20">
+                <CollectionView.Header>
+                    <Grid ColumnDefinitions="100, 200, 150, 50" Padding="10,5" BackgroundColor="{StaticResource Primary}">
+                        <Label Grid.Column="0" Text="CÓDIGO" FontAttributes="Bold" TextColor="White" />
+                        <Label Grid.Column="1" Text="NOMBRE CUENTA" FontAttributes="Bold" TextColor="White" />
+                        <Label Grid.Column="2" Text="TIPO" FontAttributes="Bold" TextColor="White" />
+                        <Label Grid.Column="3" Text="NIVEL" FontAttributes="Bold" TextColor="White" />
+                    </Grid>
+                </CollectionView.Header>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="models:PlanCuentas">
+                        <Grid ColumnDefinitions="100, 200, 150, 50" Padding="10" 
+                              BackgroundColor="White">
+                            <Label Grid.Column="0" Text="{Binding CodigoCuenta}" VerticalOptions="Center" />
+                            <Label Grid.Column="1" Text="{Binding NombreCuenta}" VerticalOptions="Center" FontAttributes="Bold" />
+                            <Label Grid.Column="2" Text="{Binding TipoCuenta}" VerticalOptions="Center" TextColor="Gray" />
+                            <Label Grid.Column="3" Text="{Binding Nivel}" VerticalOptions="Center" HorizontalTextAlignment="Center" />
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </RefreshView>
+
+    </Grid>
+
+</ContentPage>

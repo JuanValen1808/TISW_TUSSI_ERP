@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Maui.Controls.Shapes;
 using TISW_TUSSI_ERP.Helpers;
 using TISW_TUSSI_ERP.Models.Auth;
@@ -15,7 +15,7 @@ public partial class AppShell : Shell
     //  1) agrégala como <ShellContent Route="..."> en AppShell.xaml
     //  2) añade su ruta aquí
     //  3) regístrala en MauiProgram.cs
-    private static readonly HashSet<string> Implementadas = new() { "DashboardPage", "OrdenesCompraPage" }; // "OrdenesCompraPage", "ProveedoresPage" }; para dsp
+    private static readonly HashSet<string> Implementadas = new() { "DashboardPage", "OrdenesCompraPage", "PlanCuentasPage", "LibroDiarioPage", "LibroMayorPage", "BalanceOchoColumnasPage", "EstadoResultadosPage", "MayorCentralizadoPage" }; 
 
     private static readonly SeccionMenu[] Secciones =
     {
@@ -41,7 +41,10 @@ public partial class AppShell : Shell
         {
             new ItemMenu("📒", "Libro Diario", "LibroDiarioPage"),
             new ItemMenu("🧮", "Plan de Cuentas", "PlanCuentasPage"),
-            new ItemMenu("📈", "Reportes Financieros", "ReportesPage"),
+            new ItemMenu("⚖️", "Libro Mayor", "LibroMayorPage"),
+            new ItemMenu("🔍", "Mayor Centralizado", "MayorCentralizadoPage"),
+            new ItemMenu("📊", "Balance 8 Columnas", "BalanceOchoColumnasPage"),
+            new ItemMenu("📈", "Estado de Resultados", "EstadoResultadosPage"),
         }),
         new("ADMINISTRACIÓN", new[]
         {
@@ -72,8 +75,23 @@ public partial class AppShell : Shell
 
     private void ConstruirMenu()
     {
+        var rol = Sesion.UsuarioActual?.NombreRol ?? "";
+
         foreach (var seccion in Secciones)
         {
+            // Control de Accesos (RBAC)
+            if (rol == "Contador" && seccion.Nombre != "PRINCIPAL" && seccion.Nombre != "CONTABILIDAD")
+                continue;
+                
+            if (rol == "Vendedor" && seccion.Nombre != "PRINCIPAL" && seccion.Nombre != "OPERACIÓN" && seccion.Nombre != "INVENTARIOS")
+                continue;
+                
+            if (rol == "Bodega" && seccion.Nombre != "PRINCIPAL" && seccion.Nombre != "INVENTARIOS" && seccion.Nombre != "COMPRAS")
+                continue;
+                
+            if (rol == "Comprador" && seccion.Nombre != "PRINCIPAL" && seccion.Nombre != "COMPRAS")
+                continue;
+
             Menu.Add(new Label
             {
                 Text = seccion.Nombre,
