@@ -15,7 +15,7 @@ public partial class AppShell : Shell
     //  1) agrégala como <ShellContent Route="..."> en AppShell.xaml
     //  2) añade su ruta aquí
     //  3) regístrala en MauiProgram.cs
-    private static readonly HashSet<string> Implementadas = new() { "DashboardPage", "OrdenesCompraPage" }; // "OrdenesCompraPage", "ProveedoresPage" }; para dsp
+    private static readonly HashSet<string> Implementadas = new() { "DashboardPage", "OrdenesCompraPage", "InventarioPage" }; // "OrdenesCompraPage", "ProveedoresPage" }; para dsp
 
     private static readonly SeccionMenu[] Secciones =
     {
@@ -26,11 +26,11 @@ public partial class AppShell : Shell
             new ItemMenu("💵", "Control de Caja", "CajaPage"),
             new ItemMenu("👥", "Clientes", "ClientesPage"),
         }),
-        new("INVENTARIOS", new[]
+        new SeccionMenu("INVENTARIOS", new[]
         {
-            new ItemMenu("📦", "Catálogo SKUs", "CatalogoPage"),
-            new ItemMenu("🗂", "Kardex y Lotes", "KardexPage"),
-            new ItemMenu("⚠", "Mermas", "MermasPage"),
+            new ItemMenu("📦", "Catálogo SKUs", "InventarioPage"),
+            new ItemMenu("🗂", "Kardex y Lotes", "InventarioPage"),
+            new ItemMenu("⚠", "Mermas", "InventarioPage"),
         }),
         new("COMPRAS", new[]
         {

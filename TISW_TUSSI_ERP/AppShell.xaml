@@ -3,6 +3,7 @@
        xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
        xmlns:dashboard="clr-namespace:TISW_TUSSI_ERP.Views.Dashboard"
        xmlns:compras="clr-namespace:TISW_TUSSI_ERP.Views.Compras"
+       xmlns:inventario="clr-namespace:TISW_TUSSI_ERP.Views.Inventario"
        x:Class="TISW_TUSSI_ERP.AppShell"
        Shell.NavBarIsVisible="False"
        FlyoutBehavior="Locked"
@@ -48,6 +49,8 @@
 
     <ShellContent Route="DashboardPage" Shell.FlyoutItemIsVisible="False"
                   ContentTemplate="{DataTemplate dashboard:DashboardPage}" />
+    <ShellContent Route="InventarioPage" Shell.FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate inventario:InventarioPage}" />
     <ShellContent Route="OrdenesCompraPage" Shell.FlyoutItemIsVisible="False"
                   ContentTemplate="{DataTemplate compras:OrdenesCompraPage}" />
 </Shell>

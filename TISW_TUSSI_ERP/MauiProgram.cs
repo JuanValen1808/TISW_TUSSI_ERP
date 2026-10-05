@@ -4,9 +4,11 @@ using TISW_TUSSI_ERP.Services.Navigation;
 using TISW_TUSSI_ERP.ViewModels.Auth;
 using TISW_TUSSI_ERP.ViewModels.Compras;
 using TISW_TUSSI_ERP.ViewModels.Dashboard;
+using TISW_TUSSI_ERP.ViewModels.Inventario; // <-- AÑADIR
 using TISW_TUSSI_ERP.Views.Auth;
 using TISW_TUSSI_ERP.Views.Compras;
 using TISW_TUSSI_ERP.Views.Dashboard;
+using TISW_TUSSI_ERP.Views.Inventario; // <-- AÑADIR
 
 namespace TISW_TUSSI_ERP
 {
@@ -24,7 +26,7 @@ namespace TISW_TUSSI_ERP
                 });
 
 #if DEBUG
-    		builder.Logging.AddDebug();
+            builder.Logging.AddDebug();
 #endif
 
             // ---------------- Inyección de dependencias ----------------
@@ -34,6 +36,7 @@ namespace TISW_TUSSI_ERP
             builder.Services.AddSingleton<NavigationService>();
             builder.Services.AddSingleton<ComprasService>();
             builder.Services.AddSingleton<DashboardService>();
+            builder.Services.AddSingleton<InventarioService>(); // <-- AÑADIR (Si usas un servicio de inventario)
 
             // Auth
             builder.Services.AddTransient<LoginViewModel>();
@@ -46,6 +49,10 @@ namespace TISW_TUSSI_ERP
             // Compras
             builder.Services.AddTransient<OrdenesCompraViewModel>();
             builder.Services.AddTransient<OrdenesCompraPage>();
+
+            // Inventario / Catálogo (AÑADIR)
+            builder.Services.AddTransient<InventarioViewModel>();
+            builder.Services.AddTransient<InventarioPage>();
 
             return builder.Build();
         }
