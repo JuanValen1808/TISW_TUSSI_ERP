@@ -73,6 +73,23 @@ namespace TISW_TUSSI_ERP
             builder.Services.AddTransient<CuentasPorCobrarPage>();
             builder.Services.AddTransient<CuentasPorPagarViewModel>();
             builder.Services.AddTransient<CuentasPorPagarPage>();
+#if WINDOWS
+            Microsoft.Maui.Handlers.EntryHandler.Mapper.AppendToMapping("Borderless", (handler, view) =>
+            {
+                handler.PlatformView.BorderThickness = new Microsoft.UI.Xaml.Thickness(0);
+                handler.PlatformView.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
+            });
+            Microsoft.Maui.Handlers.PickerHandler.Mapper.AppendToMapping("Borderless", (handler, view) =>
+            {
+                handler.PlatformView.BorderThickness = new Microsoft.UI.Xaml.Thickness(0);
+                handler.PlatformView.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
+            });
+            Microsoft.Maui.Handlers.PickerHandler.Mapper.AppendToMapping(nameof(Microsoft.Maui.IPicker.Title), (handler, view) =>
+            {
+                handler.PlatformView.Header = null;
+                handler.PlatformView.PlaceholderText = view.Title;
+            });
+#endif
 
             return builder.Build();
         }
