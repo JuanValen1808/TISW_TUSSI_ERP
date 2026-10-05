@@ -62,7 +62,9 @@ public class OrdenesCompraViewModel : BaseViewModel
             FiltroActual = f ?? "TODAS";
             AplicarFiltro();
         });
-        ComandoNuevaOrden = new Command(async () => await Aviso("Nueva orden de compra", "Este formulario se implementará en la siguiente etapa del módulo Compras."));
+
+        ComandoNuevaOrden = new Command(async () => await Shell.Current.GoToAsync(nameof(Views.Compras.NuevaOrdenPage)));
+
         ComandoRegistrarRecepcion = new Command(async () => await Aviso("Registrar recepción", "Se implementará en la pantalla \"Recepción Facturas\"."));
         ComandoImprimir = new Command(async () => await Aviso("Imprimir", "La impresión de la orden aún no está implementada."));
     }

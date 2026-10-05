@@ -51,6 +51,10 @@
                   ContentTemplate="{DataTemplate dashboard:DashboardPage}" />
     <ShellContent Route="OrdenesCompraPage" Shell.FlyoutItemIsVisible="False"
                   ContentTemplate="{DataTemplate compras:OrdenesCompraPage}" />
+    <ShellContent Route="ProveedoresPage" Shell.FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate compras:ProveedoresPage}" />
+    <ShellContent Route="ReporteComprasPage" Shell.FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate compras:ReporteComprasPage}" />
     <ShellContent Route="PlanCuentasPage" Shell.FlyoutItemIsVisible="False"
                   ContentTemplate="{DataTemplate contabilidad:PlanCuentasPage}" />
     <ShellContent Route="LibroDiarioPage" Shell.FlyoutItemIsVisible="False"

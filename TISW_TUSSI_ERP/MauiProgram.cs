@@ -26,7 +26,7 @@ namespace TISW_TUSSI_ERP
                 });
 
 #if DEBUG
-    		builder.Logging.AddDebug();
+            builder.Logging.AddDebug();
 #endif
 
             // ---------------- Inyección de dependencias ----------------
@@ -48,6 +48,12 @@ namespace TISW_TUSSI_ERP
             // Compras
             builder.Services.AddTransient<OrdenesCompraViewModel>();
             builder.Services.AddTransient<OrdenesCompraPage>();
+            builder.Services.AddTransient<ProveedoresViewModel>();
+            builder.Services.AddTransient<ProveedoresPage>();
+            builder.Services.AddTransient<ReporteComprasViewModel>();
+            builder.Services.AddTransient<ReporteComprasPage>();
+            builder.Services.AddTransient<NuevaOrdenViewModel>();
+            builder.Services.AddTransient<NuevaOrdenPage>();
 
             // Contabilidad
             builder.Services.AddSingleton<ContabilidadService>();

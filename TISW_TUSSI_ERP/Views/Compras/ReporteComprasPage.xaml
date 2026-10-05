@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:TISW_TUSSI_ERP.ViewModels.Compras"
+             xmlns:m="clr-namespace:TISW_TUSSI_ERP.Models.Compras"
+             xmlns:ctrl="clr-namespace:TISW_TUSSI_ERP.Views.Shared"
+             x:Class="TISW_TUSSI_ERP.Views.Compras.ReporteComprasPage"
+             x:DataType="vm:ReporteComprasViewModel"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource ErpBg}"
+             Title="Reporte de Compras">
+
+    <Grid RowDefinitions="Auto,*">
+        <ctrl:PageHeader Grid.Row="0" Ruta="ERP › Compras › Reportes" Titulo="Cumplimiento de Compras" />
+
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="24" Spacing="16">
+
+                <Border IsVisible="{Binding HayError}" BackgroundColor="#FEE2E2" Stroke="#FCA5A5" StrokeShape="RoundRectangle 8" Padding="12">
+                    <Label Text="{Binding MensajeError}" TextColor="#B91C1C" FontSize="12" />
+                </Border>
+
+                <VerticalStackLayout Spacing="2">
+                    <Label Text="Reporte de Cumplimiento de Órdenes de Compra" Style="{StaticResource ErpTitle}" />
+                    <Label Text="Consolidado de compras por proveedor, filtrado por rango de fechas y RUT (RF-COM-04 / RF-COM-05)"
+                           Style="{StaticResource ErpSubtitle}" />
+                </VerticalStackLayout>
+
+                <!-- Filtros -->
+                <!-- Filtros de Búsqueda -->
+                <Frame CornerRadius="8" Padding="15" BorderColor="LightGray" HasShadow="False" Margin="0,0,0,20" BackgroundColor="Transparent">
+                    <Grid ColumnDefinitions="Auto, Auto, *, Auto" ColumnSpacing="15" VerticalOptions="Center">
+
+                        <!-- Fecha Desde -->
+                        <VerticalStackLayout Grid.Column="0">
+                            <Label Text="Desde" FontSize="12" TextColor="Gray" Margin="0,0,0,5"/>
+                            <Frame Padding="10,0" CornerRadius="5" BorderColor="LightGray" HeightRequest="40" BackgroundColor="Transparent" HasShadow="False">
+                                <DatePicker Date="{Binding FechaDesde}" Format="dd/MM/yyyy" VerticalOptions="Center" TextColor="Black"/>
+                            </Frame>
+                        </VerticalStackLayout>
+
+                        <!-- Fecha Hasta -->
+                        <VerticalStackLayout Grid.Column="1">
+                            <Label Text="Hasta" FontSize="12" TextColor="Gray" Margin="0,0,0,5"/>
+                            <Frame Padding="10,0" CornerRadius="5" BorderColor="LightGray" HeightRequest="40" BackgroundColor="Transparent" HasShadow="False">
+                                <DatePicker Date="{Binding FechaHasta}" Format="dd/MM/yyyy" VerticalOptions="Center" TextColor="Black"/>
+                            </Frame>
+                        </VerticalStackLayout>
+
+                        <!-- Buscador por RUT -->
+                        <VerticalStackLayout Grid.Column="2">
+                            <Label Text="RUT proveedor (opcional)" FontSize="12" TextColor="Gray" Margin="0,0,0,5"/>
+                            <Frame Padding="10,0" CornerRadius="5" BorderColor="LightGray" HeightRequest="40" BackgroundColor="Transparent" HasShadow="False">
+                                <Entry Text="{Binding RutFiltro}" Placeholder="Ej: 76.123.456-7" VerticalOptions="Center" TextColor="Black" PlaceholderColor="Gray"/>
+                            </Frame>
+                        </VerticalStackLayout>
+
+                        <!-- Botones -->
+                        <HorizontalStackLayout Grid.Column="3" Spacing="10" VerticalOptions="End">
+                            <Button Text="Limpiar" Command="{Binding ComandoLimpiarFiltro}" BackgroundColor="Transparent" TextColor="Gray" BorderColor="LightGray" BorderWidth="1" HeightRequest="40"/>
+                            <Button Text="Generar reporte" Command="{Binding ComandoGenerar}" BackgroundColor="#1D6FD8" TextColor="White" HeightRequest="40" FontAttributes="Bold"/>
+                        </HorizontalStackLayout>
+
+                    </Grid>
+                </Frame>
+
+                <ActivityIndicator IsRunning="{Binding EstaOcupado}" IsVisible="{Binding EstaOcupado}" Color="{StaticResource ErpPrimary}" />
+
+                <!-- KPIs del período -->
+                <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="16">
+                    <Border Grid.Column="0" Style="{StaticResource ErpCard}">
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="PROVEEDORES CON COMPRAS" Style="{StaticResource ErpCaption}" />
+                            <Label Text="{Binding Resumen.ProveedoresConCompras}" Style="{StaticResource ErpKpi}" />
+                        </VerticalStackLayout>
+                    </Border>
+                    <Border Grid.Column="1" Style="{StaticResource ErpCard}">
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="ÓRDENES EN EL PERÍODO" Style="{StaticResource ErpCaption}" />
+                            <Label Text="{Binding Resumen.TotalOrdenes}" Style="{StaticResource ErpKpi}" />
+                        </VerticalStackLayout>
+                    </Border>
+                    <Border Grid.Column="2" Style="{StaticResource ErpCard}">
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="MONTO TOTAL COMPRADO" Style="{StaticResource ErpCaption}" />
+                            <Label Text="{Binding Resumen.MontoTotalPeriodoTexto}" Style="{StaticResource ErpKpi}" />
+                        </VerticalStackLayout>
+                    </Border>
+                    <Border Grid.Column="3" Style="{StaticResource ErpCard}">
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="MONTO POR RECIBIR" Style="{StaticResource ErpCaption}" />
+                            <Label Text="{Binding Resumen.MontoPorRecibirTexto}" Style="{StaticResource ErpKpi}" />
+                        </VerticalStackLayout>
+                    </Border>
+                </Grid>
+
+                <!-- Tabla del reporte -->
+                <Border Style="{StaticResource ErpCard}">
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="No hay compras registradas para el período y filtro seleccionados."
+                               IsVisible="{Binding SinResultados}" Style="{StaticResource ErpSubtitle}"
+                               HorizontalOptions="Center" Margin="0,16" />
+
+                        <Grid ColumnDefinitions="2.2*,1*,1.3*,1.3*,1.3*,1.4*">
+                            <Label Text="PROVEEDOR" Style="{StaticResource ErpCaption}" />
+                            <Label Grid.Column="1" Text="ÓRDENES" Style="{StaticResource ErpCaption}" HorizontalTextAlignment="Center" />
+                            <Label Grid.Column="2" Text="MONTO TOTAL" Style="{StaticResource ErpCaption}" HorizontalTextAlignment="End" />
+                            <Label Grid.Column="3" Text="POR RECIBIR" Style="{StaticResource ErpCaption}" HorizontalTextAlignment="End" />
+                            <Label Grid.Column="4" Text="ÚLTIMA COMPRA" Style="{StaticResource ErpCaption}" HorizontalTextAlignment="Center" />
+                            <Label Grid.Column="5" Text="CUMPLIMIENTO" Style="{StaticResource ErpCaption}" HorizontalTextAlignment="End" />
+                        </Grid>
+                        <BoxView HeightRequest="1" Color="{StaticResource ErpBorder}" />
+
+                        <VerticalStackLayout Spacing="12" BindableLayout.ItemsSource="{Binding Filas}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="m:CompraPorProveedor">
+                                    <Grid ColumnDefinitions="2.2*,1*,1.3*,1.3*,1.3*,1.4*">
+                                        <VerticalStackLayout VerticalOptions="Center">
+                                            <Label Text="{Binding Proveedor}" FontSize="13" FontAttributes="Bold" TextColor="{StaticResource ErpText}" />
+                                            <Label Text="{Binding Rut, StringFormat='RUT {0}'}" FontSize="10" TextColor="{StaticResource ErpMuted}" />
+                                        </VerticalStackLayout>
+                                        <Label Grid.Column="1" Text="{Binding NumeroOrdenes}" Style="{StaticResource ErpBody}" HorizontalTextAlignment="Center" />
+                                        <Label Grid.Column="2" Text="{Binding MontoTotalTexto}" Style="{StaticResource ErpBody}" FontAttributes="Bold" HorizontalTextAlignment="End" />
+                                        <Label Grid.Column="3" Text="{Binding MontoPorRecibirTexto}" Style="{StaticResource ErpBody}" TextColor="{StaticResource ErpWarning}" HorizontalTextAlignment="End" />
+                                        <Label Grid.Column="4" Text="{Binding UltimaCompraTexto}" FontSize="12" TextColor="{StaticResource ErpMuted}" HorizontalTextAlignment="Center" VerticalOptions="Center" />
+                                        <VerticalStackLayout Grid.Column="5" HorizontalOptions="End" Spacing="3">
+                                            <Label Text="{Binding CumplimientoTexto}" FontSize="11" FontAttributes="Bold" TextColor="{Binding CumplimientoColor}" HorizontalTextAlignment="End" />
+                                            <ProgressBar Progress="{Binding Cumplimiento}" ProgressColor="{Binding CumplimientoColor}" WidthRequest="110" />
+                                        </VerticalStackLayout>
+                                    </Grid>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>
