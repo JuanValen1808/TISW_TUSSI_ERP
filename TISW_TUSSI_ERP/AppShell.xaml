@@ -3,7 +3,8 @@
        xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
        xmlns:dashboard="clr-namespace:TISW_TUSSI_ERP.Views.Dashboard"
        xmlns:compras="clr-namespace:TISW_TUSSI_ERP.Views.Compras"
-       xmlns:ventas="clr-namespace:TISW_TUSSI_ERP.Views.Ventas"
+       xmlns:contabilidad="clr-namespace:TISW_TUSSI_ERP.Views.Contabilidad"
+       xmlns:admin="clr-namespace:TISW_TUSSI_ERP.Views.Admin"
        x:Class="TISW_TUSSI_ERP.AppShell"
        Shell.NavBarIsVisible="False"
        FlyoutBehavior="Locked"
@@ -17,7 +18,7 @@
             <HorizontalStackLayout Grid.Row="0" Spacing="10" Padding="8,0,0,12">
                 <Border WidthRequest="36" HeightRequest="36" StrokeThickness="0" StrokeShape="RoundRectangle 9"
                         BackgroundColor="{StaticResource ErpPrimary}">
-                    <Label Text="✚" TextColor="White" FontSize="16" HorizontalOptions="Center" VerticalOptions="Center" />
+                    <Label Text="FS" TextColor="White" FontSize="16" FontAttributes="Bold" HorizontalOptions="Center" VerticalOptions="Center" />
                 </Border>
                 <VerticalStackLayout VerticalOptions="Center">
                     <Label Text="FarmSalud ERP" FontSize="14" FontAttributes="Bold" TextColor="{StaticResource ErpText}" />
@@ -55,4 +56,26 @@
               ContentTemplate="{DataTemplate ventas:PosPage}" />
     <ShellContent Route="RankingVentasPage" Shell.FlyoutItemIsVisible="False"
               ContentTemplate="{DataTemplate ventas:RankingVentasPage}" />
+    <ShellContent Route="PlanCuentasPage" Shell.FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate contabilidad:PlanCuentasPage}" />
+    <ShellContent Route="LibroDiarioPage" Shell.FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate contabilidad:LibroDiarioPage}" />
+    <ShellContent Route="LibroMayorPage" Shell.FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate contabilidad:LibroMayorPage}" />
+    <ShellContent Route="BalanceOchoColumnasPage" Shell.FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate contabilidad:BalanceOchoColumnasPage}" />
+    <ShellContent Route="EstadoResultadosPage" Shell.FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate contabilidad:EstadoResultadosPage}" />
+    <ShellContent Route="MayorCentralizadoPage" Shell.FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate contabilidad:MayorCentralizadoPage}" />
+    <ShellContent Route="CuentasPorCobrarPage" Shell.FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate contabilidad:CuentasPorCobrarPage}" />
+    <ShellContent Route="CuentasPorPagarPage" Shell.FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate contabilidad:CuentasPorPagarPage}" />
+    <ShellContent Route="UsuariosPage" Shell.FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate admin:UsuariosPage}" />
+    <ShellContent Route="PerfilesPage" Shell.FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate admin:PerfilesPage}" />
+    <ShellContent Route="AccesosPage" Shell.FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate admin:AccesosPage}" />
 </Shell>

@@ -10,7 +10,7 @@ public class DatabaseService
     // En desarrollo local (emulador Android / Windows) usa "localhost".
     // Si usas el emulador de Android, cambia "localhost" por "10.0.2.2".
     private const string ConnectionString =
-        "Server=localhost;Port=3307;Database=erp_farmaceutico;Uid=erp_admin;Pwd=admin_password;";
+        "Server=localhost;Port=3307;Database=erp_farmaceutico;Uid=erp_admin;Pwd=admin_password;CharSet=utf8mb4;";
 
     public MySqlConnection CrearConexion() => new MySqlConnection(ConnectionString);
 

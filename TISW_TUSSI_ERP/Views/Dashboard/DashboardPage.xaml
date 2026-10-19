@@ -28,7 +28,7 @@
                     </VerticalStackLayout>
                     <HorizontalStackLayout Grid.Column="1" Spacing="10" VerticalOptions="Center">
                         <ActivityIndicator IsRunning="{Binding EstaOcupado}" IsVisible="{Binding EstaOcupado}" Color="{StaticResource ErpPrimary}" />
-                        <Button Text="↻  Actualizar" Style="{StaticResource ErpPrimaryButton}" HeightRequest="38"
+                        <Button Text="Actualizar" Style="{StaticResource ErpPrimaryButton}" HeightRequest="38"
                                 Command="{Binding ComandoActualizar}" />
                     </HorizontalStackLayout>
                 </Grid>

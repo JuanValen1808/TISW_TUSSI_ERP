@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using TISW_TUSSI_ERP.Services.Api;
 using TISW_TUSSI_ERP.Services.Navigation;
 using TISW_TUSSI_ERP.ViewModels.Auth;
@@ -9,6 +9,8 @@ using TISW_TUSSI_ERP.Views.Auth;
 using TISW_TUSSI_ERP.Views.Compras;
 using TISW_TUSSI_ERP.Views.Dashboard;
 using TISW_TUSSI_ERP.Views.Ventas;
+using TISW_TUSSI_ERP.ViewModels.Contabilidad;
+using TISW_TUSSI_ERP.Views.Contabilidad;
 
 namespace TISW_TUSSI_ERP
 {
@@ -56,6 +58,33 @@ namespace TISW_TUSSI_ERP
 
             builder.Services.AddTransient<RankingVentasViewModel>();
             builder.Services.AddTransient<RankingVentasPage>();
+            // Contabilidad
+            builder.Services.AddSingleton<ContabilidadService>();
+            builder.Services.AddTransient<PlanCuentasViewModel>();
+            builder.Services.AddTransient<PlanCuentasPage>();
+            builder.Services.AddTransient<LibroDiarioViewModel>();
+            builder.Services.AddTransient<LibroDiarioPage>();
+            builder.Services.AddTransient<LibroMayorViewModel>();
+            builder.Services.AddTransient<LibroMayorPage>();
+            builder.Services.AddTransient<BalanceOchoColumnasViewModel>();
+            builder.Services.AddTransient<BalanceOchoColumnasPage>();
+            builder.Services.AddTransient<EstadoResultadosViewModel>();
+            builder.Services.AddTransient<EstadoResultadosPage>();
+            builder.Services.AddTransient<MayorCentralizadoViewModel>();
+            builder.Services.AddTransient<MayorCentralizadoPage>();
+            builder.Services.AddTransient<CuentasPorCobrarViewModel>();
+            builder.Services.AddTransient<CuentasPorCobrarPage>();
+            builder.Services.AddTransient<CuentasPorPagarViewModel>();
+            builder.Services.AddTransient<CuentasPorPagarPage>();
+
+            // Administración / Seguridad (Usuarios, Perfiles, Accesos)
+            builder.Services.AddSingleton<SeguridadService>();
+            builder.Services.AddTransient<TISW_TUSSI_ERP.ViewModels.Seguridad.UsuariosViewModel>();
+            builder.Services.AddTransient<TISW_TUSSI_ERP.Views.Admin.UsuariosPage>();
+            builder.Services.AddTransient<TISW_TUSSI_ERP.ViewModels.Seguridad.PerfilesViewModel>();
+            builder.Services.AddTransient<TISW_TUSSI_ERP.Views.Admin.PerfilesPage>();
+            builder.Services.AddTransient<TISW_TUSSI_ERP.ViewModels.Seguridad.AccesosViewModel>();
+            builder.Services.AddTransient<TISW_TUSSI_ERP.Views.Admin.AccesosPage>();
 
             return builder.Build();
         }
