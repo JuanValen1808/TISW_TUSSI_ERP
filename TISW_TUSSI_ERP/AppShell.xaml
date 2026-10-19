@@ -4,6 +4,7 @@
        xmlns:dashboard="clr-namespace:TISW_TUSSI_ERP.Views.Dashboard"
        xmlns:compras="clr-namespace:TISW_TUSSI_ERP.Views.Compras"
        xmlns:contabilidad="clr-namespace:TISW_TUSSI_ERP.Views.Contabilidad"
+       xmlns:admin="clr-namespace:TISW_TUSSI_ERP.Views.Admin"
        x:Class="TISW_TUSSI_ERP.AppShell"
        Shell.NavBarIsVisible="False"
        FlyoutBehavior="Locked"
@@ -67,4 +68,10 @@
                   ContentTemplate="{DataTemplate contabilidad:CuentasPorCobrarPage}" />
     <ShellContent Route="CuentasPorPagarPage" Shell.FlyoutItemIsVisible="False"
                   ContentTemplate="{DataTemplate contabilidad:CuentasPorPagarPage}" />
+    <ShellContent Route="UsuariosPage" Shell.FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate admin:UsuariosPage}" />
+    <ShellContent Route="PerfilesPage" Shell.FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate admin:PerfilesPage}" />
+    <ShellContent Route="AccesosPage" Shell.FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate admin:AccesosPage}" />
 </Shell>

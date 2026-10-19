@@ -1,0 +1,390 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:TISW_TUSSI_ERP.ViewModels.Seguridad"
+             xmlns:m="clr-namespace:TISW_TUSSI_ERP.Models.Seguridad"
+             xmlns:ctrl="clr-namespace:TISW_TUSSI_ERP.Views.Shared"
+             x:Class="TISW_TUSSI_ERP.Views.Admin.UsuariosPage"
+             x:DataType="vm:UsuariosViewModel"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource ErpBg}"
+             Title="Usuarios">
+
+    <Grid RowDefinitions="Auto,*">
+        <!-- Encabezado de página -->
+        <ctrl:PageHeader Grid.Row="0" Ruta="ERP › Administración" Titulo="Mantenedor de Usuarios" />
+
+        <!-- Contenido principal y capa de modal -->
+        <Grid Grid.Row="1">
+
+            <!-- Vista principal de listado -->
+            <ScrollView>
+                <VerticalStackLayout Padding="24" Spacing="16">
+
+                    <!-- Banner de notificación -->
+                    <Border IsVisible="{Binding HayMensajeGeneral}"
+                            BackgroundColor="{Binding FondoMensajeGeneral}"
+                            Stroke="{Binding ColorMensajeGeneral}"
+                            StrokeShape="RoundRectangle 8"
+                            Padding="14,10">
+                        <Label Text="{Binding MensajeGeneral}"
+                               TextColor="{Binding ColorMensajeGeneral}"
+                               FontSize="12"
+                               FontAttributes="Bold" />
+                    </Border>
+
+                    <!-- Barra de herramientas superior -->
+                    <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="10">
+                        <!-- Buscador -->
+                        <Border Style="{StaticResource ErpInputBox}">
+                            <Entry Style="{StaticResource ErpEntry}"
+                                   Placeholder="Buscar por nombre, RUT o correo electrónico..."
+                                   Text="{Binding TextoBusqueda}" />
+                        </Border>
+
+                        <!-- Filtro por Rol -->
+                        <Border Grid.Column="1" Style="{StaticResource ErpInputBox}" WidthRequest="200">
+                            <Picker Title="Filtrar por perfil"
+                                    ItemsSource="{Binding RolesFiltro}"
+                                    ItemDisplayBinding="{Binding NombreRol}"
+                                    SelectedItem="{Binding RolFiltroSeleccionado}"
+                                    TextColor="{StaticResource ErpText}"
+                                    FontSize="13" />
+                        </Border>
+
+                        <!-- Botón Limpiar Filtros -->
+                        <Button Grid.Column="2"
+                                Text="Limpiar"
+                                Style="{StaticResource ErpGhostButton}"
+                                Command="{Binding ComandoLimpiarFiltros}" />
+
+                        <!-- Botón Nuevo Usuario -->
+                        <Button Grid.Column="3"
+                                Text="+ Nuevo Usuario"
+                                Style="{StaticResource ErpPrimaryButton}"
+                                Command="{Binding ComandoNuevo}" />
+                    </Grid>
+
+                    <!-- Tarjeta con la tabla de usuarios -->
+                    <Border Style="{StaticResource ErpCard}" Padding="0">
+                        <ScrollView Orientation="Horizontal">
+                            <VerticalStackLayout MinimumWidthRequest="1040">
+
+                                <!-- Encabezado de tabla -->
+                                <Grid ColumnDefinitions="260,130,220,130,110,190"
+                                      BackgroundColor="#F8FAFC"
+                                      Padding="16,12"
+                                      ColumnSpacing="10">
+                                    <Label Text="USUARIO" Style="{StaticResource ErpCaption}" />
+                                    <Label Grid.Column="1" Text="RUT" Style="{StaticResource ErpCaption}" />
+                                    <Label Grid.Column="2" Text="CORREO ELECTRÓNICO" Style="{StaticResource ErpCaption}" />
+                                    <Label Grid.Column="3" Text="PERFIL" Style="{StaticResource ErpCaption}" />
+                                    <Label Grid.Column="4" Text="ESTADO" Style="{StaticResource ErpCaption}" />
+                                    <Label Grid.Column="5" Text="ACCIONES" Style="{StaticResource ErpCaption}" HorizontalTextAlignment="End" />
+                                </Grid>
+                                <BoxView HeightRequest="1" Color="{StaticResource ErpBorder}" />
+
+                                <!-- Indicador de carga -->
+                                <ActivityIndicator IsRunning="{Binding EstaOcupado}"
+                                                   IsVisible="{Binding EstaOcupado}"
+                                                   Color="{StaticResource ErpPrimary}"
+                                                   Margin="0,16" />
+
+                                <!-- Listado de registros -->
+                                <VerticalStackLayout BindableLayout.ItemsSource="{Binding Usuarios}">
+                                    <BindableLayout.ItemTemplate>
+                                        <DataTemplate x:DataType="m:UsuarioModel">
+                                            <VerticalStackLayout>
+                                                <Grid ColumnDefinitions="260,130,220,130,110,190"
+                                                      Padding="16,12"
+                                                      ColumnSpacing="10">
+
+                                                    <!-- Identidad del usuario con avatar (contenido delimitado que no desborda) -->
+                                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10" VerticalOptions="Center">
+                                                        <Border Grid.Column="0"
+                                                                WidthRequest="34" HeightRequest="34"
+                                                                StrokeThickness="0"
+                                                                StrokeShape="RoundRectangle 17"
+                                                                BackgroundColor="{StaticResource ErpPrimarySoft}">
+                                                            <Label Text="{Binding Iniciales}"
+                                                                   FontSize="12"
+                                                                   FontAttributes="Bold"
+                                                                   TextColor="{StaticResource ErpPrimary}"
+                                                                   HorizontalOptions="Center"
+                                                                   VerticalOptions="Center" />
+                                                        </Border>
+                                                        <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="1">
+                                                            <Label Text="{Binding Nombre}"
+                                                                   FontSize="13"
+                                                                   FontAttributes="Bold"
+                                                                   TextColor="{StaticResource ErpText}"
+                                                                   LineBreakMode="TailTruncation"
+                                                                   MaxLines="1" />
+                                                            <Label Text="{Binding FechaRegistroTexto}"
+                                                                   FontSize="10"
+                                                                   TextColor="{StaticResource ErpMuted}" />
+                                                        </VerticalStackLayout>
+                                                    </Grid>
+
+                                                    <!-- RUT -->
+                                                    <Label Grid.Column="1"
+                                                           Text="{Binding RutUsuario}"
+                                                           Style="{StaticResource ErpBody}"
+                                                           FontSize="12"
+                                                           LineBreakMode="NoWrap"
+                                                           VerticalOptions="Center" />
+
+                                                    <!-- Email -->
+                                                    <Label Grid.Column="2"
+                                                           Text="{Binding Email}"
+                                                           Style="{StaticResource ErpBody}"
+                                                           FontSize="12"
+                                                           LineBreakMode="TailTruncation"
+                                                           MaxLines="1"
+                                                           VerticalOptions="Center" />
+
+                                                    <!-- Rol badge -->
+                                                    <Border Grid.Column="3"
+                                                            BackgroundColor="#F1F5F9"
+                                                            StrokeThickness="0"
+                                                            StrokeShape="RoundRectangle 6"
+                                                            Padding="8,4"
+                                                            HorizontalOptions="Start"
+                                                            VerticalOptions="Center">
+                                                        <Label Text="{Binding NombreRol}"
+                                                               FontSize="11"
+                                                               FontAttributes="Bold"
+                                                               TextColor="{StaticResource ErpNavy}"
+                                                               LineBreakMode="NoWrap" />
+                                                    </Border>
+
+                                                    <!-- Estado badge -->
+                                                    <Border Grid.Column="4"
+                                                            BackgroundColor="{Binding EstadoFondo}"
+                                                            StrokeThickness="0"
+                                                            StrokeShape="RoundRectangle 6"
+                                                            Padding="8,4"
+                                                            HorizontalOptions="Start"
+                                                            VerticalOptions="Center">
+                                                        <Label Text="{Binding EstadoTexto}"
+                                                               FontSize="11"
+                                                               FontAttributes="Bold"
+                                                               TextColor="{Binding EstadoColor}"
+                                                               LineBreakMode="NoWrap" />
+                                                    </Border>
+
+                                                    <!-- Botones de Acción -->
+                                                    <HorizontalStackLayout Grid.Column="5"
+                                                                           Spacing="6"
+                                                                           HorizontalOptions="End"
+                                                                           VerticalOptions="Center">
+                                                        <!-- Botón Editar -->
+                                                        <Button Text="Editar"
+                                                                Style="{StaticResource ErpGhostButton}"
+                                                                HeightRequest="32"
+                                                                FontSize="11"
+                                                                Padding="8,0"
+                                                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:UsuariosViewModel}}, Path=ComandoEditar}"
+                                                                CommandParameter="{Binding .}" />
+
+                                                        <!-- Botón Activar/Desactivar -->
+                                                        <Button Text="{Binding BotonEstadoTexto}"
+                                                                Style="{StaticResource ErpGhostButton}"
+                                                                HeightRequest="32"
+                                                                FontSize="11"
+                                                                Padding="8,0"
+                                                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:UsuariosViewModel}}, Path=ComandoCambiarEstado}"
+                                                                CommandParameter="{Binding .}" />
+
+                                                        <!-- Botón Eliminar -->
+                                                        <Button Text="Eliminar"
+                                                                TextColor="{StaticResource ErpDanger}"
+                                                                BorderColor="#FECACA"
+                                                                BackgroundColor="#FEF2F2"
+                                                                HeightRequest="32"
+                                                                FontSize="11"
+                                                                CornerRadius="8"
+                                                                Padding="8,0"
+                                                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:UsuariosViewModel}}, Path=ComandoEliminar}"
+                                                                CommandParameter="{Binding .}" />
+                                                    </HorizontalStackLayout>
+                                                </Grid>
+                                                <BoxView HeightRequest="1" Color="{StaticResource ErpBorder}" />
+                                            </VerticalStackLayout>
+                                        </DataTemplate>
+                                    </BindableLayout.ItemTemplate>
+                                </VerticalStackLayout>
+
+                                <!-- Mensaje si no hay registros -->
+                                <VerticalStackLayout IsVisible="{Binding NoHayUsuarios}"
+                                                     Padding="30"
+                                                     Spacing="6"
+                                                     HorizontalOptions="Center">
+                                    <Label Text="No se encontraron usuarios"
+                                           FontSize="14"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource ErpMuted}"
+                                           HorizontalTextAlignment="Center" />
+                                    <Label Text="Intenta modificar los filtros de búsqueda o agrega un nuevo usuario."
+                                           FontSize="12"
+                                           TextColor="{StaticResource ErpMuted}"
+                                           HorizontalTextAlignment="Center" />
+                                </VerticalStackLayout>
+                            </VerticalStackLayout>
+                        </ScrollView>
+                    </Border>
+                </VerticalStackLayout>
+            </ScrollView>
+
+            <!-- MODAL DE CREACIÓN / EDICIÓN -->
+            <Grid IsVisible="{Binding MostrarFormulario}"
+                  BackgroundColor="#66000000"
+                  Padding="20">
+
+                <Border Style="{StaticResource ErpCard}"
+                        WidthRequest="520"
+                        VerticalOptions="Center"
+                        HorizontalOptions="Center"
+                        Padding="24"
+                        Shadow="{Shadow Brush=Black, Offset='0,10', Radius=20, Opacity=0.25}">
+
+                    <VerticalStackLayout Spacing="14">
+
+                        <!-- Encabezado Modal -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <VerticalStackLayout Spacing="2">
+                                <Label Text="{Binding TituloFormulario}"
+                                       FontSize="17"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource ErpText}" />
+                                <Label Text="Completa la información requerida del usuario."
+                                       FontSize="12"
+                                       TextColor="{StaticResource ErpMuted}" />
+                            </VerticalStackLayout>
+                            <Button Grid.Column="1"
+                                    Text="Cerrar"
+                                    Style="{StaticResource ErpGhostButton}"
+                                    HeightRequest="32"
+                                    Padding="10,0"
+                                    Command="{Binding ComandoCancelar}" />
+                        </Grid>
+
+                        <BoxView HeightRequest="1" Color="{StaticResource ErpBorder}" />
+
+                        <!-- Formulario de campos con validación -->
+                        <ScrollView MaximumHeightRequest="460">
+                            <VerticalStackLayout Spacing="12">
+
+                                <!-- Campo RUT -->
+                                <VerticalStackLayout Spacing="4">
+                                    <Label Text="RUT Chileno *" FontSize="12" FontAttributes="Bold" TextColor="{StaticResource ErpText}" />
+                                    <Border Style="{StaticResource ErpInputBox}">
+                                        <Entry Style="{StaticResource ErpEntry}"
+                                               Placeholder="12.345.678-9"
+                                               Text="{Binding FormRut}" />
+                                    </Border>
+                                    <Label Text="{Binding ErrorRut}"
+                                           TextColor="{StaticResource ErpDanger}"
+                                           FontSize="11"
+                                           IsVisible="{Binding HayErrorRut}" />
+                                </VerticalStackLayout>
+
+                                <!-- Campo Nombre Completo -->
+                                <VerticalStackLayout Spacing="4">
+                                    <Label Text="Nombre Completo *" FontSize="12" FontAttributes="Bold" TextColor="{StaticResource ErpText}" />
+                                    <Border Style="{StaticResource ErpInputBox}">
+                                        <Entry Style="{StaticResource ErpEntry}"
+                                               Placeholder="Juan Pérez González"
+                                               Text="{Binding FormNombre}" />
+                                    </Border>
+                                    <Label Text="{Binding ErrorNombre}"
+                                           TextColor="{StaticResource ErpDanger}"
+                                           FontSize="11"
+                                           IsVisible="{Binding HayErrorNombre}" />
+                                </VerticalStackLayout>
+
+                                <!-- Campo Correo Corporativo -->
+                                <VerticalStackLayout Spacing="4">
+                                    <Label Text="Correo Electrónico Corporativo *" FontSize="12" FontAttributes="Bold" TextColor="{StaticResource ErpText}" />
+                                    <Border Style="{StaticResource ErpInputBox}">
+                                        <Entry Style="{StaticResource ErpEntry}"
+                                               Keyboard="Email"
+                                               Placeholder="usuario@farmaciasalud.cl"
+                                               Text="{Binding FormEmail}" />
+                                    </Border>
+                                    <Label Text="{Binding ErrorEmail}"
+                                           TextColor="{StaticResource ErpDanger}"
+                                           FontSize="11"
+                                           IsVisible="{Binding HayErrorEmail}" />
+                                </VerticalStackLayout>
+
+                                <!-- Campo Perfil / Rol -->
+                                <VerticalStackLayout Spacing="4">
+                                    <Label Text="Perfil / Rol de Acceso *" FontSize="12" FontAttributes="Bold" TextColor="{StaticResource ErpText}" />
+                                    <Border Style="{StaticResource ErpInputBox}">
+                                        <Picker Title="Seleccionar perfil"
+                                                ItemsSource="{Binding Roles}"
+                                                ItemDisplayBinding="{Binding NombreRol}"
+                                                SelectedItem="{Binding FormRolSeleccionado}"
+                                                TextColor="{StaticResource ErpText}"
+                                                FontSize="13" />
+                                    </Border>
+                                    <Label Text="{Binding ErrorRol}"
+                                           TextColor="{StaticResource ErpDanger}"
+                                           FontSize="11"
+                                           IsVisible="{Binding HayErrorRol}" />
+                                </VerticalStackLayout>
+
+                                <!-- Campo Contraseña -->
+                                <VerticalStackLayout Spacing="4">
+                                    <HorizontalStackLayout Spacing="6">
+                                        <Label Text="Contraseña *" FontSize="12" FontAttributes="Bold" TextColor="{StaticResource ErpText}" />
+                                        <Label Text="(Dejar en blanco para mantener la actual)"
+                                               FontSize="11"
+                                               TextColor="{StaticResource ErpMuted}"
+                                               IsVisible="{Binding EsEdicion}" />
+                                    </HorizontalStackLayout>
+                                    <Border Style="{StaticResource ErpInputBox}">
+                                        <Entry Style="{StaticResource ErpEntry}"
+                                               IsPassword="True"
+                                               Placeholder="Minimo 4 caracteres"
+                                               Text="{Binding FormPassword}" />
+                                    </Border>
+                                    <Label Text="{Binding ErrorPassword}"
+                                           TextColor="{StaticResource ErpDanger}"
+                                           FontSize="11"
+                                           IsVisible="{Binding HayErrorPassword}" />
+                                </VerticalStackLayout>
+
+                                <!-- Estado Activo Switch -->
+                                <Grid ColumnDefinitions="*,Auto" Margin="0,4,0,0">
+                                    <VerticalStackLayout Spacing="2">
+                                        <Label Text="Estado del usuario" FontSize="12" FontAttributes="Bold" TextColor="{StaticResource ErpText}" />
+                                        <Label Text="Los usuarios inactivos no pueden ingresar al ERP." FontSize="11" TextColor="{StaticResource ErpMuted}" />
+                                    </VerticalStackLayout>
+                                    <Switch Grid.Column="1"
+                                            IsToggled="{Binding FormActivo}"
+                                            ThumbColor="{StaticResource ErpPrimary}"
+                                            OnColor="{StaticResource ErpPrimarySoft}" />
+                                </Grid>
+                            </VerticalStackLayout>
+                        </ScrollView>
+
+                        <BoxView HeightRequest="1" Color="{StaticResource ErpBorder}" />
+
+                        <!-- Acciones del Modal -->
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                            <Button Text="Cancelar"
+                                    Style="{StaticResource ErpGhostButton}"
+                                    Command="{Binding ComandoCancelar}" />
+                            <Button Grid.Column="1"
+                                    Text="{Binding TextoBotonGuardar}"
+                                    Style="{StaticResource ErpPrimaryButton}"
+                                    Command="{Binding ComandoGuardar}" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+            </Grid>
+        </Grid>
+    </Grid>
+</ContentPage>
