@@ -91,6 +91,15 @@ namespace TISW_TUSSI_ERP
             });
 #endif
 
+            // Administración / Seguridad (Usuarios, Perfiles, Accesos)
+            builder.Services.AddSingleton<SeguridadService>();
+            builder.Services.AddTransient<TISW_TUSSI_ERP.ViewModels.Seguridad.UsuariosViewModel>();
+            builder.Services.AddTransient<TISW_TUSSI_ERP.Views.Admin.UsuariosPage>();
+            builder.Services.AddTransient<TISW_TUSSI_ERP.ViewModels.Seguridad.PerfilesViewModel>();
+            builder.Services.AddTransient<TISW_TUSSI_ERP.Views.Admin.PerfilesPage>();
+            builder.Services.AddTransient<TISW_TUSSI_ERP.ViewModels.Seguridad.AccesosViewModel>();
+            builder.Services.AddTransient<TISW_TUSSI_ERP.Views.Admin.AccesosPage>();
+
             return builder.Build();
         }
     }

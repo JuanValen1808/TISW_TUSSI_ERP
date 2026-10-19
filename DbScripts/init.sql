@@ -9,6 +9,8 @@ CREATE DATABASE IF NOT EXISTS erp_farmaceutico
   COLLATE utf8mb4_unicode_ci;
 
 USE erp_farmaceutico;
+SET NAMES utf8mb4;
+SET CHARACTER SET utf8mb4;
 
 -- =========================
 -- SEGURIDAD Y USUARIOS
@@ -230,7 +232,6 @@ CREATE TABLE detalle_recepcion_lotes (
     CHECK (cantidad_ingresada > 0)
 ) ENGINE=InnoDB;
 
--- >>> NUEVA TABLA AGREGADA AQUÍ <<<
 CREATE TABLE cuentas_por_pagar (
     id_cuenta_pagar INT AUTO_INCREMENT PRIMARY KEY,
     id_recepcion INT NOT NULL,
@@ -376,11 +377,9 @@ CREATE INDEX idx_cuentas_cobrar_estado
     ON cuentas_por_cobrar(estado_cobro);
 
 -- ==========================================================
--- DATOS SEMILLA
--- Todos los integrantes parten con la misma data de prueba.
+-- BLOQUE 1: DATOS SEMILLA ORIGINALES
 -- ==========================================================
 
--- ---- Roles y permisos base ----
 INSERT INTO roles (nombre_rol, descripcion) VALUES
     ('Administrador', 'Acceso total al sistema'),
     ('Vendedor', 'Acceso al módulo de Ventas y consulta de Inventario'),
@@ -394,18 +393,12 @@ INSERT INTO permisos (codigo_permiso, modulo, descripcion) VALUES
     ('COMPRAS_CREAR', 'Compras', 'Emitir órdenes de compra'),
     ('CONTABILIDAD_VER', 'Contabilidad', 'Consultar libro diario y plan de cuentas');
 
--- Asigna todos los permisos al rol Administrador (id_rol = 1)
 INSERT INTO rol_permisos (id_rol, id_permiso)
 SELECT 1, id_permiso FROM permisos;
 
--- ---- Usuario de prueba ----
--- Login: admin@erp.cl / admin123
--- (el hash corresponde a SHA-256 de "admin123"; usar BCrypt en producción)
 INSERT INTO usuarios (rut_usuario, nombre, email, password_hash, id_rol, activo) VALUES
-    ('11.111.111-1', 'Administrador General', 'admin@erp.cl',
-     '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 1, TRUE);
+    ('11.111.111-1', 'Administrador General', 'admin@erp.cl', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 1, TRUE);
 
--- ---- Clientes y convenios ----
 INSERT INTO clientes (rut_cliente, razon_social_nombre, email, telefono, tipo_cliente) VALUES
     ('22.222.222-2', 'Cliente Demo Persona', 'cliente.demo@correo.cl', '+56912345678', 'PERSONA'),
     ('76.111.222-3', 'Clínica Demo SPA', 'contacto@clinicademo.cl', '+56221234567', 'INSTITUCION');
@@ -413,24 +406,17 @@ INSERT INTO clientes (rut_cliente, razon_social_nombre, email, telefono, tipo_cl
 INSERT INTO convenios_salud (id_cliente, nombre_convenio, porcentaje_descuento, limite_credito, dias_credito_morosidad, activo) VALUES
     (2, 'Convenio Clínica Demo', 15.00, 5000000.00, 30, TRUE);
 
--- ---- Productos e inventario ----
 INSERT INTO categorias_producto (nombre_categoria) VALUES
     ('Medicamentos'),
     ('Insumos médicos'),
     ('Dermocosmética');
 
-INSERT INTO productos
-    (sku, codigo_barras, nombre_comercial, principio_activo, registro_sanitario,
-     formato_presentacion, id_categoria, precio_venta_base, costo_promedio_ponderado,
-     stock_minimo, punto_reorden, activo)
-VALUES
-    ('MED-0001', '7801234567890', 'Paracetamol 500mg', 'Paracetamol', 'ISP-12345',
-     'Caja x 20 comprimidos', 1, 2500.00, 1200.00, 50, 80, TRUE);
+INSERT INTO productos (sku, codigo_barras, nombre_comercial, principio_activo, registro_sanitario, formato_presentacion, id_categoria, precio_venta_base, costo_promedio_ponderado, stock_minimo, punto_reorden, activo) VALUES
+    ('MED-0001', '7801234567890', 'Paracetamol 500mg', 'Paracetamol', 'ISP-12345', 'Caja x 20 comprimidos', 1, 2500.00, 1200.00, 50, 80, TRUE);
 
 INSERT INTO lotes (id_producto, numero_lote, fecha_vencimiento, stock_actual) VALUES
     (1, 'LOTE-2026-001', '2028-06-30', 150);
 
--- ---- Plan de cuentas (nivel 1: cuentas mayores) ----
 INSERT INTO plan_cuentas (codigo_cuenta, nombre_cuenta, tipo_cuenta, nivel, cuenta_padre_id) VALUES
     ('1', 'ACTIVOS', 'ACTIVO', 1, NULL),
     ('2', 'PASIVOS', 'PASIVO', 1, NULL),
@@ -442,7 +428,218 @@ INSERT INTO plan_cuentas (codigo_cuenta, nombre_cuenta, tipo_cuenta, nivel, cuen
     ('4.1.01', 'Ventas Netas', 'INGRESO', 2, 4),
     ('5.1.01', 'Costo de Ventas', 'GASTO', 2, 5);
 
--- ---- Proveedores ----
 INSERT INTO proveedores (rut_proveedor, razon_social, nombre_contacto, telefono, email, condiciones_comerciales) VALUES
-    ('77.888.999-0', 'Distribuidora Farmacéutica Demo Ltda.', 'Juan Pérez', '+56221112233',
-     'ventas@distribuidorademo.cl', 'Pago a 30 días');
+    ('77.888.999-0', 'Distribuidora Farmacéutica Demo Ltda.', 'Juan Pérez', '+56221112233', 'ventas@distribuidorademo.cl', 'Pago a 30 días');
+
+-- ==========================================================
+-- BLOQUE 2: PRIMER SET DE REGISTROS ADICIONALES
+-- ==========================================================
+
+INSERT INTO usuarios (rut_usuario, nombre, email, password_hash, id_rol, activo) VALUES
+    ('12.345.678-9', 'María Vendedora', 'ventas@erp.cl', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 2, TRUE),
+    ('13.456.789-0', 'Pedro Bodega', 'bodega@erp.cl', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 3, TRUE);
+
+INSERT INTO rol_permisos (id_rol, id_permiso) VALUES
+    (2, 1),
+    (2, 2),
+    (3, 2);
+
+INSERT INTO productos (sku, codigo_barras, nombre_comercial, principio_activo, registro_sanitario, formato_presentacion, id_categoria, precio_venta_base, costo_promedio_ponderado, stock_minimo, punto_reorden, activo) VALUES
+    ('MED-0002', '7801234567891', 'Ibuprofeno 400mg', 'Ibuprofeno', 'ISP-12346', 'Caja x 10 comprimidos', 1, 1500.00, 800.00, 100, 150, TRUE),
+    ('INS-0001', '7801234567892', 'Jeringa 5ml', 'N/A', 'ISP-12347', 'Unidad', 2, 300.00, 100.00, 500, 1000, TRUE);
+
+INSERT INTO lotes (id_producto, numero_lote, fecha_vencimiento, stock_actual) VALUES
+    (2, 'LOTE-2026-002', '2027-12-31', 300),
+    (3, 'LOTE-2026-003', '2029-01-01', 1500);
+
+INSERT INTO libro_diario_asientos (numero_asiento, fecha_asiento, glosa_descripcion, origen, id_usuario) VALUES
+    (1, '2026-10-15', 'Apertura de caja inicial', 'AJUSTE', 1);
+
+INSERT INTO detalle_asiento_contable (id_asiento, id_cuenta, debe, haber) VALUES
+    (1, 6, 100000.00, 0.00),
+    (1, 3, 0.00, 100000.00);
+
+INSERT INTO ordenes_compra (numero_oc, id_proveedor, fecha_emision, estado, monto_subtotal, monto_iva, monto_total, id_usuario_creador) VALUES
+    ('OC-2026-001', 1, '2026-10-10', 'RECIBIDA', 100000.00, 19000.00, 119000.00, 1);
+
+INSERT INTO detalle_orden_compra (id_orden_compra, id_producto, cantidad_solicitada, cantidad_recibida, costo_pactado_unitario) VALUES
+    (1, 2, 100, 100, 1000.00);
+
+INSERT INTO recepciones_facturas_compra (id_orden_compra, numero_factura_proveedor, fecha_factura, monto_total_facturado, id_asiento_contable) VALUES
+    (1, 'FACT-PROV-998', '2026-10-12', 119000.00, NULL);
+
+INSERT INTO detalle_recepcion_lotes (id_recepcion, id_producto, numero_lote, fecha_vencimiento, cantidad_ingresada, costo_adquisicion_unitario) VALUES
+    (1, 2, 'LOTE-2026-004', '2028-10-10', 100, 1000.00);
+
+INSERT INTO cuentas_por_pagar (id_recepcion, id_proveedor, numero_documento, fecha_emision, fecha_vencimiento, monto_total, monto_pagado, estado_pago, id_asiento_contable) VALUES
+    (1, 1, 'FACT-PROV-998', '2026-10-12', '2026-11-12', 119000.00, 0.00, 'PENDIENTE', NULL);
+
+INSERT INTO ventas_encabezado (folio_documento, tipo_documento, id_cliente, id_convenio, estado_documento, forma_pago, monto_neto, monto_iva, monto_descuento, monto_total, id_usuario_cajero, id_asiento_contable) VALUES
+    ('BOL-00001', 'BOLETA', 1, NULL, 'EMITIDO', 'EFECTIVO', 2100.84, 399.16, 0.00, 2500.00, 2, NULL);
+
+INSERT INTO ventas_detalle (id_venta, id_producto, id_lote, cantidad, precio_unitario, subtotal) VALUES
+    (1, 1, 1, 1, 2500.00, 2500.00);
+
+INSERT INTO cuentas_por_cobrar (id_venta, id_cliente, id_convenio, monto_pendiente, fecha_vencimiento_pago, dias_morosidad, estado_cobro) VALUES
+    (1, 1, NULL, 0.00, '2026-10-15', 0, 'PAGADA');
+
+INSERT INTO kardex_movimientos (id_producto, id_lote, tipo_movimiento, origen_documento, id_referencia_origen, cantidad, costo_unitario, saldo_stock_producto, id_usuario) VALUES
+    (2, 4, 'ENTRADA', 'COMPRA', 1, 100, 1000.00, 400, 3),
+    (1, 1, 'SALIDA', 'VENTA', 1, 1, 1200.00, 149, 2);
+
+INSERT INTO registro_mermas (id_producto, id_lote, cantidad, motivo, costo_total_perdida, id_usuario) VALUES
+    (3, 2, 5, 'DANO', 500.00, 3);
+
+-- ==========================================================
+-- BLOQUE 3: CARGA MASIVA DE DATOS DE PRUEBA (IDs 10+)
+-- ==========================================================
+
+INSERT INTO roles (id_rol, nombre_rol, descripcion) VALUES
+    (10, 'Gerente Comercial', 'Supervisión general de ventas y convenios'),
+    (11, 'Auditor Contable', 'Acceso de solo lectura a contabilidad e inventario'),
+    (12, 'Cajero', 'Operación exclusiva del punto de venta');
+
+INSERT INTO permisos (id_permiso, codigo_permiso, modulo, descripcion) VALUES
+    (10, 'PRODUCTOS_CREAR', 'Inventario', 'Crear y editar productos'),
+    (11, 'PROVEEDORES_CREAR', 'Compras', 'Gestión de proveedores'),
+    (12, 'CONVENIOS_ADMIN', 'Ventas', 'Administrar convenios de salud'),
+    (13, 'REPORTES_VER', 'Gerencia', 'Ver reportes financieros y de ventas');
+
+INSERT INTO rol_permisos (id_rol, id_permiso) VALUES
+    (10, 12), (10, 13), (11, 13), (11, 2), (12, 1);
+
+INSERT INTO usuarios (id_usuario, rut_usuario, nombre, email, password_hash, id_rol, activo) VALUES
+    (10, '15.555.666-7', 'Carlos Gerente', 'carlos.g@erp.cl', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 10, TRUE),
+    (11, '16.777.888-9', 'Ana Auditora', 'ana.a@erp.cl', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 11, TRUE),
+    (12, '17.888.999-0', 'Luis Cajero', 'luis.c@erp.cl', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 12, TRUE),
+    (13, '18.123.456-1', 'Sofía Ventas', 'sofia.v@erp.cl', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 2, TRUE),
+    (14, '19.333.444-5', 'Roberto Bodega', 'roberto.b@erp.cl', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 3, TRUE);
+
+INSERT INTO clientes (id_cliente, rut_cliente, razon_social_nombre, email, telefono, tipo_cliente) VALUES
+    (10, '20.111.222-3', 'Juan Pérez Soto', 'jperez@correo.cl', '+56987654321', 'PERSONA'),
+    (11, '21.222.333-4', 'Camila Rojas', 'crojas@correo.cl', '+56987654322', 'PERSONA'),
+    (12, '77.333.444-5', 'Mutual de Trabajadores', 'contacto@mutualtrab.cl', '+56223334444', 'INSTITUCION'),
+    (13, '78.444.555-6', 'Isapre VidaSalud', 'convenios@vidasalud.cl', '+56225556666', 'EMPRESA'),
+    (14, '22.555.666-7', 'Felipe Morales', 'fmorales@correo.cl', '+56987654323', 'PERSONA'),
+    (15, '23.666.777-8', 'Andrea Silva', 'asilva@correo.cl', '+56987654324', 'PERSONA');
+
+INSERT INTO convenios_salud (id_convenio, id_cliente, nombre_convenio, porcentaje_descuento, limite_credito, dias_credito_morosidad, activo) VALUES
+    (10, 12, 'Convenio Mutual Base', 20.00, 10000000.00, 45, TRUE),
+    (11, 13, 'Convenio Isapre Preferente', 25.00, 15000000.00, 30, TRUE);
+
+INSERT INTO categorias_producto (id_categoria, nombre_categoria) VALUES
+    (10, 'Vitaminas y Suplementos'),
+    (11, 'Cuidado Personal e Higiene'),
+    (12, 'Primeros Auxilios'),
+    (13, 'Antialérgicos'),
+    (14, 'Cardiovasculares');
+
+INSERT INTO productos (id_producto, sku, codigo_barras, nombre_comercial, principio_activo, registro_sanitario, formato_presentacion, id_categoria, precio_venta_base, costo_promedio_ponderado, stock_minimo, punto_reorden, activo) VALUES
+    (10, 'VIT-0001', '7801111111111', 'Vitamina C 1000mg', 'Ácido Ascórbico', 'ISP-V111', 'Frasco x 30 cap', 10, 4500.00, 2000.00, 20, 40, TRUE),
+    (11, 'VIT-0002', '7802222222222', 'Complejo B Forte', 'Vitaminas B', 'ISP-V222', 'Caja x 30 comp', 10, 5000.00, 2200.00, 15, 30, TRUE),
+    (12, 'HIG-0001', '7803333333333', 'Shampoo Anticaspa', 'Ketoconazol', 'ISP-H111', 'Frasco 200ml', 11, 6500.00, 3000.00, 10, 20, TRUE),
+    (13, 'PAX-0001', '7804444444444', 'Gasas Estériles', 'Algodón', 'ISP-P111', 'Sobre x 5 un', 12, 1200.00, 400.00, 100, 150, TRUE),
+    (14, 'PAX-0002', '7805555555555', 'Povidona Yodada 10%', 'Povidona', 'ISP-P222', 'Frasco 100ml', 12, 2800.00, 1100.00, 30, 50, TRUE),
+    (15, 'ALE-0001', '7806666666666', 'Loratadina 10mg', 'Loratadina', 'ISP-A111', 'Caja x 30 comp', 13, 3500.00, 1500.00, 40, 80, TRUE),
+    (16, 'ALE-0002', '7807777777777', 'Desloratadina 5mg', 'Desloratadina', 'ISP-A222', 'Caja x 30 comp', 13, 5500.00, 2500.00, 30, 60, TRUE),
+    (17, 'CAR-0001', '7808888888888', 'Losartán 50mg', 'Losartán Potásico', 'ISP-C111', 'Caja x 30 comp', 14, 2500.00, 800.00, 50, 100, TRUE),
+    (18, 'CAR-0002', '7809999999999', 'Atenolol 50mg', 'Atenolol', 'ISP-C222', 'Caja x 20 comp', 14, 1800.00, 600.00, 40, 80, TRUE),
+    (19, 'DER-0001', '7801010101010', 'Crema Hidratante Urea 10%', 'Urea', 'ISP-D111', 'Pote 250g', 3, 12000.00, 6000.00, 10, 25, TRUE);
+
+INSERT INTO lotes (id_lote, id_producto, numero_lote, fecha_vencimiento, stock_actual) VALUES
+    (10, 10, 'LOT-VIT-01', '2027-05-30', 200),
+    (11, 11, 'LOT-VIT-02', '2028-01-15', 150),
+    (12, 12, 'LOT-HIG-01', '2026-12-30', 80),
+    (13, 13, 'LOT-PAX-01', '2029-08-01', 500),
+    (14, 14, 'LOT-PAX-02', '2028-11-30', 120),
+    (15, 15, 'LOT-ALE-01', '2027-04-20', 300),
+    (16, 16, 'LOT-ALE-02', '2027-09-10', 250),
+    (17, 17, 'LOT-CAR-01', '2028-02-28', 400),
+    (18, 18, 'LOT-CAR-02', '2027-06-30', 350),
+    (19, 19, 'LOT-DER-01', '2026-10-31', 60);
+
+INSERT INTO plan_cuentas (id_cuenta, codigo_cuenta, nombre_cuenta, tipo_cuenta, nivel, cuenta_padre_id) VALUES
+    (10, '1.1.03', 'Cuentas por Cobrar Clientes', 'ACTIVO', 2, 1),
+    (11, '2.1.01', 'Cuentas por Pagar Proveedores', 'PASIVO', 2, 2),
+    (12, '2.1.02', 'IVA Débito Fiscal', 'PASIVO', 2, 2),
+    (13, '1.1.04', 'IVA Crédito Fiscal', 'ACTIVO', 2, 1),
+    (14, '5.1.02', 'Gastos de Administración', 'GASTO', 2, 5),
+    (15, '4.1.02', 'Ingresos por Convenios', 'INGRESO', 2, 4);
+
+INSERT INTO proveedores (id_proveedor, rut_proveedor, razon_social, nombre_contacto, telefono, email, condiciones_comerciales) VALUES
+    (10, '76.555.444-3', 'Laboratorios Andinos S.A.', 'Marta López', '+56227778888', 'ventas@labandinos.cl', 'Pago a 60 días'),
+    (11, '77.666.555-4', 'Insumos Médicos Sur', 'Pedro Castro', '+56412223333', 'contacto@insumossur.cl', 'Pago al contado'),
+    (12, '78.777.666-5', 'Droguería Central', 'Carla Ruiz', '+56229990000', 'despachos@drogueriacentral.cl', 'Pago a 30 días');
+
+INSERT INTO ordenes_compra (id_orden_compra, numero_oc, id_proveedor, fecha_emision, estado, monto_subtotal, monto_iva, monto_total, id_usuario_creador) VALUES
+    (10, 'OC-2026-002', 10, '2026-10-10', 'RECIBIDA', 160000.00, 30400.00, 190400.00, 1),
+    (11, 'OC-2026-003', 11, '2026-10-11', 'RECIBIDA', 50000.00, 9500.00, 59500.00, 1),
+    (12, 'OC-2026-004', 12, '2026-10-14', 'EMITIDA', 300000.00, 57000.00, 357000.00, 1);
+
+INSERT INTO detalle_orden_compra (id_detalle_oc, id_orden_compra, id_producto, cantidad_solicitada, cantidad_recibida, costo_pactado_unitario) VALUES
+    (10, 10, 17, 200, 200, 800.00),
+    (11, 11, 13, 100, 100, 400.00),
+    (12, 11, 14, 10, 10, 1000.00),
+    (13, 12, 10, 150, 0, 2000.00);
+
+INSERT INTO recepciones_facturas_compra (id_recepcion, id_orden_compra, numero_factura_proveedor, fecha_factura, monto_total_facturado, id_asiento_contable) VALUES
+    (10, 10, 'FACT-PROV-1100', '2026-10-12', 190400.00, NULL),
+    (11, 11, 'FACT-PROV-3321', '2026-10-13', 59500.00, NULL);
+
+INSERT INTO detalle_recepcion_lotes (id_detalle_recepcion, id_recepcion, id_producto, numero_lote, fecha_vencimiento, cantidad_ingresada, costo_adquisicion_unitario) VALUES
+    (10, 10, 17, 'LOT-CAR-01', '2028-02-28', 200, 800.00),
+    (11, 11, 13, 'LOT-PAX-01', '2029-08-01', 100, 400.00),
+    (12, 11, 14, 'LOT-PAX-02', '2028-11-30', 10, 1000.00);
+
+INSERT INTO cuentas_por_pagar (id_cuenta_pagar, id_recepcion, id_proveedor, numero_documento, fecha_emision, fecha_vencimiento, monto_total, monto_pagado, estado_pago, id_asiento_contable) VALUES
+    (10, 10, 10, 'FACT-PROV-1100', '2026-10-12', '2026-12-12', 190400.00, 0.00, 'PENDIENTE', NULL),
+    (11, 11, 11, 'FACT-PROV-3321', '2026-10-13', '2026-10-13', 59500.00, 59500.00, 'PAGADO', NULL);
+
+INSERT INTO ventas_encabezado (id_venta, folio_documento, tipo_documento, id_cliente, id_convenio, estado_documento, forma_pago, monto_neto, monto_iva, monto_descuento, monto_total, id_usuario_cajero, id_asiento_contable) VALUES
+    (10, 'BOL-00002', 'BOLETA', 10, NULL, 'EMITIDO', 'TARJETA', 5882.35, 1117.65, 0.00, 7000.00, 12, NULL),
+    (11, 'BOL-00003', 'BOLETA', 11, NULL, 'EMITIDO', 'EFECTIVO', 8403.36, 1596.64, 0.00, 10000.00, 12, NULL),
+    (12, 'FACT-00001', 'FACTURA', 12, 10, 'EMITIDO', 'CREDITO', 21008.40, 3991.60, 5000.00, 20000.00, 13, NULL),
+    (13, 'FACT-00002', 'FACTURA', 13, 11, 'EMITIDO', 'CREDITO', 42016.81, 7983.19, 12500.00, 37500.00, 13, NULL),
+    (14, 'BOL-00004', 'BOLETA', 14, NULL, 'ANULADO', 'EFECTIVO', 2100.84, 399.16, 0.00, 2500.00, 12, NULL);
+
+INSERT INTO ventas_detalle (id_detalle_venta, id_venta, id_producto, id_lote, cantidad, precio_unitario, subtotal) VALUES
+    (10, 10, 15, 15, 2, 3500.00, 7000.00),
+    (11, 11, 10, 10, 1, 4500.00, 4500.00),
+    (12, 11, 16, 16, 1, 5500.00, 5500.00),
+    (13, 12, 17, 17, 10, 2500.00, 25000.00),
+    (14, 13, 11, 11, 10, 5000.00, 50000.00);
+
+INSERT INTO cuentas_por_cobrar (id_cuenta_cobrar, id_venta, id_cliente, id_convenio, monto_pendiente, fecha_vencimiento_pago, dias_morosidad, estado_cobro) VALUES
+    (10, 10, 10, NULL, 0.00, '2026-10-15', 0, 'PAGADA'),
+    (11, 11, 11, NULL, 0.00, '2026-10-15', 0, 'PAGADA'),
+    (12, 12, 12, 10, 20000.00, '2026-11-29', 0, 'PENDIENTE'),
+    (13, 13, 13, 11, 37500.00, '2026-11-14', 0, 'PENDIENTE'),
+    (14, 14, 14, NULL, 0.00, '2026-10-15', 0, 'ANULADA');
+
+INSERT INTO kardex_movimientos (id_kardex, id_producto, id_lote, tipo_movimiento, origen_documento, id_referencia_origen, cantidad, costo_unitario, saldo_stock_producto, id_usuario) VALUES
+    (10, 17, 17, 'ENTRADA', 'COMPRA', 10, 200, 800.00, 200, 14),
+    (11, 13, 13, 'ENTRADA', 'COMPRA', 11, 100, 400.00, 100, 14),
+    (12, 14, 14, 'ENTRADA', 'COMPRA', 11, 10, 1000.00, 10, 14),
+    (13, 15, 15, 'SALIDA', 'VENTA', 10, 2, 1500.00, 298, 12),
+    (14, 10, 10, 'SALIDA', 'VENTA', 11, 1, 2000.00, 199, 12),
+    (15, 16, 16, 'SALIDA', 'VENTA', 11, 1, 2500.00, 249, 12),
+    (16, 17, 17, 'SALIDA', 'VENTA', 12, 10, 800.00, 190, 13),
+    (17, 11, 11, 'SALIDA', 'VENTA', 13, 10, 2200.00, 140, 13);
+
+INSERT INTO registro_mermas (id_merma, id_producto, id_lote, cantidad, motivo, costo_total_perdida, id_usuario) VALUES
+    (10, 19, 19, 2, 'DANO', 12000.00, 14),
+    (11, 12, 12, 1, 'PERDIDA', 3000.00, 14),
+    (12, 14, 14, 3, 'VENCIMIENTO', 3300.00, 14);
+
+INSERT INTO libro_diario_asientos (id_asiento, numero_asiento, fecha_asiento, glosa_descripcion, origen, id_usuario) VALUES
+    (10, 2, '2026-10-12', 'Centralización Compras Octubre (Parcial)', 'COMPRA', 11),
+    (11, 3, '2026-10-15', 'Centralización Ventas Diarias', 'VENTA', 11);
+
+INSERT INTO detalle_asiento_contable (id_detalle_asiento, id_asiento, id_cuenta, debe, haber) VALUES
+    (10, 10, 7, 200000.00, 0.00), 
+    (11, 10, 13, 38000.00, 0.00), 
+    (12, 10, 11, 0.00, 238000.00), 
+    (13, 11, 6, 17000.00, 0.00), 
+    (14, 11, 10, 57500.00, 0.00), 
+    (15, 11, 8, 0.00, 62605.04), 
+    (16, 11, 12, 0.00, 11894.96);
