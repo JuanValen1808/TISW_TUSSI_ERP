@@ -9,6 +9,8 @@ CREATE DATABASE IF NOT EXISTS erp_farmaceutico
   COLLATE utf8mb4_unicode_ci;
 
 USE erp_farmaceutico;
+SET NAMES utf8mb4;
+SET CHARACTER SET utf8mb4;
 
 -- =========================
 -- SEGURIDAD Y USUARIOS

@@ -41,6 +41,24 @@ public static class Formato
         }
         return builder.ToString();
     }
+
+    // Corrige mojibake / caracteres mal codificados (doble UTF-8 / Latin-1 como mÃ³dulo, MarÃ­a, Ã³rdenes)
+    public static string SanitizarTexto(string? texto)
+    {
+        if (string.IsNullOrEmpty(texto)) return string.Empty;
+        if (!texto.Contains('Ã') && !texto.Contains('Â')) return texto;
+
+        try
+        {
+            byte[] bytes = Encoding.Latin1.GetBytes(texto);
+            string decodificado = Encoding.UTF8.GetString(bytes);
+            return decodificado;
+        }
+        catch
+        {
+            return texto;
+        }
+    }
 }
 
 public static class Paleta
