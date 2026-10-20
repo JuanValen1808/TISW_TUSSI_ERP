@@ -3,6 +3,7 @@
        xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
        xmlns:dashboard="clr-namespace:TISW_TUSSI_ERP.Views.Dashboard"
        xmlns:compras="clr-namespace:TISW_TUSSI_ERP.Views.Compras"
+       xmlns:ventas="clr-namespace:TISW_TUSSI_ERP.Views.Ventas"
        xmlns:contabilidad="clr-namespace:TISW_TUSSI_ERP.Views.Contabilidad"
        xmlns:admin="clr-namespace:TISW_TUSSI_ERP.Views.Admin"
        x:Class="TISW_TUSSI_ERP.AppShell"
