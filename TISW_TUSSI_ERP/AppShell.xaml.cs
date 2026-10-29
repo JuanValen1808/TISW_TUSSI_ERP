@@ -45,6 +45,7 @@ public partial class AppShell : Shell
             new ItemMenu("", "Punto de Venta", "PosPage"),
             new ItemMenu("", "Control de Caja", "CajaPage"),
             new ItemMenu("", "Clientes", "ClientesPage"),
+            new ItemMenu("", "Ranking de Ventas", "RankingVentasPage"),
         }),
         new("INVENTARIOS", new[]
         {
