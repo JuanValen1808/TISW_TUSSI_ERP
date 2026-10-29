@@ -8,70 +8,64 @@
        x:Class="TISW_TUSSI_ERP.AppShell"
        Shell.NavBarIsVisible="False"
        FlyoutBehavior="Locked"
-       FlyoutWidth="250"
-       Shell.FlyoutBackgroundColor="White"
+       FlyoutWidth="260"
+       Shell.FlyoutBackgroundColor="#FFFFFF"
        Title="FarmSalud ERP">
 
-    <!-- Menú lateral: se construye en AppShell.xaml.cs -->
+    <!-- Menú lateral moderno tipo SaaS -->
     <Shell.FlyoutContent>
-        <Grid RowDefinitions="Auto,*,Auto" BackgroundColor="White" Padding="12,16">
-            <HorizontalStackLayout Grid.Row="0" Spacing="10" Padding="8,0,0,12">
-                <Border WidthRequest="36" HeightRequest="36" StrokeThickness="0" StrokeShape="RoundRectangle 9"
-                        BackgroundColor="{StaticResource ErpPrimary}">
-                    <Label Text="FS" TextColor="White" FontSize="16" FontAttributes="Bold" HorizontalOptions="Center" VerticalOptions="Center" />
+        <Grid RowDefinitions="Auto,*,Auto" BackgroundColor="#FFFFFF">
+
+            <!-- Logo y Marca -->
+            <HorizontalStackLayout Grid.Row="0" Spacing="12" Padding="20,25,20,15">
+                <Border WidthRequest="40" HeightRequest="40" StrokeThickness="0" StrokeShape="RoundRectangle 10"
+                        BackgroundColor="#2563EB">
+                    <Label Text="FS" TextColor="White" FontSize="18" FontAttributes="Bold" HorizontalOptions="Center" VerticalOptions="Center" />
                 </Border>
-                <VerticalStackLayout VerticalOptions="Center">
-                    <Label Text="FarmSalud ERP" FontSize="14" FontAttributes="Bold" TextColor="{StaticResource ErpText}" />
-                    <Label Text="Ventas · Supply · Contable" FontSize="9" TextColor="{StaticResource ErpMuted}" />
+                <VerticalStackLayout VerticalOptions="Center" Spacing="0">
+                    <Label Text="FarmSalud" FontSize="16" FontAttributes="Bold" TextColor="#0F172A" />
+                    <Label Text="ERP System" FontSize="11" TextColor="#64748B" />
                 </VerticalStackLayout>
             </HorizontalStackLayout>
 
-            <ScrollView Grid.Row="1">
+            <!-- Scroll del Menú Dinámico -->
+            <ScrollView Grid.Row="1" Padding="10,0">
                 <VerticalStackLayout x:Name="Menu" Spacing="2" />
             </ScrollView>
 
-            <Border Grid.Row="2" BackgroundColor="#F8FAFC" Stroke="{StaticResource ErpBorder}" StrokeShape="RoundRectangle 10" Padding="10">
-                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                    <Border WidthRequest="34" HeightRequest="34" StrokeThickness="0" StrokeShape="RoundRectangle 17"
-                            BackgroundColor="{StaticResource ErpPrimary}">
-                        <Label x:Name="InicialesUsuario" TextColor="White" FontSize="12" FontAttributes="Bold"
+            <!-- Tarjeta de Usuario / Cerrar Sesión -->
+            <Border Grid.Row="2" BackgroundColor="#F8FAFC" Stroke="#E2E8F0" StrokeThickness="1" StrokeShape="Rectangle" Padding="20,15">
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                    <Border WidthRequest="36" HeightRequest="36" StrokeThickness="0" StrokeShape="RoundRectangle 18"
+                            BackgroundColor="#DBEAFE">
+                        <Label x:Name="InicialesUsuario" TextColor="#2563EB" FontSize="13" FontAttributes="Bold"
                                HorizontalOptions="Center" VerticalOptions="Center" />
                     </Border>
-                    <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="0">
-                        <Label x:Name="NombreUsuario" FontSize="12" FontAttributes="Bold" TextColor="{StaticResource ErpText}" />
-                        <Label x:Name="RolUsuario" FontSize="10" TextColor="{StaticResource ErpMuted}" />
-                        <Label x:Name="CerrarSesionLabel" Text="Cerrar sesión" FontSize="10" FontAttributes="Bold"
-                               TextColor="{StaticResource ErpDanger}" Margin="0,4,0,0" />
+                    <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
+                        <Label x:Name="NombreUsuario" FontSize="13" FontAttributes="Bold" TextColor="#0F172A" />
+                        <Label x:Name="RolUsuario" FontSize="11" TextColor="#64748B" />
+
+                        <Label x:Name="CerrarSesionLabel" Text="Cerrar sesión" FontSize="11" FontAttributes="Bold"
+                               TextColor="#DC2626" Margin="0,4,0,0" />
                     </VerticalStackLayout>
                 </Grid>
             </Border>
         </Grid>
     </Shell.FlyoutContent>
 
-    <ShellContent Route="DashboardPage" Shell.FlyoutItemIsVisible="False"
-                  ContentTemplate="{DataTemplate dashboard:DashboardPage}" />
-    <ShellContent Route="OrdenesCompraPage" Shell.FlyoutItemIsVisible="False"
-                  ContentTemplate="{DataTemplate compras:OrdenesCompraPage}" />
-    <ShellContent Route="PlanCuentasPage" Shell.FlyoutItemIsVisible="False"
-                  ContentTemplate="{DataTemplate contabilidad:PlanCuentasPage}" />
-    <ShellContent Route="LibroDiarioPage" Shell.FlyoutItemIsVisible="False"
-                  ContentTemplate="{DataTemplate contabilidad:LibroDiarioPage}" />
-    <ShellContent Route="LibroMayorPage" Shell.FlyoutItemIsVisible="False"
-                  ContentTemplate="{DataTemplate contabilidad:LibroMayorPage}" />
-    <ShellContent Route="BalanceOchoColumnasPage" Shell.FlyoutItemIsVisible="False"
-                  ContentTemplate="{DataTemplate contabilidad:BalanceOchoColumnasPage}" />
-    <ShellContent Route="EstadoResultadosPage" Shell.FlyoutItemIsVisible="False"
-                  ContentTemplate="{DataTemplate contabilidad:EstadoResultadosPage}" />
-    <ShellContent Route="MayorCentralizadoPage" Shell.FlyoutItemIsVisible="False"
-                  ContentTemplate="{DataTemplate contabilidad:MayorCentralizadoPage}" />
-    <ShellContent Route="CuentasPorCobrarPage" Shell.FlyoutItemIsVisible="False"
-                  ContentTemplate="{DataTemplate contabilidad:CuentasPorCobrarPage}" />
-    <ShellContent Route="CuentasPorPagarPage" Shell.FlyoutItemIsVisible="False"
-                  ContentTemplate="{DataTemplate contabilidad:CuentasPorPagarPage}" />
-    <ShellContent Route="UsuariosPage" Shell.FlyoutItemIsVisible="False"
-                  ContentTemplate="{DataTemplate admin:UsuariosPage}" />
-    <ShellContent Route="PerfilesPage" Shell.FlyoutItemIsVisible="False"
-                  ContentTemplate="{DataTemplate admin:PerfilesPage}" />
-    <ShellContent Route="AccesosPage" Shell.FlyoutItemIsVisible="False"
-                  ContentTemplate="{DataTemplate admin:AccesosPage}" />
+    <!-- RESTAURACIÓN DE LAS RUTAS DE NAVEGACIÓN -->
+    <ShellContent Route="DashboardPage" Shell.FlyoutItemIsVisible="False" ContentTemplate="{DataTemplate dashboard:DashboardPage}" />
+    <ShellContent Route="OrdenesCompraPage" Shell.FlyoutItemIsVisible="False" ContentTemplate="{DataTemplate compras:OrdenesCompraPage}" />
+    <ShellContent Route="PlanCuentasPage" Shell.FlyoutItemIsVisible="False" ContentTemplate="{DataTemplate contabilidad:PlanCuentasPage}" />
+    <ShellContent Route="LibroDiarioPage" Shell.FlyoutItemIsVisible="False" ContentTemplate="{DataTemplate contabilidad:LibroDiarioPage}" />
+    <ShellContent Route="LibroMayorPage" Shell.FlyoutItemIsVisible="False" ContentTemplate="{DataTemplate contabilidad:LibroMayorPage}" />
+    <ShellContent Route="BalanceOchoColumnasPage" Shell.FlyoutItemIsVisible="False" ContentTemplate="{DataTemplate contabilidad:BalanceOchoColumnasPage}" />
+    <ShellContent Route="EstadoResultadosPage" Shell.FlyoutItemIsVisible="False" ContentTemplate="{DataTemplate contabilidad:EstadoResultadosPage}" />
+    <ShellContent Route="MayorCentralizadoPage" Shell.FlyoutItemIsVisible="False" ContentTemplate="{DataTemplate contabilidad:MayorCentralizadoPage}" />
+    <ShellContent Route="CuentasPorCobrarPage" Shell.FlyoutItemIsVisible="False" ContentTemplate="{DataTemplate contabilidad:CuentasPorCobrarPage}" />
+    <ShellContent Route="CuentasPorPagarPage" Shell.FlyoutItemIsVisible="False" ContentTemplate="{DataTemplate contabilidad:CuentasPorPagarPage}" />
+    <ShellContent Route="UsuariosPage" Shell.FlyoutItemIsVisible="False" ContentTemplate="{DataTemplate admin:UsuariosPage}" />
+    <ShellContent Route="PerfilesPage" Shell.FlyoutItemIsVisible="False" ContentTemplate="{DataTemplate admin:PerfilesPage}" />
+    <ShellContent Route="AccesosPage" Shell.FlyoutItemIsVisible="False" ContentTemplate="{DataTemplate admin:AccesosPage}" />
+
 </Shell>

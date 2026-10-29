@@ -5,43 +5,61 @@
              xmlns:models="clr-namespace:TISW_TUSSI_ERP.Models.Contabilidad"
              x:Class="TISW_TUSSI_ERP.Views.Contabilidad.LibroDiarioPage"
              x:DataType="viewmodels:LibroDiarioViewModel"
-             Title="{Binding Titulo}">
+             Title="{Binding Titulo}"
+             BackgroundColor="{StaticResource ErpBackground}">
 
-    <Grid RowDefinitions="Auto,*">
-        
-        <StackLayout Grid.Row="0" Padding="20">
-            <Label Text="Libro Diario" FontSize="24" FontAttributes="Bold" TextColor="{StaticResource Primary}" />
-            <Label Text="Registro cronológico de asientos contables." FontSize="14" TextColor="Gray" Margin="0,5,0,15" />
-            
-            <Button Text="Recargar Asientos" 
-                    Command="{Binding CargarAsientosCommand}"
-                    HorizontalOptions="Start" />
-        </StackLayout>
+    <Grid RowDefinitions="Auto,*" Padding="20">
 
-        <RefreshView Grid.Row="1" Command="{Binding CargarAsientosCommand}" IsRefreshing="{Binding EstaOcupado}">
-            <CollectionView ItemsSource="{Binding Asientos}" Margin="20,0,20,20">
-                <CollectionView.Header>
-                    <Grid ColumnDefinitions="100, 150, *, 100" Padding="10,5" BackgroundColor="{StaticResource Primary}">
-                        <Label Grid.Column="0" Text="Nº ASIENTO" FontAttributes="Bold" TextColor="White" />
-                        <Label Grid.Column="1" Text="FECHA" FontAttributes="Bold" TextColor="White" />
-                        <Label Grid.Column="2" Text="GLOSA" FontAttributes="Bold" TextColor="White" />
-                        <Label Grid.Column="3" Text="ORIGEN" FontAttributes="Bold" TextColor="White" />
+        <!-- HEADER MODERNO -->
+        <Grid Grid.Row="0" ColumnDefinitions="*, Auto" Margin="0,0,0,20">
+            <VerticalStackLayout>
+                <Label Text="Libro Diario" Style="{StaticResource ErpTitle}" />
+                <Label Text="Registro cronológico de asientos contables." Style="{StaticResource ErpSubtitle}" Margin="0,0,0,10" />
+            </VerticalStackLayout>
+            <Button Grid.Column="1" Text="Recargar Asientos" Command="{Binding CargarAsientosCommand}" Style="{StaticResource ErpSecondaryButton}" VerticalOptions="Center" />
+        </Grid>
+
+        <!-- TABLA DE DATOS TIPO DATA GRID SaaS -->
+        <Border Grid.Row="1" Style="{StaticResource ErpCard}" Padding="0">
+            <RefreshView Command="{Binding CargarAsientosCommand}" IsRefreshing="{Binding EstaOcupado}">
+                <VerticalStackLayout>
+
+                    <!-- Cabecera del Data Grid -->
+                    <Grid ColumnDefinitions="100, 150, *, 120" Padding="15,12" BackgroundColor="#F1F5F9">
+                        <Label Grid.Column="0" Text="Nº ASIENTO" Style="{StaticResource ErpSmallLabel}" FontAttributes="Bold" />
+                        <Label Grid.Column="1" Text="FECHA" Style="{StaticResource ErpSmallLabel}" FontAttributes="Bold" />
+                        <Label Grid.Column="2" Text="GLOSA" Style="{StaticResource ErpSmallLabel}" FontAttributes="Bold" />
+                        <Label Grid.Column="3" Text="ORIGEN" Style="{StaticResource ErpSmallLabel}" FontAttributes="Bold" HorizontalTextAlignment="End" />
                     </Grid>
-                </CollectionView.Header>
-                <CollectionView.ItemTemplate>
-                    <DataTemplate x:DataType="models:LibroDiarioAsiento">
-                        <Grid ColumnDefinitions="100, 150, *, 100" Padding="10" 
-                              BackgroundColor="White">
-                            <Label Grid.Column="0" Text="{Binding NumeroAsiento}" VerticalOptions="Center" FontAttributes="Bold" />
-                            <Label Grid.Column="1" Text="{Binding FechaAsiento, StringFormat='{}{0:dd/MM/yyyy}'}" VerticalOptions="Center" />
-                            <Label Grid.Column="2" Text="{Binding GlosaDescripcion}" VerticalOptions="Center" />
-                            <Label Grid.Column="3" Text="{Binding Origen}" VerticalOptions="Center" TextColor="Gray" />
-                        </Grid>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
-        </RefreshView>
 
+                    <BoxView HeightRequest="1" Color="{StaticResource ErpBorder}" />
+
+                    <!-- Lista de Asientos -->
+                    <CollectionView ItemsSource="{Binding Asientos}">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="models:LibroDiarioAsiento">
+                                <VerticalStackLayout>
+                                    <Grid ColumnDefinitions="100, 150, *, 120" Padding="15,12" BackgroundColor="Transparent">
+
+                                        <Label Grid.Column="0" Text="{Binding NumeroAsiento}" Style="{StaticResource ErpLabel}" FontAttributes="Bold" VerticalOptions="Center" />
+                                        <Label Grid.Column="1" Text="{Binding FechaAsiento, StringFormat='{}{0:dd/MM/yyyy}'}" Style="{StaticResource ErpLabel}" VerticalOptions="Center" />
+                                        <Label Grid.Column="2" Text="{Binding GlosaDescripcion}" Style="{StaticResource ErpLabel}" VerticalOptions="Center" />
+
+                                        <!-- Badge de Sistema para el Origen -->
+                                        <Border Grid.Column="3" StrokeThickness="0" StrokeShape="RoundRectangle 12" BackgroundColor="#F8FAFC" Padding="10,4" HorizontalOptions="End" VerticalOptions="Center">
+                                            <Label Text="{Binding Origen}" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource ErpSecondaryText}" />
+                                        </Border>
+                                    </Grid>
+
+                                    <!-- Línea separadora sutil para efecto fila -->
+                                    <BoxView HeightRequest="1" Color="{StaticResource ErpBorder}" Opacity="0.5" />
+                                </VerticalStackLayout>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+
+                </VerticalStackLayout>
+            </RefreshView>
+        </Border>
     </Grid>
-
 </ContentPage>

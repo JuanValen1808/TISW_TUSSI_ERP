@@ -430,5 +430,12 @@
         <Setter Property="UnselectedTabColor" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray950}}" />
         <Setter Property="SelectedTabColor" Value="{AppThemeBinding Light={StaticResource Gray950}, Dark={StaticResource Gray200}}" />
     </Style>
+    <!-- Alias de estilo para los títulos del ERP antiguo -->
+    <Style x:Key="ErpTitle" TargetType="Label">
+        <Setter Property="FontSize" Value="24" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="TextColor" Value="#0F172A" />
+        <!-- O {StaticResource PrimaryText} si ya lo definiste -->
+    </Style>
 
 </ResourceDictionary>
