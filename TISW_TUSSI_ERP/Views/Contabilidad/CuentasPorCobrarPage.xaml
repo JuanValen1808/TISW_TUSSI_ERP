@@ -57,7 +57,7 @@
                                         <Setter Property="BackgroundColor" Value="#f8d7da" />
                                     </DataTrigger>
                                     <DataTrigger TargetType="Border" Binding="{Binding Estado}" Value="Pendiente">
-                                        <Setter Property="BackgroundColor" Value="#fff3cd" />
+                                        <Setter Property="BackgroundColor" Value="#cce5ff" />
                                     </DataTrigger>
                                 </Border.Triggers>
                                 <Label Text="{Binding Estado}" FontSize="12">
@@ -69,7 +69,7 @@
                                             <Setter Property="TextColor" Value="#721c24" />
                                         </DataTrigger>
                                         <DataTrigger TargetType="Label" Binding="{Binding Estado}" Value="Pendiente">
-                                            <Setter Property="TextColor" Value="#856404" />
+                                            <Setter Property="TextColor" Value="#004085" />
                                         </DataTrigger>
                                     </Label.Triggers>
                                 </Label>
