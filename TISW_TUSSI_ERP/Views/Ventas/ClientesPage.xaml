@@ -1,0 +1,436 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:TISW_TUSSI_ERP.ViewModels.Ventas"
+    xmlns:m="clr-namespace:TISW_TUSSI_ERP.Models.Ventas"
+    xmlns:ctrl="clr-namespace:TISW_TUSSI_ERP.Views.Shared"
+    x:Class="TISW_TUSSI_ERP.Views.Ventas.ClientesPage"
+    x:DataType="vm:ClientesViewModel"
+    Shell.NavBarIsVisible="False"
+    BackgroundColor="{StaticResource ErpBg}"
+    Title="Gestión de clientes">
+
+    <Grid RowDefinitions="Auto,*">
+
+        <!-- ENCABEZADO -->
+        <ctrl:PageHeader
+            Grid.Row="0"
+            Ruta="ERP › Ventas"
+            Titulo="Gestión de clientes" />
+
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout
+                Padding="24"
+                Spacing="18">
+
+                <!-- BUSCADOR -->
+                <Border Style="{StaticResource ErpCard}">
+                    <Grid
+                        ColumnDefinitions="*,Auto,Auto"
+                        ColumnSpacing="12">
+
+                        <Border
+                            Grid.Column="0"
+                            Style="{StaticResource ErpInputBox}">
+                            <Entry
+                                Text="{Binding Busqueda}"
+                                Placeholder="Buscar por RUT o nombre..."
+                                Style="{StaticResource ErpEntry}"
+                                ReturnCommand="{Binding BuscarCommand}" />
+                        </Border>
+
+                        <Button
+                            Grid.Column="1"
+                            Text="Buscar"
+                            Style="{StaticResource ErpPrimaryButton}"
+                            Command="{Binding BuscarCommand}" />
+
+                        <Button
+                            Grid.Column="2"
+                            Text="+ Nuevo cliente"
+                            BackgroundColor="White"
+                            TextColor="#1D6FD8"
+                            BorderColor="#1D6FD8"
+                            BorderWidth="1"
+                            CornerRadius="9"
+                            Padding="18,10"
+                            Clicked="OnNuevoClienteClicked" />
+
+                    </Grid>
+                </Border>
+
+                <!-- ESTADO -->
+                <Label
+                    Text="{Binding Mensaje}"
+                    Style="{StaticResource ErpSubtitle}" />
+
+                <ActivityIndicator
+                    IsRunning="{Binding Cargando}"
+                    IsVisible="{Binding Cargando}"
+                    Color="#1D6FD8" />
+
+                <!-- CONTENIDO PRINCIPAL -->
+                <Grid
+                    ColumnDefinitions="0.46*,0.54*"
+                    ColumnSpacing="18">
+
+                    <!-- LISTADO DE CLIENTES -->
+                    <Border
+                        Grid.Column="0"
+                        Style="{StaticResource ErpCard}"
+                        MinimumHeightRequest="570">
+
+                        <Grid RowDefinitions="Auto,Auto,*,Auto"
+                              RowSpacing="14">
+
+                            <Grid ColumnDefinitions="*,Auto">
+                                <Label
+                                    Text="Clientes registrados"
+                                    Style="{StaticResource ErpCardTitle}"
+                                    VerticalOptions="Center" />
+
+                                <Border
+                                    Grid.Column="1"
+                                    BackgroundColor="#E8F1FD"
+                                    StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 16"
+                                    Padding="12,5">
+
+                                    <Label
+                                        Text="{Binding Clientes.Count, StringFormat='{}{0} cliente(s)'}"
+                                        TextColor="#1D6FD8"
+                                        FontSize="12"
+                                        FontAttributes="Bold" />
+                                </Border>
+                            </Grid>
+
+                            <BoxView
+                                Grid.Row="1"
+                                HeightRequest="1"
+                                Color="#E2E8F0" />
+
+                            <CollectionView
+                                Grid.Row="2"
+                                ItemsSource="{Binding Clientes}"
+                                SelectionMode="Single"
+                                SelectedItem="{Binding ClienteSeleccionado, Mode=TwoWay}">
+
+                                <CollectionView.Header>
+                                    <Grid
+                                        ColumnDefinitions="135,*,110"
+                                        Padding="8,6"
+                                        ColumnSpacing="8">
+
+                                        <Label
+                                            Text="RUT"
+                                            Style="{StaticResource ErpCaption}" />
+
+                                        <Label
+                                            Grid.Column="1"
+                                            Text="NOMBRE / RAZÓN SOCIAL"
+                                            Style="{StaticResource ErpCaption}" />
+
+                                        <Label
+                                            Grid.Column="2"
+                                            Text="TIPO"
+                                            Style="{StaticResource ErpCaption}" />
+                                    </Grid>
+                                </CollectionView.Header>
+
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate x:DataType="m:Cliente">
+                                        <Border
+                                            BackgroundColor="#F8FAFC"
+                                            Stroke="#E2E8F0"
+                                            StrokeThickness="1"
+                                            StrokeShape="RoundRectangle 9"
+                                            Padding="10"
+                                            Margin="0,2">
+
+                                            <Grid
+                                                ColumnDefinitions="135,*,110"
+                                                ColumnSpacing="8">
+
+                                                <Label
+                                                    Text="{Binding RutCliente}"
+                                                    Style="{StaticResource ErpBody}"
+                                                    VerticalOptions="Center" />
+
+                                                <Label
+                                                    Grid.Column="1"
+                                                    Text="{Binding RazonSocialNombre}"
+                                                    Style="{StaticResource ErpBody}"
+                                                    LineBreakMode="TailTruncation"
+                                                    VerticalOptions="Center" />
+
+                                                <Label
+                                                    Grid.Column="2"
+                                                    Text="{Binding TipoCliente}"
+                                                    TextColor="#1D6FD8"
+                                                    FontSize="11"
+                                                    FontAttributes="Bold"
+                                                    VerticalOptions="Center" />
+
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+
+                                <CollectionView.EmptyView>
+                                    <Label
+                                        Text="No se encontraron clientes."
+                                        TextColor="#64748B"
+                                        HorizontalTextAlignment="Center"
+                                        Margin="0,30" />
+                                </CollectionView.EmptyView>
+
+                            </CollectionView>
+
+                            <BoxView
+                                Grid.Row="3"
+                                HeightRequest="1"
+                                Color="#E2E8F0" />
+
+                        </Grid>
+                    </Border>
+
+                    <!-- FORMULARIO DEL CLIENTE -->
+                    <Border
+                        Grid.Column="1"
+                        Style="{StaticResource ErpCard}"
+                        MinimumHeightRequest="570">
+
+                        <VerticalStackLayout Spacing="16">
+
+                            <Label
+                                Text="Datos del cliente"
+                                Style="{StaticResource ErpCardTitle}" />
+
+                            <Border
+                                BackgroundColor="#E8F1FD"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 9"
+                                Padding="12">
+
+                                <Label
+                                    Text="Selecciona un cliente para editarlo o pulsa Nuevo cliente para registrar uno."
+                                    TextColor="#24578F"
+                                    FontSize="12" />
+                            </Border>
+
+                            <!-- RUT Y TIPO -->
+                            <Grid
+                                ColumnDefinitions="*,*"
+                                ColumnSpacing="16">
+
+                                <VerticalStackLayout
+                                    Grid.Column="0"
+                                    Spacing="8">
+
+                                    <Label
+                                        Text="RUT *"
+                                        TextColor="#111827"
+                                        FontSize="12"
+                                        FontAttributes="Bold" />
+
+                                    <Border Style="{StaticResource ErpInputBox}">
+                                        <Entry
+                                            Text="{Binding ClienteFormulario.RutCliente, Mode=TwoWay}"
+                                            Placeholder="12.345.678-9"
+                                            Style="{StaticResource ErpEntry}" />
+                                    </Border>
+
+                                </VerticalStackLayout>
+
+                                <VerticalStackLayout
+                                    Grid.Column="1"
+                                    Spacing="8">
+
+                                    <Label
+                                        Text="Tipo de cliente *"
+                                        TextColor="#111827"
+                                        FontSize="12"
+                                        FontAttributes="Bold" />
+
+                                    <!-- SELECTOR PERSONALIZADO -->
+                                    <Border
+                                        BackgroundColor="#F8FAFC"
+                                        Stroke="#D8E2EF"
+                                        StrokeThickness="1"
+                                        StrokeShape="RoundRectangle 9"
+                                        Padding="12,14">
+
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer
+                                                Tapped="OnMostrarTiposClicked" />
+                                        </Border.GestureRecognizers>
+
+                                        <Grid ColumnDefinitions="*,Auto">
+
+                                            <Label
+                                                Text="{Binding ClienteFormulario.TipoCliente, TargetNullValue='Seleccionar tipo'}"
+                                                TextColor="#111827"
+                                                FontSize="13"
+                                                VerticalOptions="Center" />
+
+                                            <Label
+                                                Grid.Column="1"
+                                                Text="⌄"
+                                                TextColor="#1D6FD8"
+                                                FontSize="19"
+                                                VerticalOptions="Center" />
+
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- OPCIONES -->
+                                    <Border
+                                        x:Name="PanelTipos"
+                                        IsVisible="False"
+                                        BackgroundColor="White"
+                                        Stroke="#D8E2EF"
+                                        StrokeThickness="1"
+                                        StrokeShape="RoundRectangle 9"
+                                        Padding="5">
+
+                                        <VerticalStackLayout Spacing="3">
+
+                                            <Button
+                                                Text="PERSONA"
+                                                BackgroundColor="#EFF6FF"
+                                                TextColor="#1D6FD8"
+                                                CornerRadius="6"
+                                                FontSize="12"
+                                                Clicked="OnPersonaClicked" />
+
+                                            <Button
+                                                Text="EMPRESA"
+                                                BackgroundColor="White"
+                                                TextColor="#334155"
+                                                CornerRadius="6"
+                                                FontSize="12"
+                                                Clicked="OnEmpresaClicked" />
+
+                                            <Button
+                                                Text="INSTITUCION"
+                                                BackgroundColor="White"
+                                                TextColor="#334155"
+                                                CornerRadius="6"
+                                                FontSize="12"
+                                                Clicked="OnInstitucionClicked" />
+
+                                        </VerticalStackLayout>
+                                    </Border>
+
+                                </VerticalStackLayout>
+                            </Grid>
+
+                            <!-- NOMBRE -->
+                            <VerticalStackLayout Spacing="8">
+
+                                <Label
+                                    Text="Nombre o razón social *"
+                                    TextColor="#111827"
+                                    FontSize="12"
+                                    FontAttributes="Bold" />
+
+                                <Border Style="{StaticResource ErpInputBox}">
+                                    <Entry
+                                        Text="{Binding ClienteFormulario.RazonSocialNombre, Mode=TwoWay}"
+                                        Placeholder="Nombre del cliente o empresa"
+                                        Style="{StaticResource ErpEntry}" />
+                                </Border>
+
+                            </VerticalStackLayout>
+
+                            <!-- EMAIL Y TELÉFONO -->
+                            <Grid
+                                ColumnDefinitions="*,*"
+                                ColumnSpacing="16">
+
+                                <VerticalStackLayout
+                                    Grid.Column="0"
+                                    Spacing="8">
+
+                                    <Label
+                                        Text="Correo electrónico"
+                                        TextColor="#111827"
+                                        FontSize="12"
+                                        FontAttributes="Bold" />
+
+                                    <Border Style="{StaticResource ErpInputBox}">
+                                        <Entry
+                                            Text="{Binding ClienteFormulario.Email, Mode=TwoWay}"
+                                            Placeholder="cliente@ejemplo.cl"
+                                            Keyboard="Email"
+                                            Style="{StaticResource ErpEntry}" />
+                                    </Border>
+
+                                </VerticalStackLayout>
+
+                                <VerticalStackLayout
+                                    Grid.Column="1"
+                                    Spacing="8">
+
+                                    <Label
+                                        Text="Teléfono"
+                                        TextColor="#111827"
+                                        FontSize="12"
+                                        FontAttributes="Bold" />
+
+                                    <Border Style="{StaticResource ErpInputBox}">
+                                        <Entry
+                                            Text="{Binding ClienteFormulario.Telefono, Mode=TwoWay}"
+                                            Placeholder="+56 9 1234 5678"
+                                            Keyboard="Telephone"
+                                            Style="{StaticResource ErpEntry}" />
+                                    </Border>
+
+                                </VerticalStackLayout>
+                            </Grid>
+
+                            <!-- SEPARADOR -->
+                            <BoxView
+                                HeightRequest="1"
+                                Color="#E2E8F0"
+                                Margin="0,12,0,0" />
+
+                            <!-- BOTONES DE ACCIÓN -->
+                            <HorizontalStackLayout Spacing="10">
+
+                                <Button
+                                    Text="Guardar cliente"
+                                    Style="{StaticResource ErpPrimaryButton}"
+                                    Command="{Binding GuardarCommand}" />
+
+                                <Button
+                                    Text="Eliminar cliente"
+                                    BackgroundColor="White"
+                                    TextColor="#EF4444"
+                                    BorderColor="#FCA5A5"
+                                    BorderWidth="1"
+                                    CornerRadius="9"
+                                    Padding="18,10"
+                                    Clicked="OnEliminarClienteClicked" />
+
+                                <Button
+                                    Text="Ver convenios"
+                                    BackgroundColor="White"
+                                    TextColor="#1D6FD8"
+                                    BorderColor="#1D6FD8"
+                                    BorderWidth="1"
+                                    CornerRadius="9"
+                                    Padding="18,10"
+                                    Clicked="OnVerConveniosClicked" />
+
+                            </HorizontalStackLayout>
+
+                        </VerticalStackLayout>
+                    </Border>
+
+                </Grid>
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>

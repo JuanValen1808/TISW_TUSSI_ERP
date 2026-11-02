@@ -4,9 +4,11 @@ using TISW_TUSSI_ERP.Services.Navigation;
 using TISW_TUSSI_ERP.ViewModels.Auth;
 using TISW_TUSSI_ERP.ViewModels.Compras;
 using TISW_TUSSI_ERP.ViewModels.Dashboard;
+using TISW_TUSSI_ERP.ViewModels.Ventas;
 using TISW_TUSSI_ERP.Views.Auth;
 using TISW_TUSSI_ERP.Views.Compras;
 using TISW_TUSSI_ERP.Views.Dashboard;
+using TISW_TUSSI_ERP.Views.Ventas;
 using TISW_TUSSI_ERP.ViewModels.Contabilidad;
 using TISW_TUSSI_ERP.Views.Contabilidad;
 
@@ -36,6 +38,8 @@ namespace TISW_TUSSI_ERP
             builder.Services.AddSingleton<NavigationService>();
             builder.Services.AddSingleton<ComprasService>();
             builder.Services.AddSingleton<DashboardService>();
+            builder.Services.AddSingleton<VentasService>();
+            builder.Services.AddSingleton<ConveniosService>();
 
             // Auth
             builder.Services.AddTransient<LoginViewModel>();
@@ -55,6 +59,16 @@ namespace TISW_TUSSI_ERP
             builder.Services.AddTransient<NuevaOrdenViewModel>();
             builder.Services.AddTransient<NuevaOrdenPage>();
 
+            // Ventas
+            builder.Services.AddTransient<PosViewModel>();
+            builder.Services.AddTransient<PosPage>();
+            builder.Services.AddSingleton<ClientesService>();
+            builder.Services.AddTransient<ClientesViewModel>();
+            builder.Services.AddTransient<ClientesPage>();
+            builder.Services.AddTransient<RankingVentasViewModel>();
+            builder.Services.AddTransient<RankingVentasPage>();
+            builder.Services.AddTransient<ConveniosViewModel>();
+            builder.Services.AddTransient<ConveniosPage>();
             // Contabilidad
             builder.Services.AddSingleton<ContabilidadService>();
             builder.Services.AddTransient<PlanCuentasViewModel>();

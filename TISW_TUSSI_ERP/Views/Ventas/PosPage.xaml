@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:TISW_TUSSI_ERP.ViewModels.Ventas"
+             xmlns:m="clr-namespace:TISW_TUSSI_ERP.Models.Ventas"
+             xmlns:ctrl="clr-namespace:TISW_TUSSI_ERP.Views.Shared"
+             x:Class="TISW_TUSSI_ERP.Views.Ventas.PosPage"
+             x:DataType="vm:PosViewModel"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource ErpBg}"
+             Title="Punto de Venta">
+
+    <Grid RowDefinitions="Auto,*">
+        <ctrl:PageHeader Grid.Row="0" Ruta="ERP › Ventas" Titulo="Punto de Venta" />
+
+        <ScrollView Grid.Row="1">
+            <Grid Padding="24" ColumnDefinitions="*,340" ColumnSpacing="16">
+
+                <!-- ================= IZQUIERDA: busqueda + carrito ================= -->
+                <VerticalStackLayout Spacing="14">
+
+                    <Border IsVisible="{Binding HayError}" BackgroundColor="#FEE2E2" Stroke="#FCA5A5" StrokeShape="RoundRectangle 8" Padding="12">
+                        <Label Text="{Binding MensajeError}" TextColor="#B91C1C" FontSize="12" />
+                    </Border>
+                    <Border IsVisible="{Binding HayOk}" BackgroundColor="#DCFCE7" Stroke="#86EFAC" StrokeShape="RoundRectangle 8" Padding="12">
+                        <Label Text="{Binding MensajeOk}" TextColor="#166534" FontSize="12" />
+                    </Border>
+
+                    <!-- Busqueda por codigo de barras -->
+                    <Border Style="{StaticResource ErpCard}">
+                        <VerticalStackLayout Spacing="10">
+                            <Label Text="Buscar producto" Style="{StaticResource ErpCardTitle}" />
+                            <HorizontalStackLayout Spacing="8">
+                                <Border Style="{StaticResource ErpInputBox}" WidthRequest="300">
+                                    <Entry Text="{Binding CodigoBuscado}" Style="{StaticResource ErpEntry}"
+                                           Placeholder="Escanea o escribe el código de barras / SKU"
+                                           ReturnCommand="{Binding ComandoBuscar}" />
+                                </Border>
+                                <Button Text="Buscar" Style="{StaticResource ErpPrimaryButton}"
+                                        Command="{Binding ComandoBuscar}" />
+                            </HorizontalStackLayout>
+
+                            <!-- Producto encontrado -->
+                            <VerticalStackLayout IsVisible="{Binding HayProducto}" Spacing="8">
+                                <BoxView HeightRequest="1" Color="{StaticResource ErpBorder}" />
+                                <Label Style="{StaticResource ErpBody}" FontAttributes="Bold">
+                                    <Label.Text>
+                                        <Binding Path="Producto.NombreComercial" StringFormat="{}{0}  ·  {1}" />
+                                    </Label.Text>
+                                </Label>
+                                <Label Text="{Binding Producto.PrecioTexto, StringFormat='Precio: {0}'}"
+                                       Style="{StaticResource ErpSubtitle}" />
+
+                                <HorizontalStackLayout Spacing="8">
+                                    <Picker ItemsSource="{Binding Lotes}"
+                                            SelectedItem="{Binding LoteSeleccionado}"
+                                            ItemDisplayBinding="{Binding Descripcion}"
+                                            Title="Lote (FEFO)" WidthRequest="340" />
+                                    <Border Style="{StaticResource ErpInputBox}" WidthRequest="90">
+                                        <Entry Text="{Binding CantidadTexto}" Style="{StaticResource ErpEntry}"
+                                               Placeholder="Cant." Keyboard="Numeric" />
+                                    </Border>
+                                    <Button Text="Agregar" Style="{StaticResource ErpPrimaryButton}"
+                                            Command="{Binding ComandoAgregar}" />
+                                </HorizontalStackLayout>
+                            </VerticalStackLayout>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- Carrito -->
+                    <Border Style="{StaticResource ErpCard}">
+                        <VerticalStackLayout Spacing="8">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <Label Text="Detalle de la venta" Style="{StaticResource ErpCardTitle}" />
+                                <Label Grid.Column="1" Text="{Binding Carrito.Count, StringFormat='{0} ítems'}"
+                                       Style="{StaticResource ErpSubtitle}" />
+                            </Grid>
+
+                            <CollectionView ItemsSource="{Binding Carrito}" MaximumHeightRequest="300">
+                                <CollectionView.Header>
+                                    <Grid ColumnDefinitions="*,110,70,100,40" Padding="0,4">
+                                        <Label Text="PRODUCTO" Style="{StaticResource ErpCaption}" />
+                                        <Label Grid.Column="1" Text="LOTE" Style="{StaticResource ErpCaption}" />
+                                        <Label Grid.Column="2" Text="CANT." Style="{StaticResource ErpCaption}" />
+                                        <Label Grid.Column="3" Text="SUBTOTAL" Style="{StaticResource ErpCaption}" />
+                                    </Grid>
+                                </CollectionView.Header>
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate x:DataType="m:ItemCarrito">
+                                        <Grid ColumnDefinitions="*,110,70,100,40" Padding="0,6">
+                                            <Label Text="{Binding NombreProducto}" Style="{StaticResource ErpBody}" />
+                                            <Label Grid.Column="1" Text="{Binding NumeroLote}" Style="{StaticResource ErpBody}" />
+                                            <Label Grid.Column="2" Text="{Binding Cantidad}" Style="{StaticResource ErpBody}" />
+                                            <Label Grid.Column="3" Text="{Binding SubtotalTexto}" Style="{StaticResource ErpBody}" />
+                                            <Button Grid.Column="4" Text="✕" FontSize="10" WidthRequest="30" HeightRequest="30"
+                                                    Padding="0" BackgroundColor="Transparent" TextColor="{StaticResource ErpDanger}"
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ComandoQuitar}"
+                                                    CommandParameter="{Binding .}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
+                        </VerticalStackLayout>
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- ================= DERECHA: cliente + totales ================= -->
+                <VerticalStackLayout Grid.Column="1" Spacing="14">
+
+                    <Border Style="{StaticResource ErpCard}">
+                        <VerticalStackLayout Spacing="10">
+                            <Label Text="Cliente y pago" Style="{StaticResource ErpCardTitle}" />
+                            <Picker ItemsSource="{Binding Clientes}" SelectedItem="{Binding ClienteSeleccionado}"
+                                    Title="Cliente" />
+                            <Picker ItemsSource="{Binding Convenios}" SelectedItem="{Binding ConvenioSeleccionado}"
+                                    Title="Convenio / descuento" />
+                            <Picker ItemsSource="{Binding FormasPago}" SelectedItem="{Binding FormaPagoSeleccionada}"
+                                    Title="Forma de pago" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border Style="{StaticResource ErpCard}">
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="RESUMEN" Style="{StaticResource ErpCaption}" />
+                            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="4">
+                                <Label Text="Subtotal" Grid.Row="0" Style="{StaticResource ErpBody}" />
+                                <Label Text="{Binding SubtotalTexto}" Grid.Row="0" Grid.Column="1" Style="{StaticResource ErpBody}" />
+                                <Label Text="Descuento" Grid.Row="1" Style="{StaticResource ErpBody}" />
+                                <Label Text="{Binding DescuentoTexto}" Grid.Row="1" Grid.Column="1" Style="{StaticResource ErpBody}"
+                                       TextColor="{StaticResource ErpSuccess}" />
+                                <Label Text="Neto" Grid.Row="2" Style="{StaticResource ErpBody}" />
+                                <Label Text="{Binding NetoTexto}" Grid.Row="2" Grid.Column="1" Style="{StaticResource ErpBody}" />
+                                <Label Text="IVA (19%)" Grid.Row="3" Style="{StaticResource ErpBody}" />
+                                <Label Text="{Binding IvaTexto}" Grid.Row="3" Grid.Column="1" Style="{StaticResource ErpBody}" />
+                                <Label Text="TOTAL" Grid.Row="4" FontAttributes="Bold" FontSize="20"
+                                       TextColor="{StaticResource ErpText}" />
+                                <Label Text="{Binding TotalTexto}" Grid.Row="4" Grid.Column="1" FontAttributes="Bold"
+                                       FontSize="20" TextColor="{StaticResource ErpText}" />
+                            </Grid>
+
+                            <Button Text="Emitir comprobante" Style="{StaticResource ErpPrimaryButton}"
+                                    Command="{Binding ComandoEmitir}" IsEnabled="{Binding HayItems}" Margin="0,10,0,0" />
+                            <Button Text="Ver reporte de ventas" Style="{StaticResource ErpGhostButton}"
+                                    Command="{Binding ComandoVerRanking}" />
+                            <ActivityIndicator IsVisible="{Binding EstaOcupado}" IsRunning="{Binding EstaOcupado}" />
+                        </VerticalStackLayout>
+                    </Border>
+                </VerticalStackLayout>
+            </Grid>
+        </ScrollView>
+    </Grid>
+</ContentPage>
