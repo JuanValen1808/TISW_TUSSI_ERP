@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:TISW_TUSSI_ERP.ViewModels.Compras"
+             xmlns:m="clr-namespace:TISW_TUSSI_ERP.Models.Compras"
+             xmlns:ctrl="clr-namespace:TISW_TUSSI_ERP.Views.Shared"
+             x:Class="TISW_TUSSI_ERP.Views.Compras.ProveedoresPage"
+             x:DataType="vm:ProveedoresViewModel"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource ErpBg}"
+             Title="Proveedores">
+
+    <Grid RowDefinitions="Auto,*">
+        <ctrl:PageHeader Grid.Row="0" Ruta="ERP › Compras" Titulo="Proveedores" />
+
+        <Grid Grid.Row="1" Padding="24">
+            <VerticalStackLayout Spacing="16">
+
+                <Border IsVisible="{Binding HayError}" BackgroundColor="#FEE2E2" Stroke="#FCA5A5" StrokeShape="RoundRectangle 8" Padding="12">
+                    <Label Text="{Binding MensajeError}" TextColor="#B91C1C" FontSize="12" />
+                </Border>
+
+                <Grid ColumnDefinitions="*,Auto">
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="Proveedores" Style="{StaticResource ErpTitle}" />
+                        <Label Text="Mantenedor de proveedores y laboratorios" Style="{StaticResource ErpSubtitle}" />
+                    </VerticalStackLayout>
+                    <Button Grid.Column="1" Text="+  Nuevo proveedor" Style="{StaticResource ErpPrimaryButton}"
+                            VerticalOptions="Center" Command="{Binding ComandoNuevo}" />
+                </Grid>
+
+                <Border Style="{StaticResource ErpInputBox}" WidthRequest="340" HorizontalOptions="Start">
+                    <Grid ColumnDefinitions="Auto,*">
+                        <Label Text="🔎" TextColor="{StaticResource ErpMuted}" VerticalOptions="Center" />
+                        <Entry Grid.Column="1" Style="{StaticResource ErpEntry}" Placeholder="Buscar por nombre o RUT..."
+                               Text="{Binding Busqueda}" />
+                    </Grid>
+                </Border>
+
+                <ActivityIndicator IsRunning="{Binding EstaOcupado}" IsVisible="{Binding EstaOcupado}" Color="{StaticResource ErpPrimary}" />
+
+                <CollectionView ItemsSource="{Binding Proveedores}">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="m:Proveedor">
+                            <Border Style="{StaticResource ErpCard}" Margin="0,0,0,10">
+                                <Grid ColumnDefinitions="Auto,2.2*,1.4*,1.4*,1.2*,Auto,Auto" ColumnSpacing="14">
+                                    <Border WidthRequest="38" HeightRequest="38" StrokeThickness="0"
+                                            StrokeShape="RoundRectangle 19" BackgroundColor="{StaticResource ErpPrimarySoft}">
+                                        <Label Text="{Binding Iniciales}" FontSize="12" FontAttributes="Bold"
+                                               TextColor="{StaticResource ErpPrimary}" HorizontalOptions="Center" VerticalOptions="Center" />
+                                    </Border>
+
+                                    <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                                        <Label Text="{Binding RazonSocial}" FontSize="14" FontAttributes="Bold" TextColor="{StaticResource ErpText}" />
+                                        <Label Text="{Binding Rut, StringFormat='RUT {0}'}" FontSize="11" TextColor="{StaticResource ErpMuted}" />
+                                    </VerticalStackLayout>
+
+                                    <VerticalStackLayout Grid.Column="2" VerticalOptions="Center">
+                                        <Label Text="{Binding Contacto}" FontSize="12" TextColor="{StaticResource ErpText}" />
+                                        <Label Text="{Binding Telefono}" FontSize="11" TextColor="{StaticResource ErpMuted}" />
+                                    </VerticalStackLayout>
+
+                                    <Label Grid.Column="3" Text="{Binding Email}" FontSize="12" TextColor="{StaticResource ErpMuted}" VerticalOptions="Center" LineBreakMode="TailTruncation" />
+
+                                    <VerticalStackLayout Grid.Column="4" VerticalOptions="Center">
+                                        <Label Text="{Binding OrdenesEmitidas, StringFormat='{0} órdenes'}" FontSize="12" TextColor="{StaticResource ErpText}" />
+                                        <Label Text="{Binding MontoCompradoTexto}" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource ErpSuccess}" />
+                                    </VerticalStackLayout>
+
+                                    <Button Grid.Column="5" Text="Editar" Style="{StaticResource ErpGhostButton}" HeightRequest="34"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProveedoresViewModel}}, Path=ComandoEditar}"
+                                            CommandParameter="{Binding .}" />
+                                    <Button Grid.Column="6" Text="Eliminar" Style="{StaticResource ErpGhostButton}" HeightRequest="34"
+                                            TextColor="{StaticResource ErpDanger}"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProveedoresViewModel}}, Path=ComandoEliminar}"
+                                            CommandParameter="{Binding .}" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </VerticalStackLayout>
+
+            <!-- ======= Modal: alta / edición ======= -->
+            <Grid IsVisible="{Binding FormularioVisible}" BackgroundColor="#80000000">
+                <Border Style="{StaticResource ErpCard}" WidthRequest="480" Padding="30"
+                        HorizontalOptions="Center" VerticalOptions="Center" BackgroundColor="White">
+                    <VerticalStackLayout Spacing="15">
+                        <Label Text="{Binding TituloFormulario}" Style="{StaticResource ErpTitle}" FontSize="20" TextColor="Black" Margin="0,0,0,5" />
+
+                        <!-- RUT -->
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="RUT del Proveedor *" FontSize="12" TextColor="#555555" FontAttributes="Bold" />
+                            <Border Style="{StaticResource ErpInputBox}" BackgroundColor="White" Stroke="#CCCCCC">
+                                <Entry Style="{StaticResource ErpEntry}" Placeholder="Ej: 76.123.456-7" Text="{Binding Rut}" TextColor="Black" PlaceholderColor="#AAAAAA" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <!-- Razón social -->
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="Razón Social o Nombre *" FontSize="12" TextColor="#555555" FontAttributes="Bold" />
+                            <Border Style="{StaticResource ErpInputBox}" BackgroundColor="White" Stroke="#CCCCCC">
+                                <Entry Style="{StaticResource ErpEntry}" Placeholder="Ej: Distribuidora Médica S.A." Text="{Binding RazonSocial}" TextColor="Black" PlaceholderColor="#AAAAAA" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <!-- Contacto y Teléfono -->
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="15">
+                            <VerticalStackLayout Spacing="4">
+                                <Label Text="Nombre de Contacto" FontSize="12" TextColor="#555555" FontAttributes="Bold" />
+                                <Border Style="{StaticResource ErpInputBox}" BackgroundColor="White" Stroke="#CCCCCC">
+                                    <Entry Style="{StaticResource ErpEntry}" Placeholder="Ej: Juan Pérez" Text="{Binding Contacto}" TextColor="Black" PlaceholderColor="#AAAAAA" />
+                                </Border>
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="1" Spacing="4">
+                                <Label Text="Teléfono" FontSize="12" TextColor="#555555" FontAttributes="Bold" />
+                                <Border Style="{StaticResource ErpInputBox}" BackgroundColor="White" Stroke="#CCCCCC">
+                                    <Entry Style="{StaticResource ErpEntry}" Keyboard="Telephone" Placeholder="Ej: +56 9 1234 5678" Text="{Binding Telefono}" TextColor="Black" PlaceholderColor="#AAAAAA" />
+                                </Border>
+                            </VerticalStackLayout>
+                        </Grid>
+
+                        <!-- Correo electrónico -->
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="Correo Electrónico" FontSize="12" TextColor="#555555" FontAttributes="Bold" />
+                            <Border Style="{StaticResource ErpInputBox}" BackgroundColor="White" Stroke="#CCCCCC">
+                                <Entry Style="{StaticResource ErpEntry}" Keyboard="Email" Placeholder="ejemplo@distribuidora.cl" Text="{Binding Email}" TextColor="Black" PlaceholderColor="#AAAAAA" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <!-- Condiciones comerciales -->
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="Condiciones Comerciales" FontSize="12" TextColor="#555555" FontAttributes="Bold" />
+                            <Border Style="{StaticResource ErpInputBox}" BackgroundColor="White" Stroke="#CCCCCC" HeightRequest="80" Padding="10,5">
+                                <Editor Placeholder="Ej: Pago a 30 días, despacho gratuito sobre $100.000..." Text="{Binding CondicionesComerciales}"
+                                        BackgroundColor="Transparent" TextColor="Black" PlaceholderColor="#AAAAAA" FontSize="14" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <!-- Mensaje de error -->
+                        <Label Text="{Binding ErrorFormulario}" IsVisible="{Binding HayErrorFormulario}"
+                               TextColor="{StaticResource ErpDanger}" FontSize="12" FontAttributes="Bold" HorizontalOptions="Center" />
+
+                        <!-- Botones -->
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="15" Margin="0,10,0,0">
+                            <Button Text="Cancelar" Style="{StaticResource ErpGhostButton}" Command="{Binding ComandoCancelar}" TextColor="#555555" BorderColor="#CCCCCC" BorderWidth="1" HeightRequest="45" />
+                            <Button Grid.Column="1" Text="Guardar" Style="{StaticResource ErpPrimaryButton}" Command="{Binding ComandoGuardar}" HeightRequest="45" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+            </Grid>
+        </Grid>
+    </Grid>
+</ContentPage>

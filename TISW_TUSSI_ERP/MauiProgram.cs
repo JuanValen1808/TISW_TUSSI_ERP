@@ -26,7 +26,7 @@ namespace TISW_TUSSI_ERP
                 });
 
 #if DEBUG
-    		builder.Logging.AddDebug();
+            builder.Logging.AddDebug();
 #endif
 
             // ---------------- Inyección de dependencias ----------------
@@ -48,6 +48,12 @@ namespace TISW_TUSSI_ERP
             // Compras
             builder.Services.AddTransient<OrdenesCompraViewModel>();
             builder.Services.AddTransient<OrdenesCompraPage>();
+            builder.Services.AddTransient<ProveedoresViewModel>();
+            builder.Services.AddTransient<ProveedoresPage>();
+            builder.Services.AddTransient<ReporteComprasViewModel>();
+            builder.Services.AddTransient<ReporteComprasPage>();
+            builder.Services.AddTransient<NuevaOrdenViewModel>();
+            builder.Services.AddTransient<NuevaOrdenPage>();
 
             // Contabilidad
             builder.Services.AddSingleton<ContabilidadService>();
@@ -67,6 +73,23 @@ namespace TISW_TUSSI_ERP
             builder.Services.AddTransient<CuentasPorCobrarPage>();
             builder.Services.AddTransient<CuentasPorPagarViewModel>();
             builder.Services.AddTransient<CuentasPorPagarPage>();
+#if WINDOWS
+            Microsoft.Maui.Handlers.EntryHandler.Mapper.AppendToMapping("Borderless", (handler, view) =>
+            {
+                handler.PlatformView.BorderThickness = new Microsoft.UI.Xaml.Thickness(0);
+                handler.PlatformView.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
+            });
+            Microsoft.Maui.Handlers.PickerHandler.Mapper.AppendToMapping("Borderless", (handler, view) =>
+            {
+                handler.PlatformView.BorderThickness = new Microsoft.UI.Xaml.Thickness(0);
+                handler.PlatformView.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
+            });
+            Microsoft.Maui.Handlers.PickerHandler.Mapper.AppendToMapping(nameof(Microsoft.Maui.IPicker.Title), (handler, view) =>
+            {
+                handler.PlatformView.Header = null;
+                handler.PlatformView.PlaceholderText = view.Title;
+            });
+#endif
 
             // Administración / Seguridad (Usuarios, Perfiles, Accesos)
             builder.Services.AddSingleton<SeguridadService>();

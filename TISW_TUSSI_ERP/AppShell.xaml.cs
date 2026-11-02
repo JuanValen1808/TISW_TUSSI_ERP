@@ -15,7 +15,24 @@ public partial class AppShell : Shell
     //  1) agrégala como <ShellContent Route="..."> en AppShell.xaml
     //  2) añade su ruta aquí
     //  3) regístrala en MauiProgram.cs
-    private static readonly HashSet<string> Implementadas = new() { "DashboardPage", "OrdenesCompraPage", "PlanCuentasPage", "LibroDiarioPage", "LibroMayorPage", "BalanceOchoColumnasPage", "EstadoResultadosPage", "MayorCentralizadoPage", "CuentasPorCobrarPage", "CuentasPorPagarPage", "UsuariosPage", "PerfilesPage", "AccesosPage" }; 
+    private static readonly HashSet<string> Implementadas = new()
+    {
+        "DashboardPage",
+        "OrdenesCompraPage",
+        "ProveedoresPage",
+        "ReporteComprasPage",
+        "PlanCuentasPage",
+        "LibroDiarioPage",
+        "LibroMayorPage",
+        "BalanceOchoColumnasPage",
+        "EstadoResultadosPage",
+        "MayorCentralizadoPage",
+        "CuentasPorCobrarPage",
+        "CuentasPorPagarPage",
+        "UsuariosPage",
+        "PerfilesPage",
+        "AccesosPage"
+    };
 
     private static readonly SeccionMenu[] Secciones =
     {
@@ -34,8 +51,10 @@ public partial class AppShell : Shell
         }),
         new("COMPRAS", new[]
         {
+            new ItemMenu("", "Proveedores", "ProveedoresPage"),
             new ItemMenu("", "Órdenes de Compra", "OrdenesCompraPage"),
             new ItemMenu("", "Recepción Facturas", "RecepcionPage"),
+            new ItemMenu("", "Reporte de Compras", "ReporteComprasPage"),
         }),
         new("CONTABILIDAD", new[]
         {
@@ -62,6 +81,7 @@ public partial class AppShell : Shell
     public AppShell()
     {
         InitializeComponent();
+        Routing.RegisterRoute(nameof(Views.Compras.NuevaOrdenPage), typeof(Views.Compras.NuevaOrdenPage));
         ConstruirMenu();
 
         var u = Sesion.UsuarioActual;
@@ -86,13 +106,13 @@ public partial class AppShell : Shell
             // Control de Accesos (RBAC)
             if (rol == "Contador" && seccion.Nombre != "PRINCIPAL" && seccion.Nombre != "CONTABILIDAD")
                 continue;
-                
+
             if (rol == "Vendedor" && seccion.Nombre != "PRINCIPAL" && seccion.Nombre != "OPERACIÓN" && seccion.Nombre != "INVENTARIOS")
                 continue;
-                
+
             if (rol == "Bodega" && seccion.Nombre != "PRINCIPAL" && seccion.Nombre != "INVENTARIOS" && seccion.Nombre != "COMPRAS")
                 continue;
-                
+
             if (rol == "Comprador" && seccion.Nombre != "PRINCIPAL" && seccion.Nombre != "COMPRAS")
                 continue;
 

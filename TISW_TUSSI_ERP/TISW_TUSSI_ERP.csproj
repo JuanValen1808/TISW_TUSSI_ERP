@@ -71,4 +71,16 @@
 		<PackageReference Include="MySqlConnector" Version="2.6.2" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <MauiXaml Update="Views\Compras\NuevaOrdenPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\Compras\ProveedoresPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\Compras\ReporteComprasPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	</ItemGroup>
+
 </Project>
