@@ -39,6 +39,7 @@ namespace TISW_TUSSI_ERP
             builder.Services.AddSingleton<ComprasService>();
             builder.Services.AddSingleton<DashboardService>();
             builder.Services.AddSingleton<VentasService>();
+            builder.Services.AddSingleton<ConveniosService>();
 
             // Auth
             builder.Services.AddTransient<LoginViewModel>();
@@ -55,9 +56,13 @@ namespace TISW_TUSSI_ERP
             // Ventas
             builder.Services.AddTransient<PosViewModel>();
             builder.Services.AddTransient<PosPage>();
-
+            builder.Services.AddSingleton<ClientesService>();
+            builder.Services.AddTransient<ClientesViewModel>();
+            builder.Services.AddTransient<ClientesPage>();
             builder.Services.AddTransient<RankingVentasViewModel>();
             builder.Services.AddTransient<RankingVentasPage>();
+            builder.Services.AddTransient<ConveniosViewModel>();
+            builder.Services.AddTransient<ConveniosPage>();
             // Contabilidad
             builder.Services.AddSingleton<ContabilidadService>();
             builder.Services.AddTransient<PlanCuentasViewModel>();

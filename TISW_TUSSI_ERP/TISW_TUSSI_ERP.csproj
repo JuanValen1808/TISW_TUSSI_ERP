@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFrameworks>net10.0-android</TargetFrameworks>
@@ -72,6 +72,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Compile Update="Views\Ventas\ClientesPage.xaml.cs">
+	    <DependentUpon>ClientesPage.xaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="Views\Ventas\ConveniosPage.xaml.cs">
+	    <DependentUpon>ConveniosPage.xaml</DependentUpon>
+	  </Compile>
 	  <Compile Update="Views\Ventas\RankingVentasPage.xaml.cs">
 	    <DependentUpon>RankingVentasPage.xaml</DependentUpon>
 	  </Compile>
@@ -81,6 +87,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <MauiXaml Update="Views\Ventas\ClientesPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\Ventas\ConveniosPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
 	  <MauiXaml Update="Views\Ventas\RankingVentasPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>

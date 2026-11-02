@@ -54,9 +54,13 @@
     <ShellContent Route="OrdenesCompraPage" Shell.FlyoutItemIsVisible="False"
                   ContentTemplate="{DataTemplate compras:OrdenesCompraPage}" />
     <ShellContent Route="PosPage" Shell.FlyoutItemIsVisible="False"
-              ContentTemplate="{DataTemplate ventas:PosPage}" />
+                  ContentTemplate="{DataTemplate ventas:PosPage}" />
+    <ShellContent Route="ClientesPage" Shell.FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate ventas:ClientesPage}" />
+    <ShellContent Route="ConveniosPage" Shell.FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate ventas:ConveniosPage}" />
     <ShellContent Route="RankingVentasPage" Shell.FlyoutItemIsVisible="False"
-              ContentTemplate="{DataTemplate ventas:RankingVentasPage}" />
+                  ContentTemplate="{DataTemplate ventas:RankingVentasPage}" />
     <ShellContent Route="PlanCuentasPage" Shell.FlyoutItemIsVisible="False"
                   ContentTemplate="{DataTemplate contabilidad:PlanCuentasPage}" />
     <ShellContent Route="LibroDiarioPage" Shell.FlyoutItemIsVisible="False"

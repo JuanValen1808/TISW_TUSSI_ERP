@@ -19,8 +19,9 @@ public partial class AppShell : Shell
     {
         "DashboardPage",
         "OrdenesCompraPage",
-        "OrdenesCompraPage",
         "PosPage",
+        "ClientesPage",
+        "ConveniosPage",
         "RankingVentasPage",
         "ProveedoresPage",
         "ReporteComprasPage",
@@ -159,7 +160,7 @@ public partial class AppShell : Shell
         if (Implementadas.Contains(item.Ruta))
             await GoToAsync($"//{item.Ruta}");
         else
-            await DisplayAlert("Módulo en desarrollo", $"\"{item.Titulo}\" aún no está implementado.", "OK");
+            await DisplayAlertAsync("Módulo en desarrollo", $"\"{item.Titulo}\" aún no está implementado.", "OK");
     }
 
     private void Resaltar(string ubicacion)
@@ -176,7 +177,17 @@ public partial class AppShell : Shell
     private static void CerrarSesion()
     {
         Sesion.CerrarSesion();
-        var login = IPlatformApplication.Current!.Services.GetRequiredService<LoginPage>();
-        Application.Current!.MainPage = new NavigationPage(login);
+
+        var login = IPlatformApplication.Current!
+            .Services.GetRequiredService<LoginPage>();
+
+        var ventana = Application.Current?.Windows.FirstOrDefault();
+
+        if (ventana != null)
+        {
+            ventana.Page = new NavigationPage(login);
+        }
     }
 }
+
+    
