@@ -71,4 +71,46 @@
 		<PackageReference Include="MySqlConnector" Version="2.6.2" />
 	</ItemGroup>
 
+<<<<<<< Updated upstream
+=======
+	<ItemGroup>
+	  <MauiXaml Update="Views\Compras\NuevaOrdenPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\Compras\ProveedoresPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\Compras\ReporteComprasPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <Compile Update="Views\Ventas\ClientesPage.xaml.cs">
+	    <DependentUpon>ClientesPage.xaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="Views\Ventas\ConveniosPage.xaml.cs">
+	    <DependentUpon>ConveniosPage.xaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="Views\Ventas\RankingVentasPage.xaml.cs">
+	    <DependentUpon>RankingVentasPage.xaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="Views\Ventas\PosPage.xaml.cs">
+	    <DependentUpon>PosPage.xaml</DependentUpon>
+	  </Compile>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <MauiXaml Update="Views\Ventas\ClientesPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\Ventas\ConveniosPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\Ventas\RankingVentasPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\Ventas\PosPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	</ItemGroup>
+
+>>>>>>> Stashed changes
 </Project>
