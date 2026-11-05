@@ -4,9 +4,11 @@ using TISW_TUSSI_ERP.Services.Navigation;
 using TISW_TUSSI_ERP.ViewModels.Auth;
 using TISW_TUSSI_ERP.ViewModels.Compras;
 using TISW_TUSSI_ERP.ViewModels.Dashboard;
+using TISW_TUSSI_ERP.ViewModels.Ventas;
 using TISW_TUSSI_ERP.Views.Auth;
 using TISW_TUSSI_ERP.Views.Compras;
 using TISW_TUSSI_ERP.Views.Dashboard;
+using TISW_TUSSI_ERP.Views.Ventas;
 using TISW_TUSSI_ERP.ViewModels.Contabilidad;
 using TISW_TUSSI_ERP.Views.Contabilidad;
 
@@ -26,7 +28,7 @@ namespace TISW_TUSSI_ERP
                 });
 
 #if DEBUG
-    		builder.Logging.AddDebug();
+            builder.Logging.AddDebug();
 #endif
 
             // ---------------- Inyección de dependencias ----------------
@@ -36,6 +38,8 @@ namespace TISW_TUSSI_ERP
             builder.Services.AddSingleton<NavigationService>();
             builder.Services.AddSingleton<ComprasService>();
             builder.Services.AddSingleton<DashboardService>();
+            builder.Services.AddSingleton<VentasService>();
+            builder.Services.AddSingleton<ConveniosService>();
 
             // Auth
             builder.Services.AddTransient<LoginViewModel>();
@@ -48,7 +52,23 @@ namespace TISW_TUSSI_ERP
             // Compras
             builder.Services.AddTransient<OrdenesCompraViewModel>();
             builder.Services.AddTransient<OrdenesCompraPage>();
+            builder.Services.AddTransient<ProveedoresViewModel>();
+            builder.Services.AddTransient<ProveedoresPage>();
+            builder.Services.AddTransient<ReporteComprasViewModel>();
+            builder.Services.AddTransient<ReporteComprasPage>();
+            builder.Services.AddTransient<NuevaOrdenViewModel>();
+            builder.Services.AddTransient<NuevaOrdenPage>();
 
+            // Ventas
+            builder.Services.AddTransient<PosViewModel>();
+            builder.Services.AddTransient<PosPage>();
+            builder.Services.AddSingleton<ClientesService>();
+            builder.Services.AddTransient<ClientesViewModel>();
+            builder.Services.AddTransient<ClientesPage>();
+            builder.Services.AddTransient<RankingVentasViewModel>();
+            builder.Services.AddTransient<RankingVentasPage>();
+            builder.Services.AddTransient<ConveniosViewModel>();
+            builder.Services.AddTransient<ConveniosPage>();
             // Contabilidad
             builder.Services.AddSingleton<ContabilidadService>();
             builder.Services.AddTransient<PlanCuentasViewModel>();
@@ -67,6 +87,23 @@ namespace TISW_TUSSI_ERP
             builder.Services.AddTransient<CuentasPorCobrarPage>();
             builder.Services.AddTransient<CuentasPorPagarViewModel>();
             builder.Services.AddTransient<CuentasPorPagarPage>();
+#if WINDOWS
+            Microsoft.Maui.Handlers.EntryHandler.Mapper.AppendToMapping("Borderless", (handler, view) =>
+            {
+                handler.PlatformView.BorderThickness = new Microsoft.UI.Xaml.Thickness(0);
+                handler.PlatformView.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
+            });
+            Microsoft.Maui.Handlers.PickerHandler.Mapper.AppendToMapping("Borderless", (handler, view) =>
+            {
+                handler.PlatformView.BorderThickness = new Microsoft.UI.Xaml.Thickness(0);
+                handler.PlatformView.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
+            });
+            Microsoft.Maui.Handlers.PickerHandler.Mapper.AppendToMapping(nameof(Microsoft.Maui.IPicker.Title), (handler, view) =>
+            {
+                handler.PlatformView.Header = null;
+                handler.PlatformView.PlaceholderText = view.Title;
+            });
+#endif
 
             // Administración / Seguridad (Usuarios, Perfiles, Accesos)
             builder.Services.AddSingleton<SeguridadService>();

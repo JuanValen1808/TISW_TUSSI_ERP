@@ -643,3 +643,97 @@ INSERT INTO detalle_asiento_contable (id_detalle_asiento, id_asiento, id_cuenta,
     (14, 11, 10, 57500.00, 0.00), 
     (15, 11, 8, 0.00, 62605.04), 
     (16, 11, 12, 0.00, 11894.96);
+
+-- ==========================================================
+-- BLOQUE 4: PROCEDIMIENTOS ALMACENADOS
+-- ==========================================================
+
+DELIMITER $$
+
+-- 1. Sugerencia de Reabastecimiento de Compras
+-- Calcula la cantidad sugerida a comprar basándose en el punto de reorden y el stock actual en lotes.
+CREATE PROCEDURE sp_sugerencia_reabastecimiento()
+BEGIN
+    SELECT 
+        p.id_producto, 
+        p.sku, 
+        p.nombre_comercial, 
+        p.stock_minimo, 
+        p.punto_reorden,
+        COALESCE(SUM(l.stock_actual), 0) AS stock_total,
+        (p.punto_reorden - COALESCE(SUM(l.stock_actual), 0)) AS cantidad_sugerida
+    FROM productos p
+    LEFT JOIN lotes l ON p.id_producto = l.id_producto
+    WHERE p.activo = TRUE
+    GROUP BY p.id_producto
+    HAVING stock_total <= p.punto_reorden;
+END$$
+
+-- 2. Registrar Merma e Inyectar a Kardex
+-- Registra una merma y rebaja de forma transaccional el stock del lote, insertando el movimiento de salida.
+CREATE PROCEDURE sp_registrar_merma_y_kardex(
+    IN p_id_producto INT,
+    IN p_id_lote INT,
+    IN p_cantidad INT,
+    IN p_motivo VARCHAR(50),
+    IN p_id_usuario INT
+)
+BEGIN
+    DECLARE v_costo DECIMAL(15,2);
+    DECLARE v_saldo_nuevo INT;
+    
+    START TRANSACTION;
+    
+    SELECT costo_promedio_ponderado INTO v_costo FROM productos WHERE id_producto = p_id_producto;
+    
+    INSERT INTO registro_mermas (id_producto, id_lote, cantidad, motivo, costo_total_perdida, id_usuario)
+    VALUES (p_id_producto, p_id_lote, p_cantidad, p_motivo, v_costo * p_cantidad, p_id_usuario);
+    
+    UPDATE lotes SET stock_actual = stock_actual - p_cantidad WHERE id_lote = p_id_lote;
+    
+    SELECT COALESCE(SUM(stock_actual), 0) INTO v_saldo_nuevo FROM lotes WHERE id_producto = p_id_producto;
+    
+    INSERT INTO kardex_movimientos (id_producto, id_lote, tipo_movimiento, origen_documento, id_referencia_origen, cantidad, costo_unitario, saldo_stock_producto, id_usuario)
+    VALUES (p_id_producto, p_id_lote, 'SALIDA', 'MERMA', LAST_INSERT_ID(), p_cantidad, v_costo, v_saldo_nuevo, p_id_usuario);
+    
+    COMMIT;
+END$$
+
+-- 3. Actualizar Estado Automático de Orden de Compra
+-- Comprueba la cantidad recepcionada vs la solicitada para marcar la OC como PARCIAL o RECIBIDA.
+CREATE PROCEDURE sp_actualizar_estado_oc(
+    IN p_id_orden INT
+)
+BEGIN
+    DECLARE v_solicitado INT;
+    DECLARE v_recibido INT;
+    
+    SELECT SUM(cantidad_solicitada), SUM(cantidad_recibida) 
+    INTO v_solicitado, v_recibido
+    FROM detalle_orden_compra
+    WHERE id_orden_compra = p_id_orden;
+    
+    IF v_recibido >= v_solicitado THEN
+        UPDATE ordenes_compra SET estado = 'RECIBIDA' WHERE id_orden_compra = p_id_orden;
+    ELSEIF v_recibido > 0 THEN
+        UPDATE ordenes_compra SET estado = 'PARCIAL' WHERE id_orden_compra = p_id_orden;
+    END IF;
+END$$
+
+-- 4. Registrar Pago a Proveedor
+-- Actualiza el estado de la cuenta por pagar y su monto abonado.
+CREATE PROCEDURE sp_registrar_pago_proveedor(
+    IN p_id_cuenta_pagar INT,
+    IN p_monto_abono DECIMAL(15,2)
+)
+BEGIN
+    UPDATE cuentas_por_pagar
+    SET monto_pagado = monto_pagado + p_monto_abono,
+        estado_pago = CASE
+                        WHEN (monto_pagado + p_monto_abono) >= monto_total THEN 'PAGADO'
+                        ELSE 'PENDIENTE'
+                      END
+    WHERE id_cuenta_pagar = p_id_cuenta_pagar;
+END$$
+
+DELIMITER ;

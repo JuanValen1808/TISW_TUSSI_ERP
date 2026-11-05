@@ -15,7 +15,28 @@ public partial class AppShell : Shell
     //  1) agrégala como <ShellContent Route="..."> en AppShell.xaml
     //  2) añade su ruta aquí
     //  3) regístrala en MauiProgram.cs
-    private static readonly HashSet<string> Implementadas = new() { "DashboardPage", "OrdenesCompraPage", "PlanCuentasPage", "LibroDiarioPage", "LibroMayorPage", "BalanceOchoColumnasPage", "EstadoResultadosPage", "MayorCentralizadoPage", "CuentasPorCobrarPage", "CuentasPorPagarPage", "UsuariosPage", "PerfilesPage", "AccesosPage" }; 
+    private static readonly HashSet<string> Implementadas = new()
+    {
+        "DashboardPage",
+        "OrdenesCompraPage",
+        "PosPage",
+        "ClientesPage",
+        "ConveniosPage",
+        "RankingVentasPage",
+        "ProveedoresPage",
+        "ReporteComprasPage",
+        "PlanCuentasPage",
+        "LibroDiarioPage",
+        "LibroMayorPage",
+        "BalanceOchoColumnasPage",
+        "EstadoResultadosPage",
+        "MayorCentralizadoPage",
+        "CuentasPorCobrarPage",
+        "CuentasPorPagarPage",
+        "UsuariosPage",
+        "PerfilesPage",
+        "AccesosPage"
+    };
 
     private static readonly SeccionMenu[] Secciones =
     {
@@ -25,6 +46,7 @@ public partial class AppShell : Shell
             new ItemMenu("", "Punto de Venta", "PosPage"),
             new ItemMenu("", "Control de Caja", "CajaPage"),
             new ItemMenu("", "Clientes", "ClientesPage"),
+            new ItemMenu("", "Ranking de Ventas", "RankingVentasPage"),
         }),
         new("INVENTARIOS", new[]
         {
@@ -34,8 +56,10 @@ public partial class AppShell : Shell
         }),
         new("COMPRAS", new[]
         {
+            new ItemMenu("", "Proveedores", "ProveedoresPage"),
             new ItemMenu("", "Órdenes de Compra", "OrdenesCompraPage"),
             new ItemMenu("", "Recepción Facturas", "RecepcionPage"),
+            new ItemMenu("", "Reporte de Compras", "ReporteComprasPage"),
         }),
         new("CONTABILIDAD", new[]
         {
@@ -62,6 +86,7 @@ public partial class AppShell : Shell
     public AppShell()
     {
         InitializeComponent();
+        Routing.RegisterRoute(nameof(Views.Compras.NuevaOrdenPage), typeof(Views.Compras.NuevaOrdenPage));
         ConstruirMenu();
 
         var u = Sesion.UsuarioActual;
@@ -86,13 +111,13 @@ public partial class AppShell : Shell
             // Control de Accesos (RBAC)
             if (rol == "Contador" && seccion.Nombre != "PRINCIPAL" && seccion.Nombre != "CONTABILIDAD")
                 continue;
-                
+
             if (rol == "Vendedor" && seccion.Nombre != "PRINCIPAL" && seccion.Nombre != "OPERACIÓN" && seccion.Nombre != "INVENTARIOS")
                 continue;
-                
+
             if (rol == "Bodega" && seccion.Nombre != "PRINCIPAL" && seccion.Nombre != "INVENTARIOS" && seccion.Nombre != "COMPRAS")
                 continue;
-                
+
             if (rol == "Comprador" && seccion.Nombre != "PRINCIPAL" && seccion.Nombre != "COMPRAS")
                 continue;
 
@@ -136,7 +161,7 @@ public partial class AppShell : Shell
         if (Implementadas.Contains(item.Ruta))
             await GoToAsync($"//{item.Ruta}");
         else
-            await DisplayAlert("Módulo en desarrollo", $"\"{item.Titulo}\" aún no está implementado.", "OK");
+            await DisplayAlertAsync("Módulo en desarrollo", $"\"{item.Titulo}\" aún no está implementado.", "OK");
     }
 
     private void Resaltar(string ubicacion)
@@ -153,7 +178,17 @@ public partial class AppShell : Shell
     private static void CerrarSesion()
     {
         Sesion.CerrarSesion();
-        var login = IPlatformApplication.Current!.Services.GetRequiredService<LoginPage>();
-        Application.Current!.MainPage = new NavigationPage(login);
+
+        var login = IPlatformApplication.Current!
+            .Services.GetRequiredService<LoginPage>();
+
+        var ventana = Application.Current?.Windows.FirstOrDefault();
+
+        if (ventana != null)
+        {
+            ventana.Page = new NavigationPage(login);
+        }
     }
 }
+
+    

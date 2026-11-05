@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFrameworks>net10.0-android</TargetFrameworks>
@@ -71,8 +71,11 @@
 		<PackageReference Include="MySqlConnector" Version="2.6.2" />
 	</ItemGroup>
 
+<<<<<<< HEAD
 <<<<<<< Updated upstream
 =======
+=======
+>>>>>>> a0f867ad90cd1e308d70330d2abd90a39f4b5680
 	<ItemGroup>
 	  <MauiXaml Update="Views\Compras\NuevaOrdenPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
@@ -81,8 +84,11 @@
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="Views\Compras\ReporteComprasPage.xaml">
+<<<<<<< HEAD
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
+=======
+>>>>>>> a0f867ad90cd1e308d70330d2abd90a39f4b5680
 	  <Compile Update="Views\Ventas\ClientesPage.xaml.cs">
 	    <DependentUpon>ClientesPage.xaml</DependentUpon>
 	  </Compile>
@@ -112,5 +118,8 @@
 	  </MauiXaml>
 	</ItemGroup>
 
+<<<<<<< HEAD
 >>>>>>> Stashed changes
+=======
+>>>>>>> a0f867ad90cd1e308d70330d2abd90a39f4b5680
 </Project>
