@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:TISW_TUSSI_ERP.ViewModels.Compras"
+             xmlns:m="clr-namespace:TISW_TUSSI_ERP.Models.Compras"
+             xmlns:s="clr-namespace:TISW_TUSSI_ERP.Services.Api"
+             xmlns:ctrl="clr-namespace:TISW_TUSSI_ERP.Views.Shared"
+             x:Class="TISW_TUSSI_ERP.Views.Compras.ReporteHistorialPreciosPage"
+             x:DataType="vm:ReporteHistorialPreciosViewModel"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource ErpBg}"
+             Title="Historial de Precios">
+
+    <Grid RowDefinitions="Auto,*">
+        <ctrl:PageHeader Grid.Row="0" Ruta="ERP › Compras › Reportes" Titulo="Historial de Precios de Adquisición" />
+
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="24" Spacing="16">
+
+                <Border IsVisible="{Binding HayError}" BackgroundColor="#FEE2E2" Stroke="#FCA5A5" StrokeShape="RoundRectangle 8" Padding="12">
+                    <Label Text="{Binding MensajeError}" TextColor="#B91C1C" FontSize="12" />
+                </Border>
+
+                <!-- Título y acción de exportación -->
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="Reporte: Historial y Variación de Precios de Compra (RF-COM-06)" Style="{StaticResource ErpTitle}" />
+                        <Label Text="Auditoría cronológica de costos pactados y de adquisición por producto para detectar inflación y renegociar contratos."
+                               Style="{StaticResource ErpSubtitle}" />
+                    </VerticalStackLayout>
+                    <Button Grid.Column="1" Text="📥  Exportar CSV" Style="{StaticResource ErpGhostButton}"
+                            Command="{Binding ComandoExportarCsv}" VerticalOptions="Center" />
+                </Grid>
+
+                <!-- Filtros -->
+                <Border Style="{StaticResource ErpCard}" Padding="16">
+                    <Grid ColumnDefinitions="Auto, Auto, *, Auto" ColumnSpacing="14" VerticalOptions="Center">
+
+                        <!-- Fecha Desde -->
+                        <VerticalStackLayout Grid.Column="0" Spacing="4">
+                            <Label Text="Desde" Style="{StaticResource ErpCaption}" />
+                            <Border Style="{StaticResource ErpInputBox}" WidthRequest="140">
+                                <DatePicker Date="{Binding FechaDesde}" Format="dd/MM/yyyy" TextColor="{StaticResource ErpText}" VerticalOptions="Center" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <!-- Fecha Hasta -->
+                        <VerticalStackLayout Grid.Column="1" Spacing="4">
+                            <Label Text="Hasta" Style="{StaticResource ErpCaption}" />
+                            <Border Style="{StaticResource ErpInputBox}" WidthRequest="140">
+                                <DatePicker Date="{Binding FechaHasta}" Format="dd/MM/yyyy" TextColor="{StaticResource ErpText}" VerticalOptions="Center" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <!-- Filtro por Producto -->
+                        <VerticalStackLayout Grid.Column="2" Spacing="4">
+                            <Label Text="Medicamento o Insumo" Style="{StaticResource ErpCaption}" />
+                            <Border Style="{StaticResource ErpInputBox}">
+                                <Picker Title="-- Todos los productos --"
+                                        ItemsSource="{Binding Productos}"
+                                        ItemDisplayBinding="{Binding DescripcionCompleta}"
+                                        SelectedItem="{Binding ProductoFiltro}"
+                                        TextColor="{StaticResource ErpText}"
+                                        TitleColor="{StaticResource ErpMuted}" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <!-- Botones -->
+                        <HorizontalStackLayout Grid.Column="3" Spacing="10" VerticalOptions="End">
+                            <Button Text="Limpiar" Command="{Binding ComandoLimpiarFiltros}" Style="{StaticResource ErpGhostButton}" HeightRequest="46"/>
+                            <Button Text="Filtrar" Command="{Binding ComandoGenerar}" Style="{StaticResource ErpPrimaryButton}" HeightRequest="46"/>
+                        </HorizontalStackLayout>
+                    </Grid>
+                </Border>
+
+                <ActivityIndicator IsRunning="{Binding EstaOcupado}" IsVisible="{Binding EstaOcupado}" Color="{StaticResource ErpPrimary}" />
+
+                <!-- KPIs de precios -->
+                <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="16">
+                    <Border Grid.Column="0" Style="{StaticResource ErpCard}">
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="COSTO PROMEDIO REGISTRADO" Style="{StaticResource ErpCaption}" />
+                            <Label Text="{Binding Resumen.CostoPromedioTexto}" Style="{StaticResource ErpKpi}" TextColor="{StaticResource ErpPrimary}" />
+                        </VerticalStackLayout>
+                    </Border>
+                    <Border Grid.Column="1" Style="{StaticResource ErpCard}">
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="COSTO MÍNIMO HISTÓRICO" Style="{StaticResource ErpCaption}" />
+                            <Label Text="{Binding Resumen.CostoMinimoTexto}" Style="{StaticResource ErpKpi}" TextColor="{StaticResource ErpSuccess}" />
+                        </VerticalStackLayout>
+                    </Border>
+                    <Border Grid.Column="2" Style="{StaticResource ErpCard}">
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="COSTO MÁXIMO HISTÓRICO" Style="{StaticResource ErpCaption}" />
+                            <Label Text="{Binding Resumen.CostoMaximoTexto}" Style="{StaticResource ErpKpi}" TextColor="{StaticResource ErpDanger}" />
+                        </VerticalStackLayout>
+                    </Border>
+                    <Border Grid.Column="3" Style="{StaticResource ErpCard}">
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="TOTAL REGISTROS / ALZAS" Style="{StaticResource ErpCaption}" />
+                            <Label Text="{Binding Resumen.TotalRegistros, StringFormat='{0} registros'}" Style="{StaticResource ErpKpi}" />
+                        </VerticalStackLayout>
+                    </Border>
+                </Grid>
+
+                <!-- Tabla cronológica de variación de precios -->
+                <Border Style="{StaticResource ErpCard}" Padding="18">
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="No se encontraron registros de compra para el producto o período seleccionado."
+                               IsVisible="{Binding SinResultados}" Style="{StaticResource ErpSubtitle}"
+                               HorizontalOptions="Center" Margin="0,16" />
+
+                        <!-- Cabecera de la tabla -->
+                        <Grid ColumnDefinitions="1*,1.2*,2*,1.8*,80,1*,1*,1.4*,1*" Padding="12,8" BackgroundColor="{StaticResource ErpPrimarySoft}">
+                            <Label Text="FECHA" Style="{StaticResource ErpCaption}" TextColor="{StaticResource ErpPrimary}" />
+                            <Label Grid.Column="1" Text="DOCUMENTO" Style="{StaticResource ErpCaption}" TextColor="{StaticResource ErpPrimary}" />
+                            <Label Grid.Column="2" Text="MEDICAMENTO / SKU" Style="{StaticResource ErpCaption}" TextColor="{StaticResource ErpPrimary}" />
+                            <Label Grid.Column="3" Text="PROVEEDOR" Style="{StaticResource ErpCaption}" TextColor="{StaticResource ErpPrimary}" />
+                            <Label Grid.Column="4" Text="CANT." Style="{StaticResource ErpCaption}" HorizontalTextAlignment="Center" TextColor="{StaticResource ErpPrimary}" />
+                            <Label Grid.Column="5" Text="COSTO ANT." Style="{StaticResource ErpCaption}" HorizontalTextAlignment="End" TextColor="{StaticResource ErpPrimary}" />
+                            <Label Grid.Column="6" Text="COSTO COMPRA" Style="{StaticResource ErpCaption}" HorizontalTextAlignment="End" TextColor="{StaticResource ErpPrimary}" />
+                            <Label Grid.Column="7" Text="VARIACIÓN" Style="{StaticResource ErpCaption}" HorizontalTextAlignment="Center" TextColor="{StaticResource ErpPrimary}" />
+                            <Label Grid.Column="8" Text="TENDENCIA" Style="{StaticResource ErpCaption}" HorizontalTextAlignment="Center" TextColor="{StaticResource ErpPrimary}" />
+                        </Grid>
+
+                        <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Items}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="m:ItemHistorialPrecio">
+                                    <Border BackgroundColor="#F8FAFC" Stroke="{StaticResource ErpBorder}" StrokeShape="RoundRectangle 8" Padding="12,10">
+                                        <Grid ColumnDefinitions="1*,1.2*,2*,1.8*,80,1*,1*,1.4*,1*" VerticalOptions="Center">
+
+                                            <!-- Fecha -->
+                                            <Label Grid.Column="0" Text="{Binding FechaTexto}" Style="{StaticResource ErpBody}" FontSize="12" />
+
+                                            <!-- Documento -->
+                                            <Label Grid.Column="1" Text="{Binding Documento}" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource ErpMuted}" />
+
+                                            <!-- Medicamento -->
+                                            <VerticalStackLayout Grid.Column="2" VerticalOptions="Center">
+                                                <Label Text="{Binding NombreProducto}" FontSize="12" FontAttributes="Bold" TextColor="{StaticResource ErpText}" LineBreakMode="TailTruncation" />
+                                                <Label Text="{Binding Sku}" FontSize="10" TextColor="{StaticResource ErpMuted}" />
+                                            </VerticalStackLayout>
+
+                                            <!-- Proveedor -->
+                                            <Label Grid.Column="3" Text="{Binding Proveedor}" FontSize="12" TextColor="{StaticResource ErpText}" LineBreakMode="TailTruncation" />
+
+                                            <!-- Cantidad -->
+                                            <Label Grid.Column="4" Text="{Binding Cantidad, StringFormat='{0} un.'}" Style="{StaticResource ErpBody}" HorizontalTextAlignment="Center" />
+
+                                            <!-- Costo Anterior -->
+                                            <Label Grid.Column="5" Text="{Binding CostoAnteriorTexto}" Style="{StaticResource ErpBody}" HorizontalTextAlignment="End" TextColor="{StaticResource ErpMuted}" />
+
+                                            <!-- Costo Nuevo -->
+                                            <Label Grid.Column="6" Text="{Binding CostoUnitarioTexto}" Style="{StaticResource ErpBody}" FontAttributes="Bold" HorizontalTextAlignment="End" />
+
+                                            <!-- Variación -->
+                                            <Label Grid.Column="7" Text="{Binding VariacionTexto}" FontSize="11" FontAttributes="Bold"
+                                                   TextColor="{Binding VariacionColor}" HorizontalTextAlignment="Center" />
+
+                                            <!-- Tendencia -->
+                                            <Border Grid.Column="8" HorizontalOptions="Center" VerticalOptions="Center"
+                                                    BackgroundColor="{Binding VariacionColor, StringFormat='#20{0}'}"
+                                                    StrokeThickness="0" StrokeShape="RoundRectangle 6" Padding="6,2">
+                                                <Label Text="{Binding IndicadorTendencia}" FontSize="10" FontAttributes="Bold"
+                                                       TextColor="{Binding VariacionColor}" HorizontalTextAlignment="Center" />
+                                            </Border>
+
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
+
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>
+

@@ -11,16 +11,16 @@ public partial class AppShell : Shell
     private record ItemMenu(string Icono, string Titulo, string Ruta);
     private record SeccionMenu(string Nombre, ItemMenu[] Items);
 
-    // Rutas que ya tienen pantalla. Al crear una nueva pantalla:
-    //  1) agrégala como <ShellContent Route="..."> en AppShell.xaml
-    //  2) añade su ruta aquí
-    //  3) regístrala en MauiProgram.cs
+    // Rutas que ya tienen pantalla implementada
     private static readonly HashSet<string> Implementadas = new()
     {
         "DashboardPage",
         "OrdenesCompraPage",
         "ProveedoresPage",
+        "RecepcionFacturasPage",
         "ReporteComprasPage",
+        "ReporteCumplimientoPage",
+        "ReporteHistorialPreciosPage",
         "PlanCuentasPage",
         "LibroDiarioPage",
         "LibroMayorPage",
@@ -53,8 +53,10 @@ public partial class AppShell : Shell
         {
             new ItemMenu("", "Proveedores", "ProveedoresPage"),
             new ItemMenu("", "Órdenes de Compra", "OrdenesCompraPage"),
-            new ItemMenu("", "Recepción Facturas", "RecepcionPage"),
-            new ItemMenu("", "Reporte de Compras", "ReporteComprasPage"),
+            new ItemMenu("", "Recepción Facturas", "RecepcionFacturasPage"),
+            new ItemMenu("", "Reporte Compras Lab.", "ReporteComprasPage"),
+            new ItemMenu("", "Reporte Cumplimiento", "ReporteCumplimientoPage"),
+            new ItemMenu("", "Historial de Precios", "ReporteHistorialPreciosPage"),
         }),
         new("CONTABILIDAD", new[]
         {
@@ -82,6 +84,7 @@ public partial class AppShell : Shell
     {
         InitializeComponent();
         Routing.RegisterRoute(nameof(Views.Compras.NuevaOrdenPage), typeof(Views.Compras.NuevaOrdenPage));
+        Routing.RegisterRoute(nameof(Views.Compras.RecepcionFacturasPage), typeof(Views.Compras.RecepcionFacturasPage));
         ConstruirMenu();
 
         var u = Sesion.UsuarioActual;
