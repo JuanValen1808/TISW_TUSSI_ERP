@@ -197,7 +197,7 @@
         <Setter Property="Stroke" Value="#E3E8EF" />
         <Setter Property="StrokeThickness" Value="1" />
         <Setter Property="StrokeShape" Value="RoundRectangle 14" />
-        <Setter Property="Padding" Value="0" />
+        <Setter Property="Padding" Value="14,12" />
         <Setter Property="Shadow">
             <Shadow Brush="#0F172A" Opacity="0.05" Radius="10" Offset="0,3" />
         </Setter>
@@ -361,4 +361,22 @@
         <Setter Property="HeightRequest" Value="8" />
         <Setter Property="VerticalOptions" Value="Center" />
     </Style>
+
+    <!-- ===== Alias compatibles de paleta y componentes Contabilidad ===== -->
+    <Color x:Key="CtbSurfaceAlt">#F8FAFC</Color>
+    <Color x:Key="CtbText">#0F172A</Color>
+    <Color x:Key="CtbTextMuted">#64748B</Color>
+    <Color x:Key="CtbPrimary">#1D6FD8</Color>
+    <Color x:Key="CtbBorder">#E2E8F0</Color>
+
+    <Style x:Key="CtbBtnPrimary" TargetType="Button" BasedOn="{StaticResource CtbPrimaryButton}" />
+    <Style x:Key="CtbBtnOutline" TargetType="Button" BasedOn="{StaticResource CtbGhostButton}" />
+    <Style x:Key="CtbBtnSuccess" TargetType="Button" BasedOn="{StaticResource CtbPrimaryButton}">
+        <Setter Property="BackgroundColor" Value="#059669" />
+    </Style>
+    <Style x:Key="CtbChip" TargetType="Button" BasedOn="{StaticResource CtbTab}" />
+    <Style x:Key="CtbInputBox" TargetType="Border" BasedOn="{StaticResource CtbField}" />
+    <Style x:Key="CtbKpiFoot" TargetType="Label" BasedOn="{StaticResource CtbKpiHint}" />
+    <Style x:Key="CtbTableHeader" TargetType="Grid" BasedOn="{StaticResource CtbTableHead}" />
+    <Style x:Key="CtbTableHeaderText" TargetType="Label" BasedOn="{StaticResource CtbTh}" />
 </ResourceDictionary>

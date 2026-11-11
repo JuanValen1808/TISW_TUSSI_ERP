@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.Windows.Input;
 using TISW_TUSSI_ERP.Helpers;
 using TISW_TUSSI_ERP.Models.Compras;
@@ -6,20 +6,17 @@ using TISW_TUSSI_ERP.Services.Api;
 
 namespace TISW_TUSSI_ERP.ViewModels.Compras;
 
-// Reporte: Cumplimiento de Órdenes de Compra por Proveedor (RF-COM-04 / RF-COM-05)
+// Reporte: Registro de Compras por Laboratorio / Proveedor
 public class ReporteComprasViewModel : BaseViewModel
 {
     private readonly ComprasService _servicio;
 
-    // Lista observable para llenar la tabla/grilla de resultados
     public ObservableCollection<CompraPorProveedor> Filas { get; } = new();
 
-    // Objeto que contiene las 4 métricas superiores del Dashboard
     private ResumenReporteCompras _resumen = new();
     public ResumenReporteCompras Resumen { get => _resumen; private set => SetProperty(ref _resumen, value); }
 
-    // Filtros de búsqueda con notificación de cambios para la UI
-    private DateTime _fechaDesde = DateTime.Today.AddDays(-30);
+    private DateTime _fechaDesde = DateTime.Today.AddDays(-60);
     public DateTime FechaDesde { get => _fechaDesde; set => SetProperty(ref _fechaDesde, value); }
 
     private DateTime _fechaHasta = DateTime.Today;
@@ -28,7 +25,6 @@ public class ReporteComprasViewModel : BaseViewModel
     private string _rutFiltro = string.Empty;
     public string RutFiltro { get => _rutFiltro; set => SetProperty(ref _rutFiltro, value); }
 
-    // Manejo de estado y errores
     private string _mensajeError = string.Empty;
     public string MensajeError
     {
@@ -40,22 +36,26 @@ public class ReporteComprasViewModel : BaseViewModel
     private bool _sinResultados;
     public bool SinResultados { get => _sinResultados; private set => SetProperty(ref _sinResultados, value); }
 
-    // Comandos
     public ICommand ComandoGenerar { get; }
     public ICommand ComandoLimpiarFiltro { get; }
+    public ICommand ComandoExportarCsv { get; }
 
     public ReporteComprasViewModel(ComprasService servicio)
     {
         _servicio = servicio;
-        Titulo = "Reporte de Compras";
+        Titulo = "Reporte de Compras por Laboratorio";
 
         ComandoGenerar = new Command(async () => await GenerarAsync());
 
         ComandoLimpiarFiltro = new Command(async () =>
         {
             RutFiltro = string.Empty;
+            FechaDesde = DateTime.Today.AddDays(-60);
+            FechaHasta = DateTime.Today;
             await GenerarAsync();
         });
+
+        ComandoExportarCsv = new Command(async () => await ExportarCsvAsync());
     }
 
     public async Task GenerarAsync()
@@ -74,13 +74,10 @@ public class ReporteComprasViewModel : BaseViewModel
 
         try
         {
-            // Llama al método de tu servicio que extrae las métricas y la lista en una sola consulta
             var (resumen, filas) = await _servicio.ObtenerReporteComprasAsync(FechaDesde, FechaHasta, RutFiltro);
 
-            // Actualiza los cuadros superiores
             Resumen = resumen;
 
-            // Actualiza la tabla inferior
             Filas.Clear();
             foreach (var f in filas)
             {
@@ -91,13 +88,42 @@ public class ReporteComprasViewModel : BaseViewModel
         }
         catch (Exception ex)
         {
-            // Combina el mensaje visual de tu código con la alerta nativa del mío
-            MensajeError = "Ocurrió un problema de conexión al generar el reporte.";
-            await Application.Current!.MainPage!.DisplayAlert("Error de Base de Datos", ex.Message, "OK");
+            MensajeError = "Ocurrió un problema al generar el reporte: " + ex.Message;
         }
         finally
         {
             EstaOcupado = false;
+        }
+    }
+
+    private async Task ExportarCsvAsync()
+    {
+        if (Filas.Count == 0)
+        {
+            await Shell.Current.DisplayAlert("Aviso", "No hay datos para exportar en el período seleccionado.", "OK");
+            return;
+        }
+
+        try
+        {
+            var headers = new[] { "Proveedor / Laboratorio", "RUT", "Total Órdenes", "Órdenes Pendientes", "Órdenes Liquidadas", "Monto Total Comprado", "Monto por Recibir", "Última Compra" };
+            var rows = Filas.Select(f => new[]
+            {
+                f.Proveedor,
+                f.Rut,
+                f.NumeroOrdenes.ToString(),
+                f.OrdenesPendientes.ToString(),
+                f.OrdenesLiquidadas.ToString(),
+                f.MontoTotal.ToString("0", Formato.Cultura),
+                f.MontoPorRecibir.ToString("0", Formato.Cultura),
+                f.UltimaCompraTexto
+            });
+
+            await CsvExportHelper.ExportarYCompartirAsync("Reporte_Compras_Por_Laboratorio", headers, rows);
+        }
+        catch (Exception ex)
+        {
+            await Shell.Current.DisplayAlert("Error", "No se pudo exportar a CSV: " + ex.Message, "OK");
         }
     }
 }

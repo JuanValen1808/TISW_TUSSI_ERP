@@ -1,100 +1,163 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:TISW_TUSSI_ERP.ViewModels.Compras"
+             xmlns:m="clr-namespace:TISW_TUSSI_ERP.Services.Api"
+             xmlns:ctrl="clr-namespace:TISW_TUSSI_ERP.Views.Shared"
              x:Class="TISW_TUSSI_ERP.Views.Compras.NuevaOrdenPage"
-             Title="{Binding Titulo}"
-             BackgroundColor="{StaticResource ErpBg}">
+             x:DataType="vm:NuevaOrdenViewModel"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource ErpBg}"
+             Title="Nueva Orden de Compra">
 
-    <Grid RowDefinitions="Auto, Auto, *, Auto" Padding="24" RowSpacing="16">
+    <Grid RowDefinitions="Auto,*">
+        <ctrl:PageHeader Grid.Row="0" Ruta="ERP › Compras › Órdenes" Titulo="Nueva Orden de Compra" />
 
-        <!-- 1. Cabecera y Proveedor -->
-        <VerticalStackLayout Grid.Row="0" Spacing="8">
-            <Label Text="Generar Orden de Compra" Style="{StaticResource ErpTitle}" FontSize="24" />
-            <Label Text="Seleccione el proveedor al que desea realizar el pedido:" Style="{StaticResource ErpSubtitle}" />
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="24" Spacing="16">
 
-            <Border Style="{StaticResource ErpInputBox}" Margin="0,8,0,0">
-                <Picker Title="-- Seleccione Proveedor --" 
-                        ItemsSource="{Binding Proveedores}" 
-                        ItemDisplayBinding="{Binding RazonSocial}"
-                        SelectedItem="{Binding ProveedorSeleccionado}" 
-                        TextColor="{StaticResource ErpText}" 
-                        TitleColor="{StaticResource ErpMuted}" />
-            </Border>
-        </VerticalStackLayout>
+                <!-- Botones superiores -->
+                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="12">
+                    <Button Text="Volver a Órdenes" Style="{StaticResource ErpGhostButton}"
+                            HorizontalOptions="Start" Command="{Binding ComandoVolver}" />
+                    <Button Grid.Column="1" Text="Cargar Sugerencias de Reabastecimiento" 
+                            Style="{StaticResource ErpGhostButton}" TextColor="{StaticResource ErpPrimary}"
+                            BorderColor="{StaticResource ErpPrimary}"
+                            Command="{Binding ComandoCargarSugerencias}" />
+                </Grid>
 
-        <!-- 2. Agregar Productos -->
-        <Border Grid.Row="1" Style="{StaticResource ErpCard}" Padding="16">
-            <Grid ColumnDefinitions="*, 100, Auto" ColumnSpacing="12" VerticalOptions="Center">
+                <!-- 1. Cabecera y Proveedor -->
+                <Border Style="{StaticResource ErpCard}" Padding="18">
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="1. Proveedor o Laboratorio Destino" Style="{StaticResource ErpCardTitle}" />
+                        <Label Text="Seleccione el proveedor al que se enviará la orden de compra:" Style="{StaticResource ErpSubtitle}" />
 
-                <Border Grid.Column="0" Style="{StaticResource ErpInputBox}">
-                    <Picker Title="-- Seleccione Producto --" 
-                            ItemsSource="{Binding Productos}" 
-                            ItemDisplayBinding="{Binding DescripcionCompleta}"
-                            SelectedItem="{Binding ProductoSeleccionado}" 
-                            TextColor="{StaticResource ErpText}" 
-                            TitleColor="{StaticResource ErpMuted}" />
+                        <Border Style="{StaticResource ErpInputBox}">
+                            <Picker ItemsSource="{Binding Proveedores}" 
+                                    ItemDisplayBinding="{Binding RazonSocial}"
+                                    SelectedItem="{Binding ProveedorSeleccionado}" 
+                                    TextColor="{StaticResource ErpText}" 
+                                    BackgroundColor="Transparent"
+                                    VerticalOptions="Center" />
+                        </Border>
+                    </VerticalStackLayout>
                 </Border>
 
-                <Border Grid.Column="1" Style="{StaticResource ErpInputBox}">
-                    <Entry Text="{Binding CantidadFiltro}" Keyboard="Numeric" Placeholder="Cant." 
-                           Style="{StaticResource ErpEntry}" HorizontalTextAlignment="Center" />
-                </Border>
+                <!-- 2. Agregar Productos -->
+                <Border Style="{StaticResource ErpCard}" Padding="18">
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="2. Agregar Medicamentos / Insumos al Pedido" Style="{StaticResource ErpCardTitle}" />
 
-                <Button Grid.Column="2" Text="Agregar" Style="{StaticResource ErpPrimaryButton}" 
-                        Command="{Binding ComandoAgregarProducto}" HeightRequest="45" />
-            </Grid>
-        </Border>
+                        <Grid ColumnDefinitions="3*,110,140,Auto" ColumnSpacing="12" VerticalOptions="Center">
 
-        <!-- 3. Carrito de Compras -->
-        <Border Grid.Row="2" Style="{StaticResource ErpCard}" Padding="0">
-            <CollectionView ItemsSource="{Binding Carrito}">
-                <CollectionView.Header>
-                    <Grid ColumnDefinitions="*, 100, 100, 100, 50" Padding="16" BackgroundColor="{StaticResource ErpPrimarySoft}">
-                        <Label Grid.Column="0" Text="PRODUCTO" FontAttributes="Bold" FontSize="12" TextColor="{StaticResource ErpPrimary}"/>
-                        <Label Grid.Column="1" Text="CANTIDAD" FontAttributes="Bold" FontSize="12" HorizontalOptions="Center" TextColor="{StaticResource ErpPrimary}"/>
-                        <Label Grid.Column="2" Text="PRECIO U." FontAttributes="Bold" FontSize="12" HorizontalOptions="End" TextColor="{StaticResource ErpPrimary}"/>
-                        <Label Grid.Column="3" Text="SUBTOTAL" FontAttributes="Bold" FontSize="12" HorizontalOptions="End" TextColor="{StaticResource ErpPrimary}"/>
-                    </Grid>
-                </CollectionView.Header>
-                <CollectionView.ItemTemplate>
-                    <DataTemplate>
-                        <Grid ColumnDefinitions="*, 100, 100, 100, 50" Padding="16">
-                            <Label Grid.Column="0" Text="{Binding NombreProducto}" VerticalOptions="Center" TextColor="{StaticResource ErpText}"/>
-                            <Label Grid.Column="1" Text="{Binding Cantidad}" HorizontalOptions="Center" VerticalOptions="Center" TextColor="{StaticResource ErpText}"/>
-                            <Label Grid.Column="2" Text="{Binding PrecioUnitario, StringFormat='${0:N0}'}" HorizontalOptions="End" VerticalOptions="Center" TextColor="{StaticResource ErpText}"/>
-                            <Label Grid.Column="3" Text="{Binding Subtotal, StringFormat='${0:N0}'}" FontAttributes="Bold" HorizontalOptions="End" VerticalOptions="Center" TextColor="{StaticResource ErpText}"/>
+                            <VerticalStackLayout Spacing="4">
+                                <Label Text="Producto / Medicamento" Style="{StaticResource ErpCaption}" />
+                                <Border Style="{StaticResource ErpInputBox}">
+                                    <Picker ItemsSource="{Binding Productos}" 
+                                            ItemDisplayBinding="{Binding DescripcionCompleta}"
+                                            SelectedItem="{Binding ProductoSeleccionado}" 
+                                            TextColor="{StaticResource ErpText}" 
+                                            BackgroundColor="Transparent"
+                                            VerticalOptions="Center" />
+                                </Border>
+                            </VerticalStackLayout>
 
-                            <Button Grid.Column="4" Text="X" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ComandoEliminarProducto}" 
-                                    CommandParameter="{Binding .}" Style="{StaticResource ErpGhostButton}" TextColor="{StaticResource ErpDanger}" FontAttributes="Bold" Padding="0" HeightRequest="30"/>
+                            <VerticalStackLayout Grid.Column="1" Spacing="4">
+                                <Label Text="Cantidad" Style="{StaticResource ErpCaption}" />
+                                <Border Style="{StaticResource ErpInputBox}">
+                                    <Entry Text="{Binding CantidadFiltro}" Keyboard="Numeric" Placeholder="10" 
+                                           Style="{StaticResource ErpEntry}" HorizontalTextAlignment="Center" />
+                                </Border>
+                            </VerticalStackLayout>
+
+                            <VerticalStackLayout Grid.Column="2" Spacing="4">
+                                <Label Text="Costo Pactado ($)" Style="{StaticResource ErpCaption}" />
+                                <Border Style="{StaticResource ErpInputBox}">
+                                    <Entry Text="{Binding CostoPactadoTexto}" Keyboard="Numeric" Placeholder="Costo" 
+                                           Style="{StaticResource ErpEntry}" HorizontalTextAlignment="End" />
+                                </Border>
+                            </VerticalStackLayout>
+
+                            <Button Grid.Column="3" Text="Agregar" Style="{StaticResource ErpPrimaryButton}" 
+                                    Command="{Binding ComandoAgregarProducto}" HeightRequest="46" VerticalOptions="End" />
                         </Grid>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
-        </Border>
+                    </VerticalStackLayout>
+                </Border>
 
-        <!-- 4. Resumen y Guardar -->
-        <Border Grid.Row="3" Style="{StaticResource ErpCard}" Padding="20">
-            <Grid ColumnDefinitions="*, Auto">
-                <VerticalStackLayout Grid.Column="1" Spacing="8" WidthRequest="250">
-                    <Grid ColumnDefinitions="*, *">
-                        <Label Grid.Column="0" Text="Subtotal:" HorizontalOptions="End" TextColor="{StaticResource ErpMuted}"/>
-                        <Label Grid.Column="1" Text="{Binding Subtotal, StringFormat='${0:N0}'}" HorizontalOptions="End" FontAttributes="Bold" TextColor="{StaticResource ErpText}"/>
-                    </Grid>
-                    <Grid ColumnDefinitions="*, *">
-                        <Label Grid.Column="0" Text="IVA (19%):" HorizontalOptions="End" TextColor="{StaticResource ErpMuted}"/>
-                        <Label Grid.Column="1" Text="{Binding Iva, StringFormat='${0:N0}'}" HorizontalOptions="End" FontAttributes="Bold" TextColor="{StaticResource ErpText}"/>
-                    </Grid>
-                    <BoxView HeightRequest="1" Color="{StaticResource ErpMuted}" Opacity="0.2" Margin="0,5"/>
-                    <Grid ColumnDefinitions="*, *">
-                        <Label Grid.Column="0" Text="TOTAL:" HorizontalOptions="End" FontSize="18" FontAttributes="Bold" TextColor="{StaticResource ErpText}"/>
-                        <Label Grid.Column="1" Text="{Binding Total, StringFormat='${0:N0}'}" HorizontalOptions="End" FontSize="18" FontAttributes="Bold" TextColor="{StaticResource ErpPrimary}"/>
-                    </Grid>
+                <!-- 3. Carrito de Compras -->
+                <Border Style="{StaticResource ErpCard}" Padding="18">
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="3. Detalle de Productos a Solicitar" Style="{StaticResource ErpCardTitle}" />
 
-                    <Button Text="Guardar Orden de Compra" Style="{StaticResource ErpPrimaryButton}" 
-                            Command="{Binding ComandoGuardarOrden}" Margin="0,15,0,0" HeightRequest="50"/>
-                </VerticalStackLayout>
-            </Grid>
-        </Border>
+                        <!-- Encabezados -->
+                        <Grid ColumnDefinitions="*, 100, 120, 130, 60" Padding="12,8" BackgroundColor="{StaticResource ErpPrimarySoft}">
+                            <Label Grid.Column="0" Text="MEDICAMENTO / SKU" FontAttributes="Bold" FontSize="11" TextColor="{StaticResource ErpPrimary}"/>
+                            <Label Grid.Column="1" Text="CANTIDAD" FontAttributes="Bold" FontSize="11" HorizontalOptions="Center" TextColor="{StaticResource ErpPrimary}"/>
+                            <Label Grid.Column="2" Text="COSTO PACTADO" FontAttributes="Bold" FontSize="11" HorizontalOptions="End" TextColor="{StaticResource ErpPrimary}"/>
+                            <Label Grid.Column="3" Text="SUBTOTAL" FontAttributes="Bold" FontSize="11" HorizontalOptions="End" TextColor="{StaticResource ErpPrimary}"/>
+                            <Label Grid.Column="4" Text="ACCIÓN" FontAttributes="Bold" FontSize="11" HorizontalOptions="Center" TextColor="{StaticResource ErpPrimary}"/>
+                        </Grid>
 
+                        <VerticalStackLayout BindableLayout.ItemsSource="{Binding Carrito}" Spacing="6">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="m:CarritoItem">
+                                    <Border BackgroundColor="#F8FAFC" Stroke="{StaticResource ErpBorder}" StrokeShape="RoundRectangle 8" Padding="12,10">
+                                        <Grid ColumnDefinitions="*, 100, 120, 130, 60">
+                                            <VerticalStackLayout Grid.Column="0" VerticalOptions="Center">
+                                                <Label Text="{Binding NombreProducto}" FontSize="13" FontAttributes="Bold" TextColor="{StaticResource ErpText}"/>
+                                                <Label Text="{Binding Sku}" FontSize="11" TextColor="{StaticResource ErpMuted}"/>
+                                            </VerticalStackLayout>
+                                            <Label Grid.Column="1" Text="{Binding Cantidad, StringFormat='{0} un.'}" HorizontalOptions="Center" VerticalOptions="Center" TextColor="{StaticResource ErpText}"/>
+                                            <Label Grid.Column="2" Text="{Binding PrecioUnitario, StringFormat='${0:N0}'}" HorizontalOptions="End" VerticalOptions="Center" TextColor="{StaticResource ErpText}"/>
+                                            <Label Grid.Column="3" Text="{Binding Subtotal, StringFormat='${0:N0}'}" FontAttributes="Bold" HorizontalOptions="End" VerticalOptions="Center" TextColor="{StaticResource ErpText}"/>
+
+                                            <Button Grid.Column="4" Text="Quitar" Command="{Binding Source={RelativeSource AncestorType={x:Type vm:NuevaOrdenViewModel}}, Path=ComandoEliminarProducto}" 
+                                                    CommandParameter="{Binding .}" Style="{StaticResource ErpGhostButton}" TextColor="{StaticResource ErpDanger}"
+                                                    Padding="0" HeightRequest="30" WidthRequest="56" FontSize="11" HorizontalOptions="Center" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- 4. Resumen y Guardar -->
+                <Border Style="{StaticResource ErpCard}" Padding="20">
+                    <Grid ColumnDefinitions="*, 340" ColumnSpacing="20">
+
+                        <!-- Alerta de flujo de aprobación jerárquica -->
+                        <Border Grid.Column="0" BackgroundColor="#FFF7ED" Stroke="#FDBA74" StrokeShape="RoundRectangle 8" Padding="16"
+                                IsVisible="{Binding SuperaLimitePresupuestario}" VerticalOptions="Center">
+                            <VerticalStackLayout Spacing="6">
+                                <Label Text="Control Presupuestario Activo" FontAttributes="Bold" FontSize="13" TextColor="#C2410C" />
+                                <Label Text="Esta orden excede el límite de gasto regular ($1.000.000). Al emitirse, quedará retenida en estado 'Pendiente de Autorización' hasta la aprobación explícita de Gerencia o Administración General."
+                                       FontSize="12" TextColor="#9A3412" />
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <VerticalStackLayout Grid.Column="1" Spacing="8">
+                            <Grid ColumnDefinitions="*, *">
+                                <Label Grid.Column="0" Text="Subtotal neto:" HorizontalOptions="End" TextColor="{StaticResource ErpMuted}"/>
+                                <Label Grid.Column="1" Text="{Binding SubtotalTexto}" HorizontalOptions="End" FontAttributes="Bold" TextColor="{StaticResource ErpText}"/>
+                            </Grid>
+                            <Grid ColumnDefinitions="*, *">
+                                <Label Grid.Column="0" Text="IVA (19%):" HorizontalOptions="End" TextColor="{StaticResource ErpMuted}"/>
+                                <Label Grid.Column="1" Text="{Binding IvaTexto}" HorizontalOptions="End" FontAttributes="Bold" TextColor="{StaticResource ErpText}"/>
+                            </Grid>
+                            <BoxView HeightRequest="1" Color="{StaticResource ErpBorder}" Margin="0,5"/>
+                            <Grid ColumnDefinitions="*, *">
+                                <Label Grid.Column="0" Text="TOTAL ORDEN:" HorizontalOptions="End" FontSize="16" FontAttributes="Bold" TextColor="{StaticResource ErpText}"/>
+                                <Label Grid.Column="1" Text="{Binding TotalTexto}" HorizontalOptions="End" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource ErpPrimary}"/>
+                            </Grid>
+
+                            <Button Text="Emitir Orden de Compra" Style="{StaticResource ErpPrimaryButton}" 
+                                    Command="{Binding ComandoGuardarOrden}" Margin="0,15,0,0" HeightRequest="48"/>
+                        </VerticalStackLayout>
+                    </Grid>
+                </Border>
+
+            </VerticalStackLayout>
+        </ScrollView>
     </Grid>
 </ContentPage>

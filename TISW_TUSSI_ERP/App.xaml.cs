@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using TISW_TUSSI_ERP.ViewModels.Auth;
+﻿using TISW_TUSSI_ERP.ViewModels.Auth;
 
 namespace TISW_TUSSI_ERP
 {
@@ -8,7 +7,8 @@ namespace TISW_TUSSI_ERP
         public App(LoginViewModel loginViewModel)
         {
             InitializeComponent();
-            Application.Current.UserAppTheme = AppTheme.Light;
+            // Fuerza el tema claro en toda la app sin importar cómo esté configurado el sistema del usuario
+            Application.Current!.UserAppTheme = AppTheme.Light;
 
             // Arranca la aplicación directamente en la pantalla de Login
             MainPage = new Views.Auth.LoginPage(loginViewModel);

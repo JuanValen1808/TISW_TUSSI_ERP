@@ -8,13 +8,10 @@ namespace TISW_TUSSI_ERP;
 
 public partial class AppShell : Shell
 {
-    private record ItemMenu(string Icono, string Titulo, string Ruta);
+    private record ItemMenu(string Icono, string Titulo, string Ruta, string Seccion);
     private record SeccionMenu(string Nombre, ItemMenu[] Items);
 
-    // Rutas que ya tienen pantalla. Al crear una nueva pantalla:
-    //  1) agrégala como <ShellContent Route="..."> en AppShell.xaml
-    //  2) añade su ruta aquí
-    //  3) regístrala en MauiProgram.cs
+    // Rutas implementadas en el portal
     private static readonly HashSet<string> Implementadas = new()
     {
         "DashboardPage",
@@ -24,7 +21,10 @@ public partial class AppShell : Shell
         "ConveniosPage",
         "RankingVentasPage",
         "ProveedoresPage",
+        "RecepcionFacturasPage",
         "ReporteComprasPage",
+        "ReporteCumplimientoPage",
+        "ReporteHistorialPreciosPage",
         "PlanCuentasPage",
         "LibroDiarioPage",
         "LibroMayorPage",
@@ -33,6 +33,10 @@ public partial class AppShell : Shell
         "MayorCentralizadoPage",
         "CuentasPorCobrarPage",
         "CuentasPorPagarPage",
+        "AntiguedadSaldosPage",
+        "CentralizadorImpuestosPage",
+        "BalanceGeneralPage",
+        "FlujoCajaPage",
         "UsuariosPage",
         "PerfilesPage",
         "AccesosPage"
@@ -40,44 +44,53 @@ public partial class AppShell : Shell
 
     private static readonly SeccionMenu[] Secciones =
     {
-        new("PRINCIPAL", new[] { new ItemMenu("", "Dashboard", "DashboardPage") }),
+        new("PRINCIPAL", new[]
+        {
+            new ItemMenu("", "Dashboard", "DashboardPage", "PRINCIPAL")
+        }),
         new("OPERACIÓN", new[]
         {
-            new ItemMenu("", "Punto de Venta", "PosPage"),
-            new ItemMenu("", "Control de Caja", "CajaPage"),
-            new ItemMenu("", "Clientes", "ClientesPage"),
-            new ItemMenu("", "Ranking de Ventas", "RankingVentasPage"),
+            new ItemMenu("", "Punto de Venta", "PosPage", "OPERACIÓN"),
+            new ItemMenu("", "Control de Caja", "CajaPage", "OPERACIÓN"),
+            new ItemMenu("", "Clientes", "ClientesPage", "OPERACIÓN"),
+            new ItemMenu("", "Convenios", "ConveniosPage", "OPERACIÓN"),
+            new ItemMenu("", "Ranking de Ventas", "RankingVentasPage", "OPERACIÓN"),
         }),
         new("INVENTARIOS", new[]
         {
-            new ItemMenu("", "Catálogo SKUs", "CatalogoPage"),
-            new ItemMenu("", "Kardex y Lotes", "KardexPage"),
-            new ItemMenu("", "Mermas", "MermasPage"),
+            new ItemMenu("", "Catálogo SKUs", "CatalogoPage", "INVENTARIOS"),
+            new ItemMenu("", "Kardex y Lotes", "KardexPage", "INVENTARIOS"),
+            new ItemMenu("", "Mermas", "MermasPage", "INVENTARIOS"),
         }),
         new("COMPRAS", new[]
         {
-            new ItemMenu("", "Proveedores", "ProveedoresPage"),
-            new ItemMenu("", "Órdenes de Compra", "OrdenesCompraPage"),
-            new ItemMenu("", "Recepción Facturas", "RecepcionPage"),
-            new ItemMenu("", "Reporte de Compras", "ReporteComprasPage"),
+            new ItemMenu("", "Proveedores", "ProveedoresPage", "COMPRAS"),
+            new ItemMenu("", "Órdenes de Compra", "OrdenesCompraPage", "COMPRAS"),
+            new ItemMenu("", "Recepción Facturas", "RecepcionFacturasPage", "COMPRAS"),
+            new ItemMenu("", "Reporte Compras Lab.", "ReporteComprasPage", "COMPRAS"),
+            new ItemMenu("", "Reporte Cumplimiento", "ReporteCumplimientoPage", "COMPRAS"),
+            new ItemMenu("", "Historial de Precios", "ReporteHistorialPreciosPage", "COMPRAS"),
         }),
         new("CONTABILIDAD", new[]
         {
-            new ItemMenu("", "Libro Diario", "LibroDiarioPage"),
-            new ItemMenu("", "Plan de Cuentas", "PlanCuentasPage"),
-            new ItemMenu("", "Libro Mayor", "LibroMayorPage"),
-            new ItemMenu("", "Mayor Centralizado", "MayorCentralizadoPage"),
-            new ItemMenu("", "Balance 8 Columnas", "BalanceOchoColumnasPage"),
-            new ItemMenu("", "Estado de Resultados", "EstadoResultadosPage"),
-            new ItemMenu("", "Cuentas por Cobrar", "CuentasPorCobrarPage"),
-            new ItemMenu("", "Cuentas por Pagar", "CuentasPorPagarPage"),
+            new ItemMenu("", "Plan de Cuentas (RF-01)", "PlanCuentasPage", "CONTABILIDAD"),
+            new ItemMenu("", "Libro Diario (RF-02)", "LibroDiarioPage", "CONTABILIDAD"),
+            new ItemMenu("", "Libro Mayor (RF-03)", "LibroMayorPage", "CONTABILIDAD"),
+            new ItemMenu("", "Balance General (RF-03)", "BalanceGeneralPage", "CONTABILIDAD"),
+            new ItemMenu("", "Balance 8 Columnas (RF-04)", "BalanceOchoColumnasPage", "CONTABILIDAD"),
+            new ItemMenu("", "Estado de Resultados (RF-05)", "EstadoResultadosPage", "CONTABILIDAD"),
+            new ItemMenu("", "Mayor Centralizado (RF-06)", "MayorCentralizadoPage", "CONTABILIDAD"),
+            new ItemMenu("", "Cuentas por Cobrar (RF-07)", "CuentasPorCobrarPage", "CONTABILIDAD"),
+            new ItemMenu("", "Cuentas por Pagar (RF-07)", "CuentasPorPagarPage", "CONTABILIDAD"),
+            new ItemMenu("", "Antigüedad de Saldos (RF-08)", "AntiguedadSaldosPage", "CONTABILIDAD"),
+            new ItemMenu("", "Impuestos y F29 SII (RF-09)", "CentralizadorImpuestosPage", "CONTABILIDAD"),
+            new ItemMenu("", "Flujo de Caja", "FlujoCajaPage", "CONTABILIDAD"),
         }),
         new("ADMINISTRACIÓN", new[]
         {
-            new ItemMenu("", "Usuarios", "UsuariosPage"),
-            new ItemMenu("", "Perfiles", "PerfilesPage"),
-            new ItemMenu("", "Accesos", "AccesosPage"),
-            new ItemMenu("", "Configuración", "ConfigPage"),
+            new ItemMenu("", "Usuarios (RF-POR-02)", "UsuariosPage", "ADMINISTRACIÓN"),
+            new ItemMenu("", "Perfiles", "PerfilesPage", "ADMINISTRACIÓN"),
+            new ItemMenu("", "Accesos RBAC (RF-POR-03)", "AccesosPage", "ADMINISTRACIÓN"),
         }),
     };
 
@@ -87,6 +100,7 @@ public partial class AppShell : Shell
     {
         InitializeComponent();
         Routing.RegisterRoute(nameof(Views.Compras.NuevaOrdenPage), typeof(Views.Compras.NuevaOrdenPage));
+        Routing.RegisterRoute(nameof(Views.Compras.RecepcionFacturasPage), typeof(Views.Compras.RecepcionFacturasPage));
         ConstruirMenu();
 
         var u = Sesion.UsuarioActual;
@@ -104,21 +118,10 @@ public partial class AppShell : Shell
 
     private void ConstruirMenu()
     {
-        var rol = Sesion.UsuarioActual?.NombreRol ?? "";
-
         foreach (var seccion in Secciones)
         {
-            // Control de Accesos (RBAC)
-            if (rol == "Contador" && seccion.Nombre != "PRINCIPAL" && seccion.Nombre != "CONTABILIDAD")
-                continue;
-
-            if (rol == "Vendedor" && seccion.Nombre != "PRINCIPAL" && seccion.Nombre != "OPERACIÓN" && seccion.Nombre != "INVENTARIOS")
-                continue;
-
-            if (rol == "Bodega" && seccion.Nombre != "PRINCIPAL" && seccion.Nombre != "INVENTARIOS" && seccion.Nombre != "COMPRAS")
-                continue;
-
-            if (rol == "Comprador" && seccion.Nombre != "PRINCIPAL" && seccion.Nombre != "COMPRAS")
+            // Despliegue dinámico y Control de Accesos RBAC (RF-POR-01 / RF-POR-03)
+            if (!Sesion.PuedeAccederSeccion(seccion.Nombre))
                 continue;
 
             Menu.Add(new Label
@@ -158,6 +161,15 @@ public partial class AppShell : Shell
 
     private async Task Navegar(ItemMenu item)
     {
+        // Middleware RBAC en navegación (RF-POR-03)
+        if (!Sesion.PuedeAccederSeccion(item.Seccion))
+        {
+            await DisplayAlertAsync("Acceso Restringido (RBAC)",
+                $"Tu perfil actual ({Sesion.UsuarioActual?.NombreRol ?? "Invitado"}) no posee permisos para acceder al módulo '{item.Seccion}'.",
+                "Entendido");
+            return;
+        }
+
         if (Implementadas.Contains(item.Ruta))
             await GoToAsync($"//{item.Ruta}");
         else
@@ -190,5 +202,3 @@ public partial class AppShell : Shell
         }
     }
 }
-
-    

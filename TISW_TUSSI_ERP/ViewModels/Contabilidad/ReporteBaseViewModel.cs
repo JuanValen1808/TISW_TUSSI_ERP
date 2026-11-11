@@ -34,6 +34,7 @@ public abstract class ReporteBaseViewModel : BaseViewModel
     public string GeneradoTexto { get => _generadoTexto; set => SetProperty(ref _generadoTexto, value); }
 
     public ICommand GenerarCommand { get; }
+    public ICommand CargarCommand => GenerarCommand;
     public ICommand ExportarPdfCommand { get; }
     public ICommand ExportarCsvCommand { get; }
 

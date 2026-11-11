@@ -1,8 +1,8 @@
-﻿using TISW_TUSSI_ERP.Helpers;
+using TISW_TUSSI_ERP.Helpers;
 
 namespace TISW_TUSSI_ERP.Models.Compras;
 
-// Proveedor / laboratorio (RF-COM-01)
+// Proveedor / laboratorio farmacéutico
 public class Proveedor
 {
     public int Id { get; set; }

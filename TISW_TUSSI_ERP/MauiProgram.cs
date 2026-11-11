@@ -58,6 +58,12 @@ namespace TISW_TUSSI_ERP
             builder.Services.AddTransient<ReporteComprasPage>();
             builder.Services.AddTransient<NuevaOrdenViewModel>();
             builder.Services.AddTransient<NuevaOrdenPage>();
+            builder.Services.AddTransient<RecepcionFacturasViewModel>();
+            builder.Services.AddTransient<RecepcionFacturasPage>();
+            builder.Services.AddTransient<ReporteCumplimientoViewModel>();
+            builder.Services.AddTransient<ReporteCumplimientoPage>();
+            builder.Services.AddTransient<ReporteHistorialPreciosViewModel>();
+            builder.Services.AddTransient<ReporteHistorialPreciosPage>();
 
             // Ventas
             builder.Services.AddTransient<PosViewModel>();
@@ -69,8 +75,10 @@ namespace TISW_TUSSI_ERP
             builder.Services.AddTransient<RankingVentasPage>();
             builder.Services.AddTransient<ConveniosViewModel>();
             builder.Services.AddTransient<ConveniosPage>();
-            // Contabilidad
+
+            // Contabilidad (RF-CON-01 a RF-CON-09)
             builder.Services.AddSingleton<ContabilidadService>();
+            builder.Services.AddSingleton<ReportesContablesService>();
             builder.Services.AddTransient<PlanCuentasViewModel>();
             builder.Services.AddTransient<PlanCuentasPage>();
             builder.Services.AddTransient<LibroDiarioViewModel>();
@@ -87,6 +95,15 @@ namespace TISW_TUSSI_ERP
             builder.Services.AddTransient<CuentasPorCobrarPage>();
             builder.Services.AddTransient<CuentasPorPagarViewModel>();
             builder.Services.AddTransient<CuentasPorPagarPage>();
+            builder.Services.AddTransient<AntiguedadSaldosViewModel>();
+            builder.Services.AddTransient<AntiguedadSaldosPage>();
+            builder.Services.AddTransient<CentralizadorImpuestosViewModel>();
+            builder.Services.AddTransient<CentralizadorImpuestosPage>();
+            builder.Services.AddTransient<BalanceGeneralViewModel>();
+            builder.Services.AddTransient<BalanceGeneralPage>();
+            builder.Services.AddTransient<FlujoCajaViewModel>();
+            builder.Services.AddTransient<FlujoCajaPage>();
+
 #if WINDOWS
             Microsoft.Maui.Handlers.EntryHandler.Mapper.AppendToMapping("Borderless", (handler, view) =>
             {
@@ -105,7 +122,7 @@ namespace TISW_TUSSI_ERP
             });
 #endif
 
-            // Administración / Seguridad (Usuarios, Perfiles, Accesos)
+            // Administración / Seguridad (Usuarios, Perfiles, Accesos - RF-POR-02 y RF-POR-03)
             builder.Services.AddSingleton<SeguridadService>();
             builder.Services.AddTransient<TISW_TUSSI_ERP.ViewModels.Seguridad.UsuariosViewModel>();
             builder.Services.AddTransient<TISW_TUSSI_ERP.Views.Admin.UsuariosPage>();

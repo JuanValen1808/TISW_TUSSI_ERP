@@ -17,7 +17,7 @@ public partial class EstadoResultadosPage : ContentPage
     protected override void OnAppearing()
     {
         base.OnAppearing();
-        if (_viewModel.Ingresos.Count == 0 && _viewModel.Gastos.Count == 0)
+        if (_viewModel.Ingresos.Count == 0 && _viewModel.GastosOperativos.Count == 0)
         {
             _viewModel.CargarEstadoResultadosCommand.Execute(null);
         }

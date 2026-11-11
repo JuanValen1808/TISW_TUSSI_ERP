@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:TISW_TUSSI_ERP.ViewModels.Compras"
+             xmlns:m="clr-namespace:TISW_TUSSI_ERP.Models.Compras"
+             xmlns:ctrl="clr-namespace:TISW_TUSSI_ERP.Views.Shared"
+             x:Class="TISW_TUSSI_ERP.Views.Compras.ReporteCumplimientoPage"
+             x:DataType="vm:ReporteCumplimientoViewModel"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource ErpBg}"
+             Title="Cumplimiento de Órdenes y SLA">
+
+    <Grid RowDefinitions="Auto,*">
+        <ctrl:PageHeader Grid.Row="0" Ruta="ERP › Compras › Reportes" Titulo="Cumplimiento y Nivel de Servicio (SLA)" />
+
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="24" Spacing="16">
+
+                <Border IsVisible="{Binding HayError}" BackgroundColor="#FEE2E2" Stroke="#FCA5A5" StrokeShape="RoundRectangle 8" Padding="12">
+                    <Label Text="{Binding MensajeError}" TextColor="#B91C1C" FontSize="12" />
+                </Border>
+
+                <!-- Título y acción de exportación -->
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="Cumplimiento de Órdenes y Nivel de Servicio (SLA)" Style="{StaticResource ErpTitle}" />
+                        <Label Text="Monitoreo del porcentaje de entrega a tiempo y análisis de discrepancias entre cantidades solicitadas y recibidas."
+                               Style="{StaticResource ErpSubtitle}" />
+                    </VerticalStackLayout>
+                    <Button Grid.Column="1" Text="Exportar CSV" Style="{StaticResource ErpGhostButton}"
+                            Command="{Binding ComandoExportarCsv}" VerticalOptions="Center" />
+                </Grid>
+
+                <!-- Filtros -->
+                <Border Style="{StaticResource ErpCard}" Padding="16">
+                    <Grid ColumnDefinitions="Auto, Auto, *, *, Auto" ColumnSpacing="14" VerticalOptions="Center">
+
+                        <!-- Fecha Desde -->
+                        <VerticalStackLayout Grid.Column="0" Spacing="4">
+                            <Label Text="Desde" Style="{StaticResource ErpCaption}" />
+                            <Border Style="{StaticResource ErpInputBox}" WidthRequest="140">
+                                <DatePicker Date="{Binding FechaDesde}" Format="dd/MM/yyyy" TextColor="{StaticResource ErpText}" VerticalOptions="Center" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <!-- Fecha Hasta -->
+                        <VerticalStackLayout Grid.Column="1" Spacing="4">
+                            <Label Text="Hasta" Style="{StaticResource ErpCaption}" />
+                            <Border Style="{StaticResource ErpInputBox}" WidthRequest="140">
+                                <DatePicker Date="{Binding FechaHasta}" Format="dd/MM/yyyy" TextColor="{StaticResource ErpText}" VerticalOptions="Center" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <!-- Proveedor -->
+                        <VerticalStackLayout Grid.Column="2" Spacing="4">
+                            <Label Text="Proveedor / Laboratorio" Style="{StaticResource ErpCaption}" />
+                            <Border Style="{StaticResource ErpInputBox}">
+                                <Picker ItemsSource="{Binding Proveedores}"
+                                        ItemDisplayBinding="{Binding RazonSocial}"
+                                        SelectedItem="{Binding ProveedorFiltro}"
+                                        TextColor="{StaticResource ErpText}"
+                                        BackgroundColor="Transparent"
+                                        VerticalOptions="Center" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <!-- Estado OC -->
+                        <VerticalStackLayout Grid.Column="3" Spacing="4">
+                            <Label Text="Estado de la Orden" Style="{StaticResource ErpCaption}" />
+                            <Border Style="{StaticResource ErpInputBox}">
+                                <Picker SelectedItem="{Binding EstadoFiltro}" TextColor="{StaticResource ErpText}"
+                                        BackgroundColor="Transparent"
+                                        VerticalOptions="Center">
+                                    <Picker.ItemsSource>
+                                        <x:Array Type="{x:Type x:String}">
+                                            <x:String>TODAS</x:String>
+                                            <x:String>RECIBIDA</x:String>
+                                            <x:String>PARCIAL</x:String>
+                                            <x:String>EMITIDA</x:String>
+                                            <x:String>ANULADA</x:String>
+                                        </x:Array>
+                                    </Picker.ItemsSource>
+                                </Picker>
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <!-- Botones -->
+                        <HorizontalStackLayout Grid.Column="4" Spacing="10" VerticalOptions="End">
+                            <Button Text="Limpiar" Command="{Binding ComandoLimpiarFiltros}" Style="{StaticResource ErpGhostButton}" HeightRequest="46"/>
+                            <Button Text="Filtrar" Command="{Binding ComandoGenerar}" Style="{StaticResource ErpPrimaryButton}" HeightRequest="46"/>
+                        </HorizontalStackLayout>
+                    </Grid>
+                </Border>
+
+                <ActivityIndicator IsRunning="{Binding EstaOcupado}" IsVisible="{Binding EstaOcupado}" Color="{StaticResource ErpPrimary}" />
+
+                <!-- KPIs de cumplimiento -->
+                <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="16">
+                    <Border Grid.Column="0" Style="{StaticResource ErpCard}">
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="TASA GLOBAL CUMPLIMIENTO" Style="{StaticResource ErpCaption}" />
+                            <Label Text="{Binding Resumen.TasaCumplimientoTexto}" Style="{StaticResource ErpKpi}" TextColor="{StaticResource ErpSuccess}" />
+                        </VerticalStackLayout>
+                    </Border>
+                    <Border Grid.Column="1" Style="{StaticResource ErpCard}">
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="ÓRDENES LIQUIDADAS (100%)" Style="{StaticResource ErpCaption}" />
+                            <Label Text="{Binding Resumen.Liquidadas, StringFormat='{0} órdenes'}" Style="{StaticResource ErpKpi}" />
+                        </VerticalStackLayout>
+                    </Border>
+                    <Border Grid.Column="2" Style="{StaticResource ErpCard}">
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="ÓRDENES EN PROCESO" Style="{StaticResource ErpCaption}" />
+                            <Label Text="{Binding Resumen.Parciales, StringFormat='{0} parciales'}" Style="{StaticResource ErpKpi}" TextColor="{StaticResource ErpWarning}" />
+                        </VerticalStackLayout>
+                    </Border>
+                    <Border Grid.Column="3" Style="{StaticResource ErpCard}">
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="UNIDADES RECIBIDAS / PEDIDAS" Style="{StaticResource ErpCaption}" />
+                            <Label Text="{Binding Resumen.TotalUnidadesRecibidas, StringFormat='{0} un.'}" Style="{StaticResource ErpKpi}" />
+                        </VerticalStackLayout>
+                    </Border>
+                </Grid>
+
+                <!-- Tabla detallada de cumplimiento -->
+                <Border Style="{StaticResource ErpCard}" Padding="18">
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="No se encontraron órdenes de compra para los filtros seleccionados."
+                               IsVisible="{Binding SinResultados}" Style="{StaticResource ErpSubtitle}"
+                               HorizontalOptions="Center" Margin="0,16" />
+
+                        <!-- Cabecera de la tabla -->
+                        <Grid ColumnDefinitions="1.2*,2*,1*,1*,1*,1.4*,1.6*,1.2*" Padding="12,8" BackgroundColor="{StaticResource ErpPrimarySoft}">
+                            <Label Text="N° ORDEN / FECHA" Style="{StaticResource ErpCaption}" TextColor="{StaticResource ErpPrimary}" />
+                            <Label Grid.Column="1" Text="PROVEEDOR" Style="{StaticResource ErpCaption}" TextColor="{StaticResource ErpPrimary}" />
+                            <Label Grid.Column="2" Text="ESTADO" Style="{StaticResource ErpCaption}" HorizontalTextAlignment="Center" TextColor="{StaticResource ErpPrimary}" />
+                            <Label Grid.Column="3" Text="PEDIDO" Style="{StaticResource ErpCaption}" HorizontalTextAlignment="End" TextColor="{StaticResource ErpPrimary}" />
+                            <Label Grid.Column="4" Text="RECIBIDO" Style="{StaticResource ErpCaption}" HorizontalTextAlignment="End" TextColor="{StaticResource ErpPrimary}" />
+                            <Label Grid.Column="5" Text="CUMPLIMIENTO" Style="{StaticResource ErpCaption}" HorizontalTextAlignment="Center" TextColor="{StaticResource ErpPrimary}" />
+                            <Label Grid.Column="6" Text="NIVEL DE SERVICIO (SLA)" Style="{StaticResource ErpCaption}" HorizontalTextAlignment="Center" TextColor="{StaticResource ErpPrimary}" />
+                            <Label Grid.Column="7" Text="TOTAL ($)" Style="{StaticResource ErpCaption}" HorizontalTextAlignment="End" TextColor="{StaticResource ErpPrimary}" />
+                        </Grid>
+
+                        <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Items}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="m:ItemCumplimientoOrden">
+                                    <Border BackgroundColor="#F8FAFC" Stroke="{StaticResource ErpBorder}" StrokeShape="RoundRectangle 8" Padding="12,10">
+                                        <Grid ColumnDefinitions="1.2*,2*,1*,1*,1*,1.4*,1.6*,1.2*" VerticalOptions="Center">
+                                            
+                                            <!-- N° OC / Fecha -->
+                                            <VerticalStackLayout Grid.Column="0" VerticalOptions="Center">
+                                                <Label Text="{Binding NumeroOc}" FontSize="12" FontAttributes="Bold" TextColor="{StaticResource ErpText}" />
+                                                <Label Text="{Binding FechaEmisionTexto}" FontSize="10" TextColor="{StaticResource ErpMuted}" />
+                                            </VerticalStackLayout>
+
+                                            <!-- Proveedor -->
+                                            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                                                <Label Text="{Binding Proveedor}" FontSize="12" FontAttributes="Bold" TextColor="{StaticResource ErpText}" LineBreakMode="TailTruncation" />
+                                                <Label Text="{Binding RutProveedor, StringFormat='RUT {0}'}" FontSize="10" TextColor="{StaticResource ErpMuted}" />
+                                            </VerticalStackLayout>
+
+                                            <!-- Estado -->
+                                            <Label Grid.Column="2" Text="{Binding Estado}" FontSize="11" FontAttributes="Bold"
+                                                   TextColor="{StaticResource ErpText}" HorizontalTextAlignment="Center" VerticalOptions="Center" />
+
+                                            <!-- Pedido -->
+                                            <Label Grid.Column="3" Text="{Binding TotalSolicitado, StringFormat='{0} un.'}"
+                                                   Style="{StaticResource ErpBody}" HorizontalTextAlignment="End" />
+
+                                            <!-- Recibido -->
+                                            <Label Grid.Column="4" Text="{Binding TotalRecibido, StringFormat='{0} un.'}"
+                                                   Style="{StaticResource ErpBody}" FontAttributes="Bold" HorizontalTextAlignment="End" />
+
+                                            <!-- Progreso cumplimiento -->
+                                            <VerticalStackLayout Grid.Column="5" HorizontalOptions="Center" VerticalOptions="Center" Spacing="2">
+                                                <Label Text="{Binding PorcentajeTexto}" FontSize="11" FontAttributes="Bold"
+                                                       TextColor="{Binding NivelServicioColor}" HorizontalTextAlignment="Center" />
+                                                <ProgressBar Progress="{Binding PorcentajeCumplimiento}" ProgressColor="{Binding NivelServicioColor}" WidthRequest="80" />
+                                            </VerticalStackLayout>
+
+                                            <!-- Nivel de Servicio (SLA) -->
+                                            <Border Grid.Column="6" HorizontalOptions="Center" VerticalOptions="Center"
+                                                    BackgroundColor="{Binding NivelServicioFondo}"
+                                                    Stroke="{Binding NivelServicioBorde}"
+                                                    StrokeThickness="1" StrokeShape="RoundRectangle 8" Padding="10,4">
+                                                <Label Text="{Binding NivelServicio}" FontSize="10" FontAttributes="Bold"
+                                                       TextColor="{Binding NivelServicioTextoColor}" HorizontalTextAlignment="Center" />
+                                            </Border>
+
+                                            <!-- Monto Total -->
+                                            <Label Grid.Column="7" Text="{Binding MontoTotalTexto}" Style="{StaticResource ErpBody}"
+                                                   FontAttributes="Bold" HorizontalTextAlignment="End" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
+
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>
+

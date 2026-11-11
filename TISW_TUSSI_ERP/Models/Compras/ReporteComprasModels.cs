@@ -1,8 +1,8 @@
-﻿using TISW_TUSSI_ERP.Helpers;
+using TISW_TUSSI_ERP.Helpers;
 
 namespace TISW_TUSSI_ERP.Models.Compras;
 
-// Fila del reporte "Compras por Proveedor" (RF-COM-04 / RF-COM-05)
+// Fila del reporte "Compras por Proveedor"
 public class CompraPorProveedor
 {
     public string Proveedor { get; set; } = string.Empty;

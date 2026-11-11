@@ -206,6 +206,7 @@ public class MovimientoCaja
     public decimal Saldo { get; set; }
 
     public string FechaTexto => Fecha.ToString("dd/MM/yyyy");
+    public string AsientoTexto => $"#{NumeroAsiento}";
     public string EntradaTexto => Entrada > 0 ? "+ " + Formato.Moneda(Entrada) : "";
     public string SalidaTexto => Salida > 0 ? "− " + Formato.Moneda(Salida) : "";
     public string SaldoTexto => Formato.Moneda(Saldo);
@@ -270,4 +271,146 @@ public class ResumenMensualCuenta
     public string NetoTexto => (Neto >= 0 ? "+ " : "− ") + Formato.Moneda(Math.Abs(Neto));
     public Color NetoColor => Neto >= 0 ? Color.FromArgb("#047857") : Color.FromArgb("#BE123C");
     public string SaldoTexto => Formato.Moneda(SaldoAcumulado);
+}
+
+// ===================================================================
+//  RF-CON-05: Estado de Resultados Integral (IFRS Pyme / SII Chile)
+// ===================================================================
+public class LineaEstadoResultadosItem
+{
+    public string CodigoCuenta { get; set; } = string.Empty;
+    public string NombreCuenta { get; set; } = string.Empty;
+    public string CategoriaRubro { get; set; } = string.Empty; // INGRESO, COSTO_VENTA, GASTO_OPERACIONAL
+    public decimal Monto { get; set; }
+    public double ParticipacionSobreVentas { get; set; }
+
+    public string MontoTexto => Formato.Moneda(Monto);
+    public string ParticipacionTexto => ParticipacionSobreVentas.ToString("P1", Formato.Cultura);
+    public string PorcentajeSobreIngresosTexto => ParticipacionTexto;
+    public Color RubroFondo => CategoriaRubro switch
+    {
+        "INGRESO" => Color.FromArgb("#D1FAE5"),
+        "COSTO_VENTA" => Color.FromArgb("#FEF3C7"),
+        _ => Color.FromArgb("#FFE4E6")
+    };
+    public Color RubroColor => CategoriaRubro switch
+    {
+        "INGRESO" => Color.FromArgb("#047857"),
+        "COSTO_VENTA" => Color.FromArgb("#B45309"),
+        _ => Color.FromArgb("#BE123C")
+    };
+}
+
+// ===================================================================
+//  RF-CON-09: Reporte Centralizador de Impuestos (Libro Compras/Ventas + F29 SII)
+// ===================================================================
+public class DocumentoLibroVentasItem
+{
+    public int IdVenta { get; set; }
+    public DateTime FechaEmision { get; set; }
+    public string TipoDocumento { get; set; } = "BOLETA";
+    public string Folio { get; set; } = string.Empty;
+    public string RutCliente { get; set; } = string.Empty;
+    public string RazonSocial { get; set; } = string.Empty;
+    public decimal MontoDescuento { get; set; }
+    public decimal MontoNeto { get; set; }
+    public decimal MontoIva { get; set; }
+    public decimal MontoTotal { get; set; }
+    public string FormaPago { get; set; } = string.Empty;
+    public string Estado { get; set; } = string.Empty;
+
+    public bool EsNotaCredito => TipoDocumento.ToUpperInvariant() == "NOTA_CREDITO";
+    public string CodigoSii => TipoDocumento.ToUpperInvariant() switch
+    {
+        "FACTURA" => "DTE 33",
+        "BOLETA" => "DTE 39",
+        "NOTA_CREDITO" => "DTE 61",
+        _ => "DTE 33"
+    };
+    public string TipoDteTexto => TipoDocumento.ToUpperInvariant() switch
+    {
+        "FACTURA" => "Factura Electrónica (33)",
+        "BOLETA" => "Boleta Afecta (39)",
+        "NOTA_CREDITO" => "Nota de Crédito (61)",
+        _ => TipoDocumento
+    };
+    public string FechaTexto => FechaEmision.ToString("dd/MM/yyyy");
+    public string NetoTexto => (EsNotaCredito ? "− " : "") + Formato.Moneda(MontoNeto);
+    public string IvaTexto => (EsNotaCredito ? "− " : "") + Formato.Moneda(MontoIva);
+    public string TotalTexto => (EsNotaCredito ? "− " : "") + Formato.Moneda(MontoTotal);
+    public string TipoDte => TipoDteTexto;
+    public string MontoNetoTexto => NetoTexto;
+    public string MontoIvaTexto => IvaTexto;
+    public string MontoTotalTexto => TotalTexto;
+    public Color DteFondo => EsNotaCredito ? Color.FromArgb("#FFE4E6") : (TipoDocumento == "FACTURA" ? Color.FromArgb("#DBEAFE") : Color.FromArgb("#D1FAE5"));
+    public Color DteColor => EsNotaCredito ? Color.FromArgb("#BE123C") : (TipoDocumento == "FACTURA" ? Color.FromArgb("#1D4ED8") : Color.FromArgb("#047857"));
+}
+
+public class DocumentoLibroComprasItem
+{
+    public int IdRecepcion { get; set; }
+    public DateTime FechaFactura { get; set; }
+    public string NumeroFactura { get; set; } = string.Empty;
+    public string NumeroOrdenCompra { get; set; } = string.Empty;
+    public string RutProveedor { get; set; } = string.Empty;
+    public string RazonSocial { get; set; } = string.Empty;
+    public decimal MontoNeto { get; set; }
+    public decimal MontoIvaCredito { get; set; }
+    public decimal MontoTotal { get; set; }
+    public string EstadoPago { get; set; } = "PENDIENTE";
+
+    public string CodigoSii => "DTE 33";
+    public string TipoDteTexto => "Factura Compra Giro (33)";
+    public string FechaTexto => FechaFactura.ToString("dd/MM/yyyy");
+    public string NetoTexto => Formato.Moneda(MontoNeto);
+    public string IvaTexto => Formato.Moneda(MontoIvaCredito);
+    public string TotalTexto => Formato.Moneda(MontoTotal);
+    public string TipoDte => TipoDteTexto;
+    public string Folio => NumeroFactura;
+    public string MontoNetoTexto => NetoTexto;
+    public string MontoIvaTexto => IvaTexto;
+    public string MontoTotalTexto => TotalTexto;
+    public Color EstadoFondo => EstadoPago == "PAGADO" ? Color.FromArgb("#D1FAE5") : Color.FromArgb("#FEF3C7");
+    public Color EstadoColor => EstadoPago == "PAGADO" ? Color.FromArgb("#047857") : Color.FromArgb("#B45309");
+}
+
+public class ResumenDteSiiItem
+{
+    public string CodigoSii { get; set; } = string.Empty;
+    public string TipoDocumento { get; set; } = string.Empty;
+    public string Libro { get; set; } = string.Empty; // VENTAS o COMPRAS
+    public int CantidadDocumentos { get; set; }
+    public decimal TotalNeto { get; set; }
+    public decimal TotalIva { get; set; }
+    public decimal TotalBruto { get; set; }
+
+    public string CantidadTexto => CantidadDocumentos == 1 ? "1 doc." : $"{CantidadDocumentos} docs.";
+    public string NetoTexto => Formato.Moneda(TotalNeto);
+    public string IvaTexto => Formato.Moneda(TotalIva);
+    public string TotalTexto => Formato.Moneda(TotalBruto);
+    public string CodigoDte => CodigoSii;
+    public string NombreDte => TipoDocumento;
+    public string TipoRegistro => Libro;
+    public string MontoNetoTexto => NetoTexto;
+    public string MontoIvaTexto => IvaTexto;
+    public string MontoTotalTexto => TotalTexto;
+}
+
+public class LineaFormulario29Item
+{
+    public string CodigoCasilla { get; set; } = string.Empty;
+    public string GlosaCasilla { get; set; } = string.Empty;
+    public string ReferenciaLegal { get; set; } = string.Empty;
+    public string Operador { get; set; } = "+";
+    public decimal Monto { get; set; }
+    public bool EsTotal { get; set; }
+
+    public string MontoTexto => Formato.Moneda(Monto);
+    public Color FondoFila => EsTotal ? Color.FromArgb("#EEF2FF") : Colors.White;
+    public FontAttributes Fuente => EsTotal ? FontAttributes.Bold : FontAttributes.None;
+    public Color ColorMonto => Operador == "−" ? Color.FromArgb("#047857") : (EsTotal ? Color.FromArgb("#1D4ED8") : Color.FromArgb("#0F172A"));
+    public string CodigoSii => CodigoCasilla;
+    public string Glosa => GlosaCasilla;
+    public string Naturaleza => Operador;
+    public Color ColorTexto => ColorMonto;
 }
