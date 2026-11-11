@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:ctrl="clr-namespace:TISW_TUSSI_ERP.Views.Shared"
+             xmlns:models="clr-namespace:TISW_TUSSI_ERP.Models.Contabilidad"
+             x:Class="TISW_TUSSI_ERP.Views.Contabilidad.BalanceGeneralPage"
+             Shell.NavBarIsVisible="False"
+             Title="Balance General Clasificado"
+             BackgroundColor="{StaticResource CtbSurfaceAlt}">
+
+    <Grid RowDefinitions="Auto, *">
+        <ctrl:PageHeader Grid.Row="0" Ruta="ERP › Contabilidad › RF-CON-03" Titulo="Estado de Situación Financiera / Balance General (IFRS)" />
+
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="24" Spacing="18">
+
+                <!-- HERO BANNER -->
+                <Border Style="{StaticResource CtbHero}">
+                    <Grid ColumnDefinitions="*, Auto" ColumnSpacing="20">
+                        <VerticalStackLayout Spacing="4">
+                            <HorizontalStackLayout Spacing="8">
+                                <Border BackgroundColor="#2563EB" StrokeThickness="0" Padding="8,3" StrokeShape="RoundRectangle 6">
+                                    <Label Text="RF-CON-03 · ESTADO DE SITUACIÓN FINANCIERA" TextColor="White" FontSize="10" FontAttributes="Bold" />
+                                </Border>
+                            </HorizontalStackLayout>
+                            <Label Text="Balance General Clasificado" Style="{StaticResource CtbHeroTitle}" />
+                            <Label Text="{Binding FechaCorteTexto, StringFormat='Verificación de la ecuación patrimonial Activo = Pasivo + Patrimonio al {0}'}" Style="{StaticResource CtbHeroSubtitle}" />
+                        </VerticalStackLayout>
+
+                        <HorizontalStackLayout Grid.Column="1" Spacing="10" VerticalOptions="Center">
+                            <Button Text="Exportar PDF" Command="{Binding ExportarPdfCommand}" Style="{StaticResource CtbBtnPrimary}" />
+                            <Button Text="Exportar CSV" Command="{Binding ExportarCsvCommand}" Style="{StaticResource CtbBtnOutline}" BackgroundColor="#1E293B" TextColor="White" BorderColor="#475569" />
+                        </HorizontalStackLayout>
+                    </Grid>
+                </Border>
+
+                <!-- BARRA DE FILTROS + BANNER DE CUADRATURA -->
+                <Grid ColumnDefinitions="Auto, *" ColumnSpacing="16">
+                    <Border Grid.Column="0" Style="{StaticResource CtbFilterBar}">
+                        <HorizontalStackLayout Spacing="12" VerticalOptions="Center">
+                            <VerticalStackLayout>
+                                <Label Text="FECHA DE CORTE" Style="{StaticResource CtbFieldLabel}" />
+                                <Border Style="{StaticResource CtbInputBox}">
+                                    <DatePicker Date="{Binding FechaCorte}" Format="dd/MM/yyyy" TextColor="{StaticResource CtbText}" FontSize="13" />
+                                </Border>
+                            </VerticalStackLayout>
+                            <Button Text="Actualizar Balance" Command="{Binding CargarCommand}" Style="{StaticResource CtbBtnPrimary}" VerticalOptions="End" />
+                        </HorizontalStackLayout>
+                    </Border>
+
+                    <Border Grid.Column="1" BackgroundColor="{Binding CuadraturaFondo}" StrokeThickness="1" Stroke="{Binding CuadraturaColor}" StrokeShape="RoundRectangle 12" Padding="18,14" VerticalOptions="Fill">
+                        <VerticalStackLayout VerticalOptions="Center" Spacing="2">
+                            <Label Text="VERIFICACIÓN DE PARTIDA DOBLE PATRIMONIAL" FontSize="10" FontAttributes="Bold" TextColor="{Binding CuadraturaColor}" />
+                            <Label Text="{Binding CuadraturaTexto}" FontSize="13" FontAttributes="Bold" TextColor="{Binding CuadraturaColor}" />
+                        </VerticalStackLayout>
+                    </Border>
+                </Grid>
+
+                <!-- KPIS E INDICADORES FINANCIEROS -->
+                <Grid ColumnDefinitions="*, *, *, *, *" ColumnSpacing="14">
+                    <Border Grid.Column="0" Style="{StaticResource CtbKpiCard}" Stroke="#BFDBFE">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="TOTAL ACTIVOS" Style="{StaticResource CtbKpiLabel}" TextColor="#1D4ED8" />
+                            <Label Text="{Binding TotalActivosTexto}" Style="{StaticResource CtbKpiValue}" FontSize="18" TextColor="#1D4ED8" />
+                            <Label Text="Recursos controlados" Style="{StaticResource CtbKpiFoot}" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border Grid.Column="1" Style="{StaticResource CtbKpiCard}" Stroke="#FECDD3">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="TOTAL PASIVOS" Style="{StaticResource CtbKpiLabel}" TextColor="#BE123C" />
+                            <Label Text="{Binding TotalPasivosTexto}" Style="{StaticResource CtbKpiValue}" FontSize="18" TextColor="#BE123C" />
+                            <Label Text="{Binding EndeudamientoTexto, StringFormat='Endeudamiento: {0}'}" Style="{StaticResource CtbKpiFoot}" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border Grid.Column="2" Style="{StaticResource CtbKpiCard}" Stroke="#DDD6FE">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="TOTAL PATRIMONIO" Style="{StaticResource CtbKpiLabel}" TextColor="#6D28D9" />
+                            <Label Text="{Binding TotalPatrimonioTexto}" Style="{StaticResource CtbKpiValue}" FontSize="18" TextColor="#6D28D9" />
+                            <Label Text="{Binding AutonomiaTexto, StringFormat='Autonomía: {0}'}" Style="{StaticResource CtbKpiFoot}" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border Grid.Column="3" Style="{StaticResource CtbKpiCard}">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="{Binding ResultadoEtiqueta}" Style="{StaticResource CtbKpiLabel}" TextColor="{Binding ResultadoColor}" />
+                            <Label Text="{Binding ResultadoTexto}" Style="{StaticResource CtbKpiValue}" FontSize="18" TextColor="{Binding ResultadoColor}" />
+                            <Label Text="Integrado al Patrimonio" Style="{StaticResource CtbKpiFoot}" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border Grid.Column="4" Style="{StaticResource CtbKpiCard}">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="RATIO DE SOLVENCIA" Style="{StaticResource CtbKpiLabel}" />
+                            <Label Text="{Binding SolvenciaTexto}" Style="{StaticResource CtbKpiValue}" FontSize="18" />
+                            <Label Text="Cobertura Activo / Pasivo" Style="{StaticResource CtbKpiFoot}" />
+                        </VerticalStackLayout>
+                    </Border>
+                </Grid>
+
+                <!-- DOS COLUMNAS: ACTIVOS vs PASIVOS + PATRIMONIO -->
+                <Grid ColumnDefinitions="*, *" ColumnSpacing="18">
+
+                    <!-- ACTIVOS -->
+                    <Border Grid.Column="0" Style="{StaticResource CtbTable}">
+                        <VerticalStackLayout Spacing="0">
+                            <Grid BackgroundColor="#1E3A8A" Padding="16,12" ColumnDefinitions="*, Auto">
+                                <Label Text="ACTIVOS (RECURSOS ECONÓMICOS)" TextColor="White" FontAttributes="Bold" FontSize="13" />
+                                <Label Grid.Column="1" Text="{Binding TotalActivosTexto}" TextColor="#93C5FD" FontAttributes="Bold" FontSize="13" />
+                            </Grid>
+
+                            <CollectionView ItemsSource="{Binding Activos}">
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate x:DataType="models:LineaBalanceGeneral">
+                                        <VerticalStackLayout Spacing="0">
+                                            <Grid Padding="14,10" ColumnDefinitions="75, *, 120, 65" BackgroundColor="White">
+                                                <Label Grid.Column="0" Text="{Binding CodigoCuenta}" FontAttributes="Bold" FontSize="12" TextColor="#1D4ED8" />
+                                                <Label Grid.Column="1" Text="{Binding NombreCuenta}" FontSize="12" TextColor="{StaticResource CtbText}" />
+                                                <Label Grid.Column="2" Text="{Binding SaldoTexto}" FontAttributes="Bold" FontSize="12" HorizontalTextAlignment="End" />
+                                                <Label Grid.Column="3" Text="{Binding PorcentajeTexto}" FontSize="11" TextColor="{StaticResource CtbTextMuted}" HorizontalTextAlignment="End" />
+                                            </Grid>
+                                            <BoxView Style="{StaticResource CtbDivider}" />
+                                        </VerticalStackLayout>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- PASIVOS Y PATRIMONIO -->
+                    <VerticalStackLayout Grid.Column="1" Spacing="16">
+                        <Border Style="{StaticResource CtbTable}">
+                            <VerticalStackLayout Spacing="0">
+                                <Grid BackgroundColor="#881337" Padding="16,12" ColumnDefinitions="*, Auto">
+                                    <Label Text="PASIVOS (OBLIGACIONES CON TERCEROS)" TextColor="White" FontAttributes="Bold" FontSize="13" />
+                                    <Label Grid.Column="1" Text="{Binding TotalPasivosTexto}" TextColor="#FECDD3" FontAttributes="Bold" FontSize="13" />
+                                </Grid>
+
+                                <CollectionView ItemsSource="{Binding Pasivos}">
+                                    <CollectionView.ItemTemplate>
+                                        <DataTemplate x:DataType="models:LineaBalanceGeneral">
+                                            <VerticalStackLayout Spacing="0">
+                                                <Grid Padding="14,10" ColumnDefinitions="75, *, 120, 65" BackgroundColor="White">
+                                                    <Label Grid.Column="0" Text="{Binding CodigoCuenta}" FontAttributes="Bold" FontSize="12" TextColor="#BE123C" />
+                                                    <Label Grid.Column="1" Text="{Binding NombreCuenta}" FontSize="12" TextColor="{StaticResource CtbText}" />
+                                                    <Label Grid.Column="2" Text="{Binding SaldoTexto}" FontAttributes="Bold" FontSize="12" HorizontalTextAlignment="End" />
+                                                    <Label Grid.Column="3" Text="{Binding PorcentajeTexto}" FontSize="11" TextColor="{StaticResource CtbTextMuted}" HorizontalTextAlignment="End" />
+                                                </Grid>
+                                                <BoxView Style="{StaticResource CtbDivider}" />
+                                            </VerticalStackLayout>
+                                        </DataTemplate>
+                                    </CollectionView.ItemTemplate>
+                                </CollectionView>
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <Border Style="{StaticResource CtbTable}">
+                            <VerticalStackLayout Spacing="0">
+                                <Grid BackgroundColor="#4C1D95" Padding="16,12" ColumnDefinitions="*, Auto">
+                                    <Label Text="PATRIMONIO NETO" TextColor="White" FontAttributes="Bold" FontSize="13" />
+                                    <Label Grid.Column="1" Text="{Binding TotalPatrimonioTexto}" TextColor="#DDD6FE" FontAttributes="Bold" FontSize="13" />
+                                </Grid>
+
+                                <CollectionView ItemsSource="{Binding Patrimonio}">
+                                    <CollectionView.ItemTemplate>
+                                        <DataTemplate x:DataType="models:LineaBalanceGeneral">
+                                            <VerticalStackLayout Spacing="0">
+                                                <Grid Padding="14,10" ColumnDefinitions="75, *, 120, 65" BackgroundColor="White">
+                                                    <Label Grid.Column="0" Text="{Binding CodigoCuenta}" FontAttributes="Bold" FontSize="12" TextColor="#6D28D9" />
+                                                    <Label Grid.Column="1" Text="{Binding NombreCuenta}" FontSize="12" TextColor="{StaticResource CtbText}" />
+                                                    <Label Grid.Column="2" Text="{Binding SaldoTexto}" FontAttributes="Bold" FontSize="12" HorizontalTextAlignment="End" />
+                                                    <Label Grid.Column="3" Text="{Binding PorcentajeTexto}" FontSize="11" TextColor="{StaticResource CtbTextMuted}" HorizontalTextAlignment="End" />
+                                                </Grid>
+                                                <BoxView Style="{StaticResource CtbDivider}" />
+                                            </VerticalStackLayout>
+                                        </DataTemplate>
+                                    </CollectionView.ItemTemplate>
+                                </CollectionView>
+
+                                <Grid BackgroundColor="#0F172A" Padding="16,12" ColumnDefinitions="*, Auto">
+                                    <Label Text="TOTAL PASIVO + PATRIMONIO" TextColor="White" FontAttributes="Bold" FontSize="13" />
+                                    <Label Grid.Column="1" Text="{Binding TotalPasivoPatrimonioTexto}" TextColor="#6EE7B7" FontAttributes="Bold" FontSize="14" />
+                                </Grid>
+                            </VerticalStackLayout>
+                        </Border>
+                    </VerticalStackLayout>
+
+                </Grid>
+
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>

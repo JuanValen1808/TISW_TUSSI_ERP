@@ -1,99 +1,273 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:viewmodels="clr-namespace:TISW_TUSSI_ERP.ViewModels.Contabilidad"
+             xmlns:ctrl="clr-namespace:TISW_TUSSI_ERP.Views.Shared"
              xmlns:models="clr-namespace:TISW_TUSSI_ERP.Models.Contabilidad"
              x:Class="TISW_TUSSI_ERP.Views.Contabilidad.EstadoResultadosPage"
-             x:DataType="viewmodels:EstadoResultadosViewModel"
-             Title="{Binding Titulo}"
-             BackgroundColor="{StaticResource ErpBackground}">
+             Shell.NavBarIsVisible="False"
+             Title="Estado de Resultados"
+             BackgroundColor="{StaticResource CtbSurfaceAlt}">
 
-    <Grid RowDefinitions="Auto,*">
+    <Grid RowDefinitions="Auto, *">
+        <ctrl:PageHeader Grid.Row="0" Ruta="ERP › Contabilidad › RF-CON-05" Titulo="Estado de Resultados Integral (IFRS Pyme / LIR Chile)" />
 
-        <StackLayout Grid.Row="0" Padding="20">
-            <Label Text="Estado de Resultados" Style="{StaticResource ErpTitle}" />
-            <Label Text="Reporte operacional de ingresos y gastos." Style="{StaticResource ErpSubtitle}" />
-            <Button Text="Generar Reporte" Command="{Binding CargarEstadoResultadosCommand}" Style="{StaticResource ErpPrimaryButton}" HorizontalOptions="Start" />
-        </StackLayout>
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="24" Spacing="18">
 
-        <RefreshView Grid.Row="1" Command="{Binding CargarEstadoResultadosCommand}" IsRefreshing="{Binding EstaOcupado}">
-            <ScrollView>
-                <VerticalStackLayout Margin="20,0,20,30" Spacing="20">
+                <!-- HERO BANNER -->
+                <Border Style="{StaticResource CtbHero}">
+                    <Grid ColumnDefinitions="*, Auto" ColumnSpacing="20">
+                        <VerticalStackLayout Spacing="4">
+                            <HorizontalStackLayout Spacing="8">
+                                <Border BackgroundColor="#2563EB" StrokeThickness="0" Padding="8,3" StrokeShape="RoundRectangle 6">
+                                    <Label Text="RF-CON-05 · ESTADO DE RESULTADOS" TextColor="White" FontSize="10" FontAttributes="Bold" />
+                                </Border>
+                                <Border BackgroundColor="#1E293B" Stroke="#334155" StrokeThickness="1" Padding="8,3" StrokeShape="RoundRectangle 6">
+                                    <Label Text="NIC 1 / Art. 14 D N°3 LIR (25%)" TextColor="#93C5FD" FontSize="10" FontAttributes="Bold" />
+                                </Border>
+                            </HorizontalStackLayout>
+                            <Label Text="Estado de Resultados (Pérdidas y Ganancias)" Style="{StaticResource CtbHeroTitle}" />
+                            <Label Text="{Binding PeriodoTexto, StringFormat='Cálculo de Utilidad Bruta, Resultado Operacional, Impuesto 1ª Categoría y Utilidad Neta · {0}'}" Style="{StaticResource CtbHeroSubtitle}" />
+                        </VerticalStackLayout>
 
-                    <!-- TARJETA: INGRESOS -->
-                    <Border Style="{StaticResource ErpCard}">
-                        <VerticalStackLayout>
-                            <Label Text="INGRESOS OPERACIONALES" FontAttributes="Bold" FontSize="16" TextColor="{StaticResource ErpSuccess}" Margin="0,0,0,10" />
+                        <HorizontalStackLayout Grid.Column="1" Spacing="10" VerticalOptions="Center">
+                            <Button Text="Exportar PDF" Command="{Binding ExportarPdfCommand}" Style="{StaticResource CtbBtnPrimary}" />
+                            <Button Text="Exportar CSV" Command="{Binding ExportarCsvCommand}" Style="{StaticResource CtbBtnOutline}" BackgroundColor="#1E293B" TextColor="White" BorderColor="#475569" />
+                        </HorizontalStackLayout>
+                    </Grid>
+                </Border>
 
-                            <Grid ColumnDefinitions="100, *, 150" Padding="5,10">
-                                <Label Grid.Column="0" Text="CÓDIGO" Style="{StaticResource ErpSmallLabel}" FontAttributes="Bold" />
-                                <Label Grid.Column="1" Text="CUENTA" Style="{StaticResource ErpSmallLabel}" FontAttributes="Bold" />
-                                <Label Grid.Column="2" Text="MONTO" Style="{StaticResource ErpSmallLabel}" FontAttributes="Bold" HorizontalTextAlignment="End" />
+                <!-- BARRA DE FILTROS -->
+                <Border Style="{StaticResource CtbFilterBar}">
+                    <Grid ColumnDefinitions="170, 170, Auto, *, Auto" ColumnSpacing="14" VerticalOptions="Center">
+                        <VerticalStackLayout Grid.Column="0">
+                            <Label Text="FECHA DESDE" Style="{StaticResource CtbFieldLabel}" />
+                            <Border Style="{StaticResource CtbInputBox}">
+                                <DatePicker Date="{Binding FechaInicio}" Format="dd/MM/yyyy" TextColor="{StaticResource CtbText}" FontSize="13" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Grid.Column="1">
+                            <Label Text="FECHA HASTA" Style="{StaticResource CtbFieldLabel}" />
+                            <Border Style="{StaticResource CtbInputBox}">
+                                <DatePicker Date="{Binding FechaFin}" Format="dd/MM/yyyy" TextColor="{StaticResource CtbText}" FontSize="13" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <Button Grid.Column="2" Text="Calcular Estado" Command="{Binding CargarEstadoResultadosCommand}" Style="{StaticResource CtbBtnPrimary}" VerticalOptions="End" />
+
+                        <HorizontalStackLayout Grid.Column="4" Spacing="6" VerticalOptions="End">
+                            <Button Text="Mes actual" Command="{Binding RangoMesActualCommand}" Style="{StaticResource CtbChip}" />
+                            <Button Text="Trimestre" Command="{Binding RangoTrimestreCommand}" Style="{StaticResource CtbChip}" />
+                            <Button Text="Año actual" Command="{Binding RangoAnioActualCommand}" Style="{StaticResource CtbChip}" />
+                            <Button Text="Todo" Command="{Binding RangoTodoCommand}" Style="{StaticResource CtbChip}" />
+                        </HorizontalStackLayout>
+                    </Grid>
+                </Border>
+
+                <!-- TARJETAS KPI CASCADA DE RESULTADOS -->
+                <Grid ColumnDefinitions="*, *, *, *, *" ColumnSpacing="14">
+                    <Border Grid.Column="0" Style="{StaticResource CtbKpiCard}" Stroke="#A7F3D0">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="INGRESOS POR VENTAS" Style="{StaticResource CtbKpiLabel}" TextColor="#047857" />
+                            <Label Text="{Binding TotalIngresosTexto}" Style="{StaticResource CtbKpiValue}" FontSize="19" TextColor="#047857" />
+                            <Label Text="100,0% base ingresos" Style="{StaticResource CtbKpiFoot}" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border Grid.Column="1" Style="{StaticResource CtbKpiCard}" Stroke="#FDE68A">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="COSTO DE VENTAS" Style="{StaticResource CtbKpiLabel}" TextColor="#B45309" />
+                            <Label Text="{Binding TotalCostoVentasTexto}" Style="{StaticResource CtbKpiValue}" FontSize="19" TextColor="#B45309" />
+                            <Label Text="Mercaderías vendidas" Style="{StaticResource CtbKpiFoot}" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border Grid.Column="2" Style="{StaticResource CtbKpiCard}" Stroke="#BFDBFE">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="UTILIDAD BRUTA" Style="{StaticResource CtbKpiLabel}" TextColor="#1D4ED8" />
+                            <Label Text="{Binding UtilidadBrutaTexto}" Style="{StaticResource CtbKpiValue}" FontSize="19" TextColor="#1D4ED8" />
+                            <Label Text="{Binding MargenBrutoTexto, StringFormat='Margen Bruto: {0}'}" Style="{StaticResource CtbKpiFoot}" FontAttributes="Bold" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border Grid.Column="3" Style="{StaticResource CtbKpiCard}" Stroke="#FECDD3">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="GASTOS OPERATIVOS" Style="{StaticResource CtbKpiLabel}" TextColor="#BE123C" />
+                            <Label Text="{Binding TotalGastosOperativosTexto}" Style="{StaticResource CtbKpiValue}" FontSize="19" TextColor="#BE123C" />
+                            <Label Text="{Binding ImpuestoRentaEstimadoTexto, StringFormat='Imp. Renta 25%: {0}'}" Style="{StaticResource CtbKpiFoot}" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border Grid.Column="4" Style="{StaticResource CtbKpiCard}" BackgroundColor="{Binding UtilidadFondo}">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="{Binding EstadoResultadoTexto}" Style="{StaticResource CtbKpiLabel}" TextColor="{Binding ColorUtilidad}" />
+                            <Label Text="{Binding UtilidadNetaDespuesImpuestosTexto}" Style="{StaticResource CtbKpiValue}" FontSize="19" TextColor="{Binding ColorUtilidad}" />
+                            <Label Text="{Binding MargenNetoDespuesImpuestosTexto, StringFormat='Margen Neto final: {0}'}" Style="{StaticResource CtbKpiFoot}" TextColor="{Binding ColorUtilidad}" FontAttributes="Bold" />
+                        </VerticalStackLayout>
+                    </Border>
+                </Grid>
+
+                <!-- ESTRUCTURA CASCADA VERTICAL + DESGLOSE LATERAL -->
+                <Grid ColumnDefinitions="1.15*, *" ColumnSpacing="18">
+
+                    <!-- COLUMNA IZQUIERDA: CASCADA CONTABLE TRIBUTARIA -->
+                    <Border Grid.Column="0" Style="{StaticResource CtbTable}">
+                        <VerticalStackLayout Spacing="0">
+                            <Grid BackgroundColor="#0F172A" Padding="18,14" ColumnDefinitions="*, Auto">
+                                <VerticalStackLayout>
+                                    <Label Text="CASCADA DEL ESTADO DE RESULTADOS" TextColor="White" FontAttributes="Bold" FontSize="13" />
+                                    <Label Text="Estructura escalonada según normativa contable chilena" TextColor="#94A3B8" FontSize="11" />
+                                </VerticalStackLayout>
+                                <Label Grid.Column="1" Text="CLP / % VENTAS" TextColor="#93C5FD" FontSize="11" FontAttributes="Bold" VerticalOptions="Center" />
                             </Grid>
 
-                            <CollectionView ItemsSource="{Binding Ingresos}">
-                                <CollectionView.ItemTemplate>
-                                    <DataTemplate x:DataType="models:BalanceOchoColumnasItem">
-                                        <Grid ColumnDefinitions="100, *, 150" Padding="5,12">
-                                            <Label Grid.Column="0" Text="{Binding CodigoCuenta}" Style="{StaticResource ErpLabel}" />
-                                            <Label Grid.Column="1" Text="{Binding NombreCuenta}" Style="{StaticResource ErpLabel}" />
-                                            <Label Grid.Column="2" Text="{Binding Ganancia, StringFormat='{}{0:N0}'}" Style="{StaticResource ErpLabel}" HorizontalTextAlignment="End" />
-                                        </Grid>
-                                    </DataTemplate>
-                                </CollectionView.ItemTemplate>
-                            </CollectionView>
+                            <Grid Padding="18,14" ColumnDefinitions="*, 140, 80" BackgroundColor="#ECFDF5">
+                                <Label Text="(+) Ingresos de Actividades Ordinarias (Ventas Netas)" FontAttributes="Bold" TextColor="#065F46" FontSize="13" />
+                                <Label Grid.Column="1" Text="{Binding TotalIngresosTexto}" FontAttributes="Bold" TextColor="#047857" HorizontalTextAlignment="End" FontSize="13" />
+                                <Label Grid.Column="2" Text="100,0%" FontAttributes="Bold" TextColor="#047857" HorizontalTextAlignment="End" FontSize="12" />
+                            </Grid>
+                            <BoxView HeightRequest="1" Color="{StaticResource CtbBorder}" />
 
-                            <BoxView Style="{StaticResource ErpSeparator}" />
+                            <Grid Padding="18,14" ColumnDefinitions="*, 140, 80" BackgroundColor="White">
+                                <Label Text="(−) Costo de Ventas (Mercaderías y Despachos)" TextColor="#92400E" FontSize="13" />
+                                <Label Grid.Column="1" Text="{Binding TotalCostoVentasTexto}" FontAttributes="Bold" TextColor="#B45309" HorizontalTextAlignment="End" FontSize="13" />
+                                <Label Grid.Column="2" Text="Costo Dir." TextColor="{StaticResource CtbTextMuted}" HorizontalTextAlignment="End" FontSize="11" />
+                            </Grid>
+                            <BoxView HeightRequest="1" Color="{StaticResource CtbBorder}" />
 
-                            <Grid ColumnDefinitions="*, 150">
-                                <Label Grid.Column="0" Text="TOTAL INGRESOS:" Style="{StaticResource ErpSmallLabel}" HorizontalTextAlignment="End" VerticalOptions="Center" />
-                                <Label Grid.Column="1" Text="{Binding TotalIngresos, StringFormat='{}{0:C0}'}" FontAttributes="Bold" FontSize="16" TextColor="{StaticResource ErpSuccess}" HorizontalTextAlignment="End" />
+                            <Grid Padding="18,14" ColumnDefinitions="*, 140, 80" BackgroundColor="#EFF6FF">
+                                <VerticalStackLayout>
+                                    <Label Text="(=) UTILIDAD BRUTA (MARGEN DE CONTRIBUCIÓN)" FontAttributes="Bold" TextColor="#1E40AF" FontSize="13" />
+                                    <Label Text="Ingresos por Ventas menos Costo directo de Ventas" FontSize="11" TextColor="#3B82F6" />
+                                </VerticalStackLayout>
+                                <Label Grid.Column="1" Text="{Binding UtilidadBrutaTexto}" FontAttributes="Bold" TextColor="#1D4ED8" HorizontalTextAlignment="End" VerticalOptions="Center" FontSize="14" />
+                                <Label Grid.Column="2" Text="{Binding MargenBrutoTexto}" FontAttributes="Bold" TextColor="#1D4ED8" HorizontalTextAlignment="End" VerticalOptions="Center" FontSize="12" />
+                            </Grid>
+                            <BoxView HeightRequest="1" Color="{StaticResource CtbBorder}" />
+
+                            <Grid Padding="18,14" ColumnDefinitions="*, 140, 80" BackgroundColor="White">
+                                <VerticalStackLayout>
+                                    <Label Text="(−) Gastos de Administración y Ventas (GAV)" TextColor="#9F1239" FontSize="13" />
+                                    <Label Text="Remuneraciones, arriendos, servicios básicos, mermas y depreciación" FontSize="11" TextColor="{StaticResource CtbTextMuted}" />
+                                </VerticalStackLayout>
+                                <Label Grid.Column="1" Text="{Binding TotalGastosOperativosTexto}" FontAttributes="Bold" TextColor="#BE123C" HorizontalTextAlignment="End" VerticalOptions="Center" FontSize="13" />
+                                <Label Grid.Column="2" Text="GAV" TextColor="{StaticResource CtbTextMuted}" HorizontalTextAlignment="End" VerticalOptions="Center" FontSize="11" />
+                            </Grid>
+                            <BoxView HeightRequest="1" Color="{StaticResource CtbBorder}" />
+
+                            <Grid Padding="18,14" ColumnDefinitions="*, 140, 80" BackgroundColor="#F8FAFC">
+                                <VerticalStackLayout>
+                                    <Label Text="(=) RESULTADO OPERACIONAL (ANTES DE IMPUESTOS - RAI)" FontAttributes="Bold" TextColor="{StaticResource CtbText}" FontSize="13" />
+                                    <Label Text="Base imponible estimada antes de Impuesto de Primera Categoría" FontSize="11" TextColor="{StaticResource CtbTextMuted}" />
+                                </VerticalStackLayout>
+                                <Label Grid.Column="1" Text="{Binding UtilidadNetaTexto}" FontAttributes="Bold" TextColor="{Binding ColorUtilidad}" HorizontalTextAlignment="End" VerticalOptions="Center" FontSize="14" />
+                                <Label Grid.Column="2" Text="{Binding MargenOperacionalTexto}" FontAttributes="Bold" TextColor="{Binding ColorUtilidad}" HorizontalTextAlignment="End" VerticalOptions="Center" FontSize="12" />
+                            </Grid>
+                            <BoxView HeightRequest="1" Color="{StaticResource CtbBorder}" />
+
+                            <Grid Padding="18,14" ColumnDefinitions="*, 140, 80" BackgroundColor="White">
+                                <VerticalStackLayout>
+                                    <Label Text="(−) Provisión Impuesto Renta 1ª Categoría (25% Régimen Pro Pyme)" TextColor="#475569" FontSize="13" />
+                                    <Label Text="Art. 14 Letra D N° 3 Ley sobre Impuesto a la Renta (SII Chile)" FontSize="11" TextColor="{StaticResource CtbTextMuted}" />
+                                </VerticalStackLayout>
+                                <Label Grid.Column="1" Text="{Binding ImpuestoRentaEstimadoTexto}" FontAttributes="Bold" TextColor="#475569" HorizontalTextAlignment="End" VerticalOptions="Center" FontSize="13" />
+                                <Label Grid.Column="2" Text="25% RLI" TextColor="{StaticResource CtbTextMuted}" HorizontalTextAlignment="End" VerticalOptions="Center" FontSize="11" />
+                            </Grid>
+
+                            <Grid Padding="18,16" ColumnDefinitions="*, 140, 80" BackgroundColor="#0F172A">
+                                <VerticalStackLayout>
+                                    <Label Text="(=) UTILIDAD (O PÉRDIDA) LÍQUIDA DEL EJERCICIO" FontAttributes="Bold" TextColor="White" FontSize="14" />
+                                    <Label Text="{Binding EstadoResultadoTexto}" FontSize="11" TextColor="#93C5FD" FontAttributes="Bold" />
+                                </VerticalStackLayout>
+                                <Label Grid.Column="1" Text="{Binding UtilidadNetaDespuesImpuestosTexto}" FontAttributes="Bold" TextColor="#6EE7B7" HorizontalTextAlignment="End" VerticalOptions="Center" FontSize="16" />
+                                <Label Grid.Column="2" Text="{Binding MargenNetoDespuesImpuestosTexto}" FontAttributes="Bold" TextColor="#93C5FD" HorizontalTextAlignment="End" VerticalOptions="Center" FontSize="12" />
                             </Grid>
                         </VerticalStackLayout>
                     </Border>
 
-                    <!-- TARJETA: GASTOS -->
-                    <Border Style="{StaticResource ErpCard}">
-                        <VerticalStackLayout>
-                            <Label Text="COSTOS Y GASTOS" FontAttributes="Bold" FontSize="16" TextColor="{StaticResource ErpDanger}" Margin="0,0,0,10" />
+                    <!-- COLUMNA DERECHA: DETALLE ANALÍTICO POR CUENTA -->
+                    <VerticalStackLayout Grid.Column="1" Spacing="14">
 
-                            <Grid ColumnDefinitions="100, *, 150" Padding="5,10">
-                                <Label Grid.Column="0" Text="CÓDIGO" Style="{StaticResource ErpSmallLabel}" FontAttributes="Bold" />
-                                <Label Grid.Column="1" Text="CUENTA" Style="{StaticResource ErpSmallLabel}" FontAttributes="Bold" />
-                                <Label Grid.Column="2" Text="MONTO" Style="{StaticResource ErpSmallLabel}" FontAttributes="Bold" HorizontalTextAlignment="End" />
-                            </Grid>
+                        <!-- DETALLE INGRESOS -->
+                        <Border Style="{StaticResource CtbTable}">
+                            <VerticalStackLayout Spacing="0">
+                                <Grid BackgroundColor="#ECFDF5" Padding="14,10" ColumnDefinitions="*, Auto">
+                                    <Label Text="1. CUENTAS DE INGRESO (4.X)" FontAttributes="Bold" FontSize="12" TextColor="#065F46" />
+                                    <Label Grid.Column="1" Text="{Binding TotalIngresosTexto}" FontAttributes="Bold" FontSize="12" TextColor="#047857" />
+                                </Grid>
+                                <CollectionView ItemsSource="{Binding Ingresos}">
+                                    <CollectionView.EmptyView>
+                                        <Label Text="Sin movimientos de ingresos en el período." Padding="14" FontSize="12" TextColor="{StaticResource CtbTextMuted}" />
+                                    </CollectionView.EmptyView>
+                                    <CollectionView.ItemTemplate>
+                                        <DataTemplate x:DataType="models:LineaEstadoResultadosItem">
+                                            <Grid Padding="14,9" ColumnDefinitions="70, *, 110, 65" ColumnSpacing="8">
+                                                <Label Text="{Binding CodigoCuenta}" FontAttributes="Bold" FontSize="12" TextColor="#047857" />
+                                                <Label Grid.Column="1" Text="{Binding NombreCuenta}" FontSize="12" TextColor="{StaticResource CtbText}" LineBreakMode="TailTruncation" />
+                                                <Label Grid.Column="2" Text="{Binding MontoTexto}" FontAttributes="Bold" FontSize="12" TextColor="#047857" HorizontalTextAlignment="End" />
+                                                <Label Grid.Column="3" Text="{Binding PorcentajeSobreIngresosTexto}" FontSize="11" TextColor="{StaticResource CtbTextMuted}" HorizontalTextAlignment="End" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </CollectionView.ItemTemplate>
+                                </CollectionView>
+                            </VerticalStackLayout>
+                        </Border>
 
-                            <CollectionView ItemsSource="{Binding Gastos}">
-                                <CollectionView.ItemTemplate>
-                                    <DataTemplate x:DataType="models:BalanceOchoColumnasItem">
-                                        <Grid ColumnDefinitions="100, *, 150" Padding="5,12">
-                                            <Label Grid.Column="0" Text="{Binding CodigoCuenta}" Style="{StaticResource ErpLabel}" />
-                                            <Label Grid.Column="1" Text="{Binding NombreCuenta}" Style="{StaticResource ErpLabel}" />
-                                            <Label Grid.Column="2" Text="{Binding Perdida, StringFormat='{}{0:N0}'}" Style="{StaticResource ErpLabel}" HorizontalTextAlignment="End" />
-                                        </Grid>
-                                    </DataTemplate>
-                                </CollectionView.ItemTemplate>
-                            </CollectionView>
+                        <!-- DETALLE COSTO DE VENTAS -->
+                        <Border Style="{StaticResource CtbTable}">
+                            <VerticalStackLayout Spacing="0">
+                                <Grid BackgroundColor="#FEF3C7" Padding="14,10" ColumnDefinitions="*, Auto">
+                                    <Label Text="2. COSTO DE VENTAS (5.1)" FontAttributes="Bold" FontSize="12" TextColor="#92400E" />
+                                    <Label Grid.Column="1" Text="{Binding TotalCostoVentasTexto}" FontAttributes="Bold" FontSize="12" TextColor="#B45309" />
+                                </Grid>
+                                <CollectionView ItemsSource="{Binding CostosVentas}">
+                                    <CollectionView.EmptyView>
+                                        <Label Text="Sin costos directos registrados en el período." Padding="14" FontSize="12" TextColor="{StaticResource CtbTextMuted}" />
+                                    </CollectionView.EmptyView>
+                                    <CollectionView.ItemTemplate>
+                                        <DataTemplate x:DataType="models:LineaEstadoResultadosItem">
+                                            <Grid Padding="14,9" ColumnDefinitions="70, *, 110, 65" ColumnSpacing="8">
+                                                <Label Text="{Binding CodigoCuenta}" FontAttributes="Bold" FontSize="12" TextColor="#B45309" />
+                                                <Label Grid.Column="1" Text="{Binding NombreCuenta}" FontSize="12" TextColor="{StaticResource CtbText}" LineBreakMode="TailTruncation" />
+                                                <Label Grid.Column="2" Text="{Binding MontoTexto}" FontAttributes="Bold" FontSize="12" TextColor="#B45309" HorizontalTextAlignment="End" />
+                                                <Label Grid.Column="3" Text="{Binding PorcentajeSobreIngresosTexto}" FontSize="11" TextColor="{StaticResource CtbTextMuted}" HorizontalTextAlignment="End" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </CollectionView.ItemTemplate>
+                                </CollectionView>
+                            </VerticalStackLayout>
+                        </Border>
 
-                            <BoxView Style="{StaticResource ErpSeparator}" />
+                        <!-- DETALLE GASTOS OPERATIVOS -->
+                        <Border Style="{StaticResource CtbTable}">
+                            <VerticalStackLayout Spacing="0">
+                                <Grid BackgroundColor="#FFE4E6" Padding="14,10" ColumnDefinitions="*, Auto">
+                                    <Label Text="3. GASTOS OPERATIVOS Y ADMINISTRACIÓN (5.2+)" FontAttributes="Bold" FontSize="12" TextColor="#9F1239" />
+                                    <Label Grid.Column="1" Text="{Binding TotalGastosOperativosTexto}" FontAttributes="Bold" FontSize="12" TextColor="#BE123C" />
+                                </Grid>
+                                <CollectionView ItemsSource="{Binding GastosOperativos}">
+                                    <CollectionView.EmptyView>
+                                        <Label Text="Sin gastos operacionales registrados en el período." Padding="14" FontSize="12" TextColor="{StaticResource CtbTextMuted}" />
+                                    </CollectionView.EmptyView>
+                                    <CollectionView.ItemTemplate>
+                                        <DataTemplate x:DataType="models:LineaEstadoResultadosItem">
+                                            <Grid Padding="14,9" ColumnDefinitions="70, *, 110, 65" ColumnSpacing="8">
+                                                <Label Text="{Binding CodigoCuenta}" FontAttributes="Bold" FontSize="12" TextColor="#BE123C" />
+                                                <Label Grid.Column="1" Text="{Binding NombreCuenta}" FontSize="12" TextColor="{StaticResource CtbText}" LineBreakMode="TailTruncation" />
+                                                <Label Grid.Column="2" Text="{Binding MontoTexto}" FontAttributes="Bold" FontSize="12" TextColor="#BE123C" HorizontalTextAlignment="End" />
+                                                <Label Grid.Column="3" Text="{Binding PorcentajeSobreIngresosTexto}" FontSize="11" TextColor="{StaticResource CtbTextMuted}" HorizontalTextAlignment="End" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </CollectionView.ItemTemplate>
+                                </CollectionView>
+                            </VerticalStackLayout>
+                        </Border>
 
-                            <Grid ColumnDefinitions="*, 150">
-                                <Label Grid.Column="0" Text="TOTAL GASTOS:" Style="{StaticResource ErpSmallLabel}" HorizontalTextAlignment="End" VerticalOptions="Center" />
-                                <Label Grid.Column="1" Text="{Binding TotalGastos, StringFormat='{}{0:C0}'}" FontAttributes="Bold" FontSize="16" TextColor="{StaticResource ErpDanger}" HorizontalTextAlignment="End" />
-                            </Grid>
-                        </VerticalStackLayout>
-                    </Border>
+                    </VerticalStackLayout>
+                </Grid>
 
-                    <!-- TARJETA: RESULTADO FINAL -->
-                    <Border Style="{StaticResource ErpCard}" BackgroundColor="{StaticResource ErpPrimaryText}">
-                        <Grid ColumnDefinitions="*, 250" Padding="10">
-                            <Label Grid.Column="0" Text="{Binding TextoResultado}" FontAttributes="Bold" FontSize="18" TextColor="White" VerticalOptions="Center" HorizontalTextAlignment="End" />
-                            <Label Grid.Column="1" Text="{Binding ResultadoEjercicio, StringFormat='{}{0:C0}'}" FontAttributes="Bold" FontSize="22" TextColor="{Binding ColorResultado}" HorizontalTextAlignment="End" />
-                        </Grid>
-                    </Border>
-
-                </VerticalStackLayout>
-            </ScrollView>
-        </RefreshView>
+            </VerticalStackLayout>
+        </ScrollView>
     </Grid>
 </ContentPage>

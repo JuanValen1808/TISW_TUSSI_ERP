@@ -1,124 +1,223 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:viewmodels="clr-namespace:TISW_TUSSI_ERP.ViewModels.Contabilidad"
+             xmlns:ctrl="clr-namespace:TISW_TUSSI_ERP.Views.Shared"
              xmlns:models="clr-namespace:TISW_TUSSI_ERP.Models.Contabilidad"
              x:Class="TISW_TUSSI_ERP.Views.Contabilidad.MayorCentralizadoPage"
-             x:DataType="viewmodels:MayorCentralizadoViewModel"
-             Title="{Binding Titulo}"
-             BackgroundColor="{StaticResource ErpBackground}">
+             Shell.NavBarIsVisible="False"
+             Title="Libro Mayor Centralizado"
+             BackgroundColor="{StaticResource CtbSurfaceAlt}">
 
-    <Grid RowDefinitions="Auto,*,Auto" Padding="20">
+    <Grid RowDefinitions="Auto, *">
+        <ctrl:PageHeader Grid.Row="0" Ruta="ERP › Contabilidad › RF-CON-06" Titulo="Reporte de Libro Mayor Centralizado Mensual" />
 
-        <!-- HEADER Y PANEL DE FILTROS -->
-        <VerticalStackLayout Grid.Row="0" Spacing="15" Margin="0,0,0,20">
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="24" Spacing="18">
 
-            <VerticalStackLayout>
-                <Label Text="Mayor Centralizado" Style="{StaticResource ErpTitle}" />
-                <Label Text="Consulta de movimientos y saldos por cuenta." Style="{StaticResource ErpSubtitle}" />
-            </VerticalStackLayout>
+                <!-- HERO BANNER -->
+                <Border Style="{StaticResource CtbHero}">
+                    <Grid ColumnDefinitions="*, Auto" ColumnSpacing="20">
+                        <VerticalStackLayout Spacing="4">
+                            <HorizontalStackLayout Spacing="8">
+                                <Border BackgroundColor="#2563EB" StrokeThickness="0" Padding="8,3" StrokeShape="RoundRectangle 6">
+                                    <Label Text="RF-CON-06 · MAYOR CENTRALIZADO" TextColor="White" FontSize="10" FontAttributes="Bold" />
+                                </Border>
+                                <Border BackgroundColor="#1E293B" Stroke="#334155" StrokeThickness="1" Padding="8,3" StrokeShape="RoundRectangle 6">
+                                    <Label Text="RESUMEN MENSUAL POR CUENTA" TextColor="#93C5FD" FontSize="10" FontAttributes="Bold" />
+                                </Border>
+                            </HorizontalStackLayout>
+                            <Label Text="Reporte de Libro Mayor Centralizado" Style="{StaticResource CtbHeroTitle}" />
+                            <Label Text="Desglose detallado de movimientos mensuales agrupados por cuenta contable y auditoría de asientos." Style="{StaticResource CtbHeroSubtitle}" />
+                        </VerticalStackLayout>
 
-            <!-- Tarjeta de Filtros -->
-            <Border Style="{StaticResource ErpCard}" Padding="15">
-                <Grid ColumnDefinitions="*, *, *, Auto" ColumnSpacing="15" VerticalOptions="End">
-
-                    <!-- Filtro: Cuenta -->
-                    <VerticalStackLayout Grid.Column="0" Spacing="5">
-                        <Label Text="CUENTA CONTABLE" Style="{StaticResource ErpSmallLabel}" FontAttributes="Bold" />
-                        <Border Style="{StaticResource ErpInputBox}">
-                            <Picker ItemsSource="{Binding CuentasFiltro}" 
-                                    ItemDisplayBinding="{Binding NombreCuenta}"
-                                    SelectedItem="{Binding CuentaSeleccionada}"
-                                    TextColor="{StaticResource ErpPrimaryText}"
-                                    BackgroundColor="Transparent"
-                                    VerticalOptions="Center" />
-                        </Border>
-                    </VerticalStackLayout>
-
-                    <!-- Filtro: Fecha Desde -->
-                    <VerticalStackLayout Grid.Column="1" Spacing="5">
-                        <Label Text="DESDE" Style="{StaticResource ErpSmallLabel}" FontAttributes="Bold" />
-                        <Border Style="{StaticResource ErpInputBox}">
-                            <DatePicker Date="{Binding FechaDesde}" 
-                                        TextColor="{StaticResource ErpPrimaryText}"
-                                        BackgroundColor="Transparent"
-                                        VerticalOptions="Center" />
-                        </Border>
-                    </VerticalStackLayout>
-
-                    <!-- Filtro: Fecha Hasta -->
-                    <VerticalStackLayout Grid.Column="2" Spacing="5">
-                        <Label Text="HASTA" Style="{StaticResource ErpSmallLabel}" FontAttributes="Bold" />
-                        <Border Style="{StaticResource ErpInputBox}">
-                            <DatePicker Date="{Binding FechaHasta}" 
-                                        TextColor="{StaticResource ErpPrimaryText}"
-                                        BackgroundColor="Transparent"
-                                        VerticalOptions="Center" />
-                        </Border>
-                    </VerticalStackLayout>
-
-                    <!-- Botón Buscar -->
-                    <Button Grid.Column="3" Text="Buscar" 
-                            Command="{Binding BuscarCommand}" 
-                            Style="{StaticResource ErpPrimaryButton}" 
-                            VerticalOptions="End" />
-                </Grid>
-            </Border>
-        </VerticalStackLayout>
-
-        <!-- TABLA DE RESULTADOS -->
-        <Border Grid.Row="1" Style="{StaticResource ErpCard}" Padding="0">
-            <RefreshView Command="{Binding BuscarCommand}" IsRefreshing="{Binding EstaOcupado}">
-                <VerticalStackLayout>
-
-                    <!-- Cabecera de la Tabla -->
-                    <Grid ColumnDefinitions="100, 100, *, 120, 120" Padding="15,12" BackgroundColor="#F1F5F9">
-                        <Label Grid.Column="0" Text="FECHA" Style="{StaticResource ErpSmallLabel}" FontAttributes="Bold" />
-                        <Label Grid.Column="1" Text="ASIENTO" Style="{StaticResource ErpSmallLabel}" FontAttributes="Bold" />
-                        <Label Grid.Column="2" Text="GLOSA / DESCRIPCIÓN" Style="{StaticResource ErpSmallLabel}" FontAttributes="Bold" />
-                        <Label Grid.Column="3" Text="DEBE" Style="{StaticResource ErpSmallLabel}" FontAttributes="Bold" HorizontalTextAlignment="End" />
-                        <Label Grid.Column="4" Text="HABER" Style="{StaticResource ErpSmallLabel}" FontAttributes="Bold" HorizontalTextAlignment="End" />
+                        <HorizontalStackLayout Grid.Column="1" Spacing="10" VerticalOptions="Center">
+                            <Button Text="Exportar PDF" Command="{Binding ExportarPdfCommand}" Style="{StaticResource CtbBtnPrimary}" />
+                            <Button Text="Exportar CSV" Command="{Binding ExportarCsvCommand}" Style="{StaticResource CtbBtnOutline}" BackgroundColor="#1E293B" TextColor="White" BorderColor="#475569" />
+                        </HorizontalStackLayout>
                     </Grid>
+                </Border>
 
-                    <BoxView HeightRequest="1" Color="{StaticResource ErpBorder}" />
-
-                    <CollectionView ItemsSource="{Binding Items}">
-                        <CollectionView.ItemTemplate>
-                            <DataTemplate x:DataType="models:MayorCentralizadoItem">
-                                <VerticalStackLayout>
-                                    <Grid ColumnDefinitions="100, 100, *, 120, 120" Padding="15,12">
-                                        <Label Grid.Column="0" Text="{Binding Fecha, StringFormat='{}{0:dd/MM/yyyy}'}" Style="{StaticResource ErpLabel}" VerticalOptions="Center" />
-                                        <Label Grid.Column="1" Text="{Binding NumeroAsiento}" Style="{StaticResource ErpLabel}" FontAttributes="Bold" VerticalOptions="Center" />
-                                        <Label Grid.Column="2" Text="{Binding Glosa}" Style="{StaticResource ErpLabel}" VerticalOptions="Center" />
-
-                                        <Label Grid.Column="3" Text="{Binding Debe, StringFormat='{}{0:N0}'}" Style="{StaticResource ErpLabel}" HorizontalTextAlignment="End" VerticalOptions="Center" />
-                                        <Label Grid.Column="4" Text="{Binding Haber, StringFormat='{}{0:N0}'}" Style="{StaticResource ErpLabel}" HorizontalTextAlignment="End" VerticalOptions="Center" />
-                                    </Grid>
-                                    <BoxView HeightRequest="1" Color="{StaticResource ErpBorder}" Opacity="0.5" />
-                                </VerticalStackLayout>
-                            </DataTemplate>
-                        </CollectionView.ItemTemplate>
-
-                        <!-- Empty State por defecto si no hay items -->
-                        <CollectionView.EmptyView>
-                            <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Padding="40" Spacing="10">
-                                <Label Text="Realiza una búsqueda para ver los movimientos." Style="{StaticResource ErpSubtitle}" HorizontalTextAlignment="Center" />
+                <!-- FILTROS -->
+                <Border Style="{StaticResource CtbFilterBar}">
+                    <VerticalStackLayout Spacing="12">
+                        <Grid ColumnDefinitions="160, 160, 1.2*, *, Auto" ColumnSpacing="12" VerticalOptions="Center">
+                            <VerticalStackLayout Grid.Column="0">
+                                <Label Text="DESDE" Style="{StaticResource CtbFieldLabel}" />
+                                <Border Style="{StaticResource CtbInputBox}">
+                                    <DatePicker Date="{Binding FechaDesde}" Format="dd/MM/yyyy" TextColor="{StaticResource CtbText}" FontSize="13" />
+                                </Border>
                             </VerticalStackLayout>
-                        </CollectionView.EmptyView>
-                    </CollectionView>
 
-                </VerticalStackLayout>
-            </RefreshView>
-        </Border>
+                            <VerticalStackLayout Grid.Column="1">
+                                <Label Text="HASTA" Style="{StaticResource CtbFieldLabel}" />
+                                <Border Style="{StaticResource CtbInputBox}">
+                                    <DatePicker Date="{Binding FechaHasta}" Format="dd/MM/yyyy" TextColor="{StaticResource CtbText}" FontSize="13" />
+                                </Border>
+                            </VerticalStackLayout>
 
-        <!-- SECCIÓN DE TOTALES -->
-        <Border Grid.Row="2" Style="{StaticResource ErpCard}" Margin="0,15,0,0" Padding="15" BackgroundColor="#F8FAFC">
-            <Grid ColumnDefinitions="*, 120, 120">
-                <Label Grid.Column="0" Text="TOTALES DEL PERIODO:" Style="{StaticResource ErpSmallLabel}" FontAttributes="Bold" VerticalOptions="Center" HorizontalTextAlignment="End" />
-                <Label Grid.Column="1" Text="{Binding TotalDebeFiltro, StringFormat='{}{0:C0}'}" FontAttributes="Bold" FontSize="16" TextColor="{StaticResource ErpPrimaryText}" HorizontalTextAlignment="End" />
-                <Label Grid.Column="2" Text="{Binding TotalHaberFiltro, StringFormat='{}{0:C0}'}" FontAttributes="Bold" FontSize="16" TextColor="{StaticResource ErpPrimaryText}" HorizontalTextAlignment="End" />
-            </Grid>
-        </Border>
+                            <VerticalStackLayout Grid.Column="2">
+                                <Label Text="CUENTA CONTABLE" Style="{StaticResource CtbFieldLabel}" />
+                                <Border Style="{StaticResource CtbInputBox}">
+                                    <Picker ItemsSource="{Binding CuentasFiltro}" SelectedItem="{Binding CuentaFiltroSeleccionada}" TextColor="{StaticResource CtbText}" FontSize="13" />
+                                </Border>
+                            </VerticalStackLayout>
 
+                            <VerticalStackLayout Grid.Column="3">
+                                <Label Text="BUSCAR GLOSA / N° ASIENTO / CUENTA" Style="{StaticResource CtbFieldLabel}" />
+                                <Border Style="{StaticResource CtbInputBox}">
+                                    <Entry Text="{Binding TextoBusqueda}" Placeholder="Ej: 1.1.04, Factura, IVA..." TextColor="{StaticResource CtbText}" FontSize="13" ClearButtonVisibility="WhileEditing" />
+                                </Border>
+                            </VerticalStackLayout>
+
+                            <Button Grid.Column="4" Text="Consultar" Command="{Binding BuscarCommand}" Style="{StaticResource CtbBtnPrimary}" VerticalOptions="End" />
+                        </Grid>
+
+                        <HorizontalStackLayout Spacing="8">
+                            <Label Text="Períodos rápidos:" VerticalOptions="Center" FontSize="12" TextColor="{StaticResource CtbTextMuted}" />
+                            <Button Text="Mes actual" Command="{Binding RangoMesActualCommand}" Style="{StaticResource CtbChip}" />
+                            <Button Text="Trimestre" Command="{Binding RangoTrimestreCommand}" Style="{StaticResource CtbChip}" />
+                            <Button Text="Año actual" Command="{Binding RangoAnioActualCommand}" Style="{StaticResource CtbChip}" />
+                            <Button Text="Todo el historial" Command="{Binding RangoTodoCommand}" Style="{StaticResource CtbChip}" />
+                        </HorizontalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- KPIS -->
+                <Grid ColumnDefinitions="*, *, *, *" ColumnSpacing="14">
+                    <Border Grid.Column="0" Style="{StaticResource CtbKpiCard}">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="PERÍODOS / CUENTAS" Style="{StaticResource CtbKpiLabel}" />
+                            <Label Text="{Binding CantidadGruposMensuales}" Style="{StaticResource CtbKpiValue}" />
+                            <Label Text="{Binding CantidadMovimientos, StringFormat='{0} imputaciones detalladas'}" Style="{StaticResource CtbKpiFoot}" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border Grid.Column="1" Style="{StaticResource CtbKpiCard}" Stroke="#A7F3D0">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="TOTAL DÉBITOS (DEBE)" Style="{StaticResource CtbKpiLabel}" TextColor="#047857" />
+                            <Label Text="{Binding TotalDebeTexto}" Style="{StaticResource CtbKpiValue}" TextColor="#047857" />
+                            <Label Text="Cargos centralizados" Style="{StaticResource CtbKpiFoot}" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border Grid.Column="2" Style="{StaticResource CtbKpiCard}" Stroke="#FECDD3">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="TOTAL CRÉDITOS (HABER)" Style="{StaticResource CtbKpiLabel}" TextColor="#BE123C" />
+                            <Label Text="{Binding TotalHaberTexto}" Style="{StaticResource CtbKpiValue}" TextColor="#BE123C" />
+                            <Label Text="Abonos centralizados" Style="{StaticResource CtbKpiFoot}" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border Grid.Column="3" Style="{StaticResource CtbKpiCard}" Stroke="#BFDBFE">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="MOVIMIENTO NETO" Style="{StaticResource CtbKpiLabel}" TextColor="#1D4ED8" />
+                            <Label Text="{Binding SaldoNetoTexto}" Style="{StaticResource CtbKpiValue}" TextColor="#1D4ED8" />
+                            <Label Text="Diferencia Debe − Haber" Style="{StaticResource CtbKpiFoot}" />
+                        </VerticalStackLayout>
+                    </Border>
+                </Grid>
+
+                <!-- SECCIÓN 1: CENTRALIZACIÓN MENSUAL AGRUPADA POR CUENTA CONTABLE (RF-CON-06) -->
+                <Border Style="{StaticResource CtbTable}">
+                    <VerticalStackLayout Spacing="0">
+                        <Grid BackgroundColor="#0F172A" Padding="16,12" ColumnDefinitions="*, Auto">
+                            <VerticalStackLayout>
+                                <Label Text="1. RESUMEN MENSUAL CENTRALIZADO POR CUENTA CONTABLE (RF-CON-06)" TextColor="White" FontAttributes="Bold" FontSize="13" />
+                                <Label Text="Totales mensuales de cargos, abonos y saldo neto agrupados por período y cuenta" TextColor="#94A3B8" FontSize="11" />
+                            </VerticalStackLayout>
+                            <Border Grid.Column="1" BackgroundColor="#1E293B" Padding="10,4" StrokeShape="RoundRectangle 6" VerticalOptions="Center">
+                                <Label Text="{Binding CantidadGruposMensuales, StringFormat='{0} agrupaciones'}" TextColor="#93C5FD" FontSize="11" FontAttributes="Bold" />
+                            </Border>
+                        </Grid>
+
+                        <Grid Style="{StaticResource CtbTableHeader}" ColumnDefinitions="110, 95, *, 95, 70, 130, 130, 135">
+                            <Label Grid.Column="0" Text="MES / AÑO" Style="{StaticResource CtbTableHeaderText}" />
+                            <Label Grid.Column="1" Text="CÓDIGO" Style="{StaticResource CtbTableHeaderText}" />
+                            <Label Grid.Column="2" Text="CUENTA CONTABLE" Style="{StaticResource CtbTableHeaderText}" />
+                            <Label Grid.Column="3" Text="TIPO" Style="{StaticResource CtbTableHeaderText}" HorizontalTextAlignment="Center" />
+                            <Label Grid.Column="4" Text="MOVS." Style="{StaticResource CtbTableHeaderText}" HorizontalTextAlignment="Center" />
+                            <Label Grid.Column="5" Text="DEBE MENSUAL" Style="{StaticResource CtbTableHeaderText}" HorizontalTextAlignment="End" />
+                            <Label Grid.Column="6" Text="HABER MENSUAL" Style="{StaticResource CtbTableHeaderText}" HorizontalTextAlignment="End" />
+                            <Label Grid.Column="7" Text="SALDO NETO MES" Style="{StaticResource CtbTableHeaderText}" HorizontalTextAlignment="End" />
+                        </Grid>
+
+                        <CollectionView ItemsSource="{Binding ResumenMensual}">
+                            <CollectionView.EmptyView>
+                                <VerticalStackLayout Padding="30" Spacing="6" HorizontalOptions="Center">
+                                    <Label Text="No hay movimientos centralizados para los filtros seleccionados." FontAttributes="Bold" TextColor="{StaticResource CtbText}" HorizontalTextAlignment="Center" />
+                                </VerticalStackLayout>
+                            </CollectionView.EmptyView>
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="models:ResumenMensualMayorCentralizado">
+                                    <VerticalStackLayout Spacing="0">
+                                        <Grid Padding="16,11" ColumnDefinitions="110, 95, *, 95, 70, 130, 130, 135" BackgroundColor="White">
+                                            <Label Grid.Column="0" Text="{Binding PeriodoNombre}" FontAttributes="Bold" FontSize="12" TextColor="#1E40AF" VerticalOptions="Center" />
+                                            <Label Grid.Column="1" Text="{Binding CodigoCuenta}" FontAttributes="Bold" FontSize="12" TextColor="{StaticResource CtbPrimary}" VerticalOptions="Center" />
+                                            <Label Grid.Column="2" Text="{Binding NombreCuenta}" FontSize="13" TextColor="{StaticResource CtbText}" VerticalOptions="Center" LineBreakMode="TailTruncation" />
+                                            <Label Grid.Column="3" Text="{Binding TipoCuenta}" FontSize="11" TextColor="{StaticResource CtbTextMuted}" HorizontalTextAlignment="Center" VerticalOptions="Center" />
+                                            <Label Grid.Column="4" Text="{Binding CantidadMovimientos}" FontSize="12" TextColor="{StaticResource CtbText}" HorizontalTextAlignment="Center" VerticalOptions="Center" />
+                                            <Label Grid.Column="5" Text="{Binding TotalDebeTexto}" FontSize="12" FontAttributes="Bold" TextColor="#047857" HorizontalTextAlignment="End" VerticalOptions="Center" />
+                                            <Label Grid.Column="6" Text="{Binding TotalHaberTexto}" FontSize="12" FontAttributes="Bold" TextColor="#BE123C" HorizontalTextAlignment="End" VerticalOptions="Center" />
+                                            <Label Grid.Column="7" Text="{Binding SaldoMensualTexto}" FontSize="12" FontAttributes="Bold" TextColor="{Binding SaldoColor}" HorizontalTextAlignment="End" VerticalOptions="Center" />
+                                        </Grid>
+                                        <BoxView Style="{StaticResource CtbDivider}" />
+                                    </VerticalStackLayout>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- SECCIÓN 2: DESGLOSE DETALLADO DE IMPUTACIONES -->
+                <Border Style="{StaticResource CtbTable}">
+                    <VerticalStackLayout Spacing="0">
+                        <Grid BackgroundColor="#1E293B" Padding="16,12" ColumnDefinitions="*, Auto">
+                            <VerticalStackLayout>
+                                <Label Text="2. DESGLOSE DETALLADO DE MOVIMIENTOS POR CUENTA" TextColor="White" FontAttributes="Bold" FontSize="13" />
+                                <Label Text="Detalle línea por línea de cada asiento contable mayorizado en el período" TextColor="#94A3B8" FontSize="11" />
+                            </VerticalStackLayout>
+                            <Border Grid.Column="1" BackgroundColor="#334155" Padding="10,4" StrokeShape="RoundRectangle 6" VerticalOptions="Center">
+                                <Label Text="{Binding CantidadMovimientos, StringFormat='{0} líneas'}" TextColor="White" FontSize="11" FontAttributes="Bold" />
+                            </Border>
+                        </Grid>
+
+                        <Grid Style="{StaticResource CtbTableHeader}" ColumnDefinitions="95, 80, 90, 90, 180, *, 120, 120">
+                            <Label Grid.Column="0" Text="FECHA" Style="{StaticResource CtbTableHeaderText}" />
+                            <Label Grid.Column="1" Text="ASIENTO" Style="{StaticResource CtbTableHeaderText}" HorizontalTextAlignment="Center" />
+                            <Label Grid.Column="2" Text="ORIGEN" Style="{StaticResource CtbTableHeaderText}" HorizontalTextAlignment="Center" />
+                            <Label Grid.Column="3" Text="CÓDIGO" Style="{StaticResource CtbTableHeaderText}" />
+                            <Label Grid.Column="4" Text="CUENTA" Style="{StaticResource CtbTableHeaderText}" />
+                            <Label Grid.Column="5" Text="GLOSA DEL MOVIMIENTO" Style="{StaticResource CtbTableHeaderText}" />
+                            <Label Grid.Column="6" Text="DEBE" Style="{StaticResource CtbTableHeaderText}" HorizontalTextAlignment="End" />
+                            <Label Grid.Column="7" Text="HABER" Style="{StaticResource CtbTableHeaderText}" HorizontalTextAlignment="End" />
+                        </Grid>
+
+                        <CollectionView ItemsSource="{Binding Items}">
+                            <CollectionView.EmptyView>
+                                <Label Text="Sin movimientos detallados en el rango consultado." Padding="24" HorizontalTextAlignment="Center" TextColor="{StaticResource CtbTextMuted}" />
+                            </CollectionView.EmptyView>
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="models:MayorCentralizadoItem">
+                                    <VerticalStackLayout Spacing="0">
+                                        <Grid Padding="16,10" ColumnDefinitions="95, 80, 90, 90, 180, *, 120, 120" BackgroundColor="White">
+                                            <Label Grid.Column="0" Text="{Binding FechaTexto}" FontSize="12" TextColor="{StaticResource CtbText}" VerticalOptions="Center" />
+                                            <Label Grid.Column="1" Text="{Binding NumeroAsiento, StringFormat='#{0}'}" FontAttributes="Bold" FontSize="12" TextColor="{StaticResource CtbPrimary}" HorizontalTextAlignment="Center" VerticalOptions="Center" />
+                                            <Label Grid.Column="2" Text="{Binding Origen}" FontSize="10" FontAttributes="Bold" TextColor="#475569" HorizontalTextAlignment="Center" VerticalOptions="Center" />
+                                            <Label Grid.Column="3" Text="{Binding CodigoCuenta}" FontAttributes="Bold" FontSize="12" TextColor="{StaticResource CtbText}" VerticalOptions="Center" />
+                                            <Label Grid.Column="4" Text="{Binding NombreCuenta}" FontSize="12" TextColor="{StaticResource CtbText}" LineBreakMode="TailTruncation" VerticalOptions="Center" />
+                                            <Label Grid.Column="5" Text="{Binding Glosa}" FontSize="12" TextColor="{StaticResource CtbTextMuted}" LineBreakMode="TailTruncation" VerticalOptions="Center" />
+                                            <Label Grid.Column="6" Text="{Binding DebeTexto}" FontAttributes="Bold" FontSize="12" TextColor="#047857" HorizontalTextAlignment="End" VerticalOptions="Center" />
+                                            <Label Grid.Column="7" Text="{Binding HaberTexto}" FontAttributes="Bold" FontSize="12" TextColor="#BE123C" HorizontalTextAlignment="End" VerticalOptions="Center" />
+                                        </Grid>
+                                        <BoxView Style="{StaticResource CtbDivider}" />
+                                    </VerticalStackLayout>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </VerticalStackLayout>
+                </Border>
+
+            </VerticalStackLayout>
+        </ScrollView>
     </Grid>
 </ContentPage>

@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:ctrl="clr-namespace:TISW_TUSSI_ERP.Views.Shared"
+             xmlns:models="clr-namespace:TISW_TUSSI_ERP.Models.Contabilidad"
+             x:Class="TISW_TUSSI_ERP.Views.Contabilidad.FlujoCajaPage"
+             Shell.NavBarIsVisible="False"
+             Title="Flujo de Caja"
+             BackgroundColor="{StaticResource CtbSurfaceAlt}">
+
+    <Grid RowDefinitions="Auto, *">
+        <ctrl:PageHeader Grid.Row="0" Ruta="ERP › Contabilidad › Liquidez" Titulo="Estado de Flujo de Efectivo y Proyección a 30 Días (NIC 7)" />
+
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="24" Spacing="18">
+
+                <!-- HERO BANNER -->
+                <Border Style="{StaticResource CtbHero}">
+                    <Grid ColumnDefinitions="*, Auto" ColumnSpacing="20">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="Estado de Flujo de Caja y Liquidez Proyectada" Style="{StaticResource CtbHeroTitle}" />
+                            <Label Text="{Binding ProyeccionAlerta}" Style="{StaticResource CtbHeroSubtitle}" />
+                        </VerticalStackLayout>
+
+                        <HorizontalStackLayout Grid.Column="1" Spacing="10" VerticalOptions="Center">
+                            <Button Text="Exportar PDF" Command="{Binding ExportarPdfCommand}" Style="{StaticResource CtbBtnPrimary}" />
+                            <Button Text="Exportar CSV" Command="{Binding ExportarCsvCommand}" Style="{StaticResource CtbBtnOutline}" BackgroundColor="#1E293B" TextColor="White" BorderColor="#475569" />
+                        </HorizontalStackLayout>
+                    </Grid>
+                </Border>
+
+                <!-- FILTROS -->
+                <Border Style="{StaticResource CtbFilterBar}">
+                    <Grid ColumnDefinitions="170, 170, Auto, *" ColumnSpacing="14" VerticalOptions="Center">
+                        <VerticalStackLayout Grid.Column="0">
+                            <Label Text="DESDE" Style="{StaticResource CtbFieldLabel}" />
+                            <Border Style="{StaticResource CtbInputBox}">
+                                <DatePicker Date="{Binding FechaDesde}" Format="dd/MM/yyyy" TextColor="{StaticResource CtbText}" FontSize="13" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Grid.Column="1">
+                            <Label Text="HASTA" Style="{StaticResource CtbFieldLabel}" />
+                            <Border Style="{StaticResource CtbInputBox}">
+                                <DatePicker Date="{Binding FechaHasta}" Format="dd/MM/yyyy" TextColor="{StaticResource CtbText}" FontSize="13" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <Button Grid.Column="2" Text="Consultar Flujo" Command="{Binding CargarCommand}" Style="{StaticResource CtbBtnPrimary}" VerticalOptions="End" />
+                    </Grid>
+                </Border>
+
+                <!-- KPIS -->
+                <Grid ColumnDefinitions="*, *, *, *, *" ColumnSpacing="14">
+                    <Border Grid.Column="0" Style="{StaticResource CtbKpiCard}">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="SALDO INICIAL CAJA/BANCO" Style="{StaticResource CtbKpiLabel}" />
+                            <Label Text="{Binding SaldoInicialTexto}" Style="{StaticResource CtbKpiValue}" FontSize="18" />
+                        </VerticalStackLayout>
+                    </Border>
+                    <Border Grid.Column="1" Style="{StaticResource CtbKpiCard}" Stroke="#A7F3D0">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="ENTRADAS DE EFECTIVO" Style="{StaticResource CtbKpiLabel}" TextColor="#047857" />
+                            <Label Text="{Binding EntradasTexto}" Style="{StaticResource CtbKpiValue}" FontSize="18" TextColor="#047857" />
+                        </VerticalStackLayout>
+                    </Border>
+                    <Border Grid.Column="2" Style="{StaticResource CtbKpiCard}" Stroke="#FECDD3">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="SALIDAS DE EFECTIVO" Style="{StaticResource CtbKpiLabel}" TextColor="#BE123C" />
+                            <Label Text="{Binding SalidasTexto}" Style="{StaticResource CtbKpiValue}" FontSize="18" TextColor="#BE123C" />
+                        </VerticalStackLayout>
+                    </Border>
+                    <Border Grid.Column="3" Style="{StaticResource CtbKpiCard}">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="SALDO FINAL DISPONIBLE" Style="{StaticResource CtbKpiLabel}" />
+                            <Label Text="{Binding SaldoFinalTexto}" Style="{StaticResource CtbKpiValue}" FontSize="18" />
+                        </VerticalStackLayout>
+                    </Border>
+                    <Border Grid.Column="4" Style="{StaticResource CtbKpiCard}" Stroke="#BFDBFE">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="CAJA PROYECTADA (30 DÍAS)" Style="{StaticResource CtbKpiLabel}" TextColor="{Binding SaldoProyectadoColor}" />
+                            <Label Text="{Binding SaldoProyectadoTexto}" Style="{StaticResource CtbKpiValue}" FontSize="18" TextColor="{Binding SaldoProyectadoColor}" />
+                        </VerticalStackLayout>
+                    </Border>
+                </Grid>
+
+                <!-- TABLA DE MOVIMIENTOS -->
+                <Border Style="{StaticResource CtbTable}">
+                    <VerticalStackLayout Spacing="0">
+                        <Grid Style="{StaticResource CtbTableHeader}" ColumnDefinitions="95, 80, 95, *, 180, 125, 125, 130">
+                            <Label Grid.Column="0" Text="FECHA" Style="{StaticResource CtbTableHeaderText}" />
+                            <Label Grid.Column="1" Text="ASIENTO" Style="{StaticResource CtbTableHeaderText}" HorizontalTextAlignment="Center" />
+                            <Label Grid.Column="2" Text="ORIGEN" Style="{StaticResource CtbTableHeaderText}" HorizontalTextAlignment="Center" />
+                            <Label Grid.Column="3" Text="GLOSA" Style="{StaticResource CtbTableHeaderText}" />
+                            <Label Grid.Column="4" Text="CONTRAPARTIDA" Style="{StaticResource CtbTableHeaderText}" />
+                            <Label Grid.Column="5" Text="ENTRADA" Style="{StaticResource CtbTableHeaderText}" HorizontalTextAlignment="End" />
+                            <Label Grid.Column="6" Text="SALIDA" Style="{StaticResource CtbTableHeaderText}" HorizontalTextAlignment="End" />
+                            <Label Grid.Column="7" Text="SALDO CAJA" Style="{StaticResource CtbTableHeaderText}" HorizontalTextAlignment="End" />
+                        </Grid>
+
+                        <CollectionView ItemsSource="{Binding Movimientos}">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="models:MovimientoCaja">
+                                    <VerticalStackLayout Spacing="0">
+                                        <Grid Padding="16,10" ColumnDefinitions="95, 80, 95, *, 180, 125, 125, 130" BackgroundColor="White">
+                                            <Label Grid.Column="0" Text="{Binding FechaTexto}" FontSize="12" />
+                                            <Label Grid.Column="1" Text="{Binding AsientoTexto}" FontAttributes="Bold" FontSize="12" TextColor="{StaticResource CtbPrimary}" HorizontalTextAlignment="Center" />
+                                            <Label Grid.Column="2" Text="{Binding Origen}" FontSize="11" HorizontalTextAlignment="Center" />
+                                            <Label Grid.Column="3" Text="{Binding GlosaTexto}" FontSize="12" LineBreakMode="TailTruncation" />
+                                            <Label Grid.Column="4" Text="{Binding Contrapartida}" FontSize="11" TextColor="{StaticResource CtbTextMuted}" LineBreakMode="TailTruncation" />
+                                            <Label Grid.Column="5" Text="{Binding EntradaTexto}" FontAttributes="Bold" FontSize="12" TextColor="#047857" HorizontalTextAlignment="End" />
+                                            <Label Grid.Column="6" Text="{Binding SalidaTexto}" FontAttributes="Bold" FontSize="12" TextColor="#BE123C" HorizontalTextAlignment="End" />
+                                            <Label Grid.Column="7" Text="{Binding SaldoTexto}" FontAttributes="Bold" FontSize="12" HorizontalTextAlignment="End" />
+                                        </Grid>
+                                        <BoxView Style="{StaticResource CtbDivider}" />
+                                    </VerticalStackLayout>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </VerticalStackLayout>
+                </Border>
+
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>
