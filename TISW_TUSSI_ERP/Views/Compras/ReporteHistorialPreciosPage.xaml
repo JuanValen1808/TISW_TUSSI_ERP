@@ -24,11 +24,11 @@
                 <!-- Título y acción de exportación -->
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
                     <VerticalStackLayout Spacing="2">
-                        <Label Text="Reporte: Historial y Variación de Precios de Compra (RF-COM-06)" Style="{StaticResource ErpTitle}" />
+                        <Label Text="Historial y Variación de Precios de Adquisición" Style="{StaticResource ErpTitle}" />
                         <Label Text="Auditoría cronológica de costos pactados y de adquisición por producto para detectar inflación y renegociar contratos."
                                Style="{StaticResource ErpSubtitle}" />
                     </VerticalStackLayout>
-                    <Button Grid.Column="1" Text="📥  Exportar CSV" Style="{StaticResource ErpGhostButton}"
+                    <Button Grid.Column="1" Text="Exportar CSV" Style="{StaticResource ErpGhostButton}"
                             Command="{Binding ComandoExportarCsv}" VerticalOptions="Center" />
                 </Grid>
 
@@ -56,12 +56,12 @@
                         <VerticalStackLayout Grid.Column="2" Spacing="4">
                             <Label Text="Medicamento o Insumo" Style="{StaticResource ErpCaption}" />
                             <Border Style="{StaticResource ErpInputBox}">
-                                <Picker Title="-- Todos los productos --"
-                                        ItemsSource="{Binding Productos}"
+                                <Picker ItemsSource="{Binding Productos}"
                                         ItemDisplayBinding="{Binding DescripcionCompleta}"
                                         SelectedItem="{Binding ProductoFiltro}"
                                         TextColor="{StaticResource ErpText}"
-                                        TitleColor="{StaticResource ErpMuted}" />
+                                        BackgroundColor="Transparent"
+                                        VerticalOptions="Center" />
                             </Border>
                         </VerticalStackLayout>
 
@@ -159,10 +159,11 @@
 
                                             <!-- Tendencia -->
                                             <Border Grid.Column="8" HorizontalOptions="Center" VerticalOptions="Center"
-                                                    BackgroundColor="{Binding VariacionColor, StringFormat='#20{0}'}"
-                                                    StrokeThickness="0" StrokeShape="RoundRectangle 6" Padding="6,2">
+                                                    BackgroundColor="{Binding TendenciaFondo}"
+                                                    Stroke="{Binding TendenciaBorde}"
+                                                    StrokeThickness="1" StrokeShape="RoundRectangle 6" Padding="8,3">
                                                 <Label Text="{Binding IndicadorTendencia}" FontSize="10" FontAttributes="Bold"
-                                                       TextColor="{Binding VariacionColor}" HorizontalTextAlignment="Center" />
+                                                       TextColor="{Binding TendenciaTextoColor}" HorizontalTextAlignment="Center" />
                                             </Border>
 
                                         </Grid>

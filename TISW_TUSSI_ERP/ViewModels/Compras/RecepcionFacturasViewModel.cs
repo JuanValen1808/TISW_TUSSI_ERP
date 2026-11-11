@@ -7,7 +7,7 @@ using TISW_TUSSI_ERP.Services.Api;
 
 namespace TISW_TUSSI_ERP.ViewModels.Compras;
 
-// Pantalla 3: Recepción y Liquidación de Factura (RF-COM-03 & RF-COM-09)
+// Recepción y Liquidación de Facturas
 public class RecepcionFacturasViewModel : BaseViewModel
 {
     private readonly ComprasService _servicio;
@@ -219,10 +219,10 @@ public class RecepcionFacturasViewModel : BaseViewModel
             await Shell.Current.DisplayAlert(
                 "Factura Liquidada Exitosamente",
                 $"Recepción N° {idRecepcion} procesada correctamente para la Factura {numFact}.\n\n" +
-                "✓ Stock de inventario actualizado en lotes.\n" +
-                "✓ Entradas registradas cronológicamente en Kardex.\n" +
-                "✓ Estado de Orden de Compra actualizado.\n" +
-                "✓ Cuenta por pagar creada y asiento contable enlazado.",
+                "• Stock de inventario actualizado en lotes.\n" +
+                "• Entradas registradas cronológicamente en Kardex.\n" +
+                "• Estado de Orden de Compra actualizado.\n" +
+                "• Cuenta por pagar creada y asiento contable enlazado.",
                 "Entendido");
 
             // Refrescar lista de órdenes disponibles

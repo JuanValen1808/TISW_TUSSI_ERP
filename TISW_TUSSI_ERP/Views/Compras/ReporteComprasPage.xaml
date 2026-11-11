@@ -23,22 +23,22 @@
                 <!-- Título y descripción -->
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
                     <VerticalStackLayout Spacing="2">
-                        <Label Text="Reporte: Registro de Compras por Laboratorio (RF-COM-04)" Style="{StaticResource ErpTitle}" />
+                        <Label Text="Registro Consolidado de Compras por Laboratorio" Style="{StaticResource ErpTitle}" />
                         <Label Text="Consolidado de facturas y adquisiciones filtrado por rango de fechas y RUT del proveedor."
                                Style="{StaticResource ErpSubtitle}" />
                     </VerticalStackLayout>
-                    <Button Grid.Column="1" Text="📥  Exportar CSV" Style="{StaticResource ErpGhostButton}"
+                    <Button Grid.Column="1" Text="Exportar CSV" Style="{StaticResource ErpGhostButton}"
                             Command="{Binding ComandoExportarCsv}" VerticalOptions="Center" />
                 </Grid>
 
                 <!-- Filtros de Búsqueda -->
                 <Border Style="{StaticResource ErpCard}" Padding="16">
-                    <Grid ColumnDefinitions="Auto, Auto, *, Auto" ColumnSpacing="16" VerticalOptions="Center">
+                    <Grid ColumnDefinitions="150, 150, 250, *, Auto" ColumnSpacing="14" VerticalOptions="Center">
 
                         <!-- Fecha Desde -->
                         <VerticalStackLayout Grid.Column="0" Spacing="4">
                             <Label Text="Desde" Style="{StaticResource ErpCaption}" />
-                            <Border Style="{StaticResource ErpInputBox}" WidthRequest="150">
+                            <Border Style="{StaticResource ErpInputBox}">
                                 <DatePicker Date="{Binding FechaDesde}" Format="dd/MM/yyyy" VerticalOptions="Center" TextColor="{StaticResource ErpText}"/>
                             </Border>
                         </VerticalStackLayout>
@@ -46,7 +46,7 @@
                         <!-- Fecha Hasta -->
                         <VerticalStackLayout Grid.Column="1" Spacing="4">
                             <Label Text="Hasta" Style="{StaticResource ErpCaption}" />
-                            <Border Style="{StaticResource ErpInputBox}" WidthRequest="150">
+                            <Border Style="{StaticResource ErpInputBox}">
                                 <DatePicker Date="{Binding FechaHasta}" Format="dd/MM/yyyy" VerticalOptions="Center" TextColor="{StaticResource ErpText}"/>
                             </Border>
                         </VerticalStackLayout>
@@ -60,7 +60,7 @@
                         </VerticalStackLayout>
 
                         <!-- Botones -->
-                        <HorizontalStackLayout Grid.Column="3" Spacing="10" VerticalOptions="End">
+                        <HorizontalStackLayout Grid.Column="4" Spacing="10" VerticalOptions="End">
                             <Button Text="Limpiar" Command="{Binding ComandoLimpiarFiltro}" Style="{StaticResource ErpGhostButton}" HeightRequest="46"/>
                             <Button Text="Generar Reporte" Command="{Binding ComandoGenerar}" Style="{StaticResource ErpPrimaryButton}" HeightRequest="46"/>
                         </HorizontalStackLayout>

@@ -37,7 +37,7 @@ public class ComprasService
     private readonly DatabaseService _db;
     public ComprasService(DatabaseService db) => _db = db;
 
-    // Límite de compra que activa la aprobación jerárquica obligatoria (RF-COM-10 / RF-COM-13)
+    // Límite de compra que activa la aprobación jerárquica obligatoria
     public const decimal LimiteGastoAutorizacion = 1_000_000m;
 
     public async Task<ResumenCompras> ObtenerResumenAsync()
@@ -256,7 +256,7 @@ public class ComprasService
     }
 
     // =========================================================
-    // CREACIÓN Y FLUJO DE AUTORIZACIÓN DE ÓRDENES (RF-COM-02, RF-COM-10, RF-COM-13)
+    // CREACIÓN Y FLUJO DE AUTORIZACIÓN DE ÓRDENES
     // =========================================================
 
     public async Task<List<ProductoSelector>> ObtenerProductosParaCompraAsync()
@@ -294,7 +294,7 @@ public class ComprasService
 
         try
         {
-            // RF-COM-10 y RF-COM-13: Flujo de autorización jerárquica
+            // Flujo de autorización jerárquica
             // Si supera el límite de gasto y el usuario no tiene rol superior, queda retenida
             string estadoInicial = (total > LimiteGastoAutorizacion && !esAdminOGerente)
                 ? "PENDIENTE_AUTORIZACION"
@@ -374,7 +374,7 @@ public class ComprasService
     }
 
     // =========================================================
-    // SUGERENCIA AUTOMATIZADA DE REABASTECIMIENTO (RF-COM-08)
+    // SUGERENCIA AUTOMATIZADA DE REABASTECIMIENTO
     // =========================================================
 
     public async Task<List<SugerenciaReabastecimientoItem>> ObtenerSugerenciasReabastecimientoAsync()
@@ -420,7 +420,7 @@ public class ComprasService
     }
 
     // =========================================================
-    // RECEPCIÓN Y LIQUIDACIÓN DE FACTURAS (RF-COM-03 & RF-COM-09)
+    // RECEPCIÓN Y LIQUIDACIÓN DE FACTURAS
     // =========================================================
 
     public async Task<List<OrdenCompra>> ObtenerOrdenesParaRecepcionAsync()
@@ -669,7 +669,7 @@ public class ComprasService
             cmdCxP.Parameters.AddWithValue("@monto", input.MontoTotalFacturado);
             await cmdCxP.ExecuteNonQueryAsync();
 
-            // 5. Asiento Contable Automático en Libro Diario (RF-COM-03)
+            // 5. Asiento Contable Automático en Libro Diario
             // Debe: Inventario de Mercaderías (1.1.02) + IVA Crédito Fiscal (1.1.04)
             // Haber: Cuentas por Pagar Proveedores (2.1.01)
             try
@@ -733,7 +733,7 @@ public class ComprasService
     }
 
     // =========================================================
-    // REPORTE 1: REGISTRO DE COMPRAS POR LABORATORIO (RF-COM-04)
+    // REPORTE: REGISTRO DE COMPRAS POR LABORATORIO
     // =========================================================
 
     public async Task<(ResumenReporteCompras Resumen, List<CompraPorProveedor> Filas)> ObtenerReporteComprasAsync(
@@ -811,7 +811,7 @@ public class ComprasService
     }
 
     // =========================================================
-    // REPORTE 2: CUMPLIMIENTO DE ÓRDENES Y SLA DE PROVEEDORES (RF-COM-05 & RF-COM-12)
+    // REPORTE: CUMPLIMIENTO DE ÓRDENES Y SLA DE PROVEEDORES
     // =========================================================
 
     public async Task<(ResumenCumplimientoOrdenes Resumen, List<ItemCumplimientoOrden> Items)> ObtenerReporteCumplimientoAsync(
@@ -879,7 +879,7 @@ public class ComprasService
     }
 
     // =========================================================
-    // REPORTE 3: HISTORIAL DE PRECIOS Y COSTOS DE ADQUISICIÓN (RF-COM-06)
+    // REPORTE: HISTORIAL DE PRECIOS Y COSTOS DE ADQUISICIÓN
     // =========================================================
 
     public async Task<(ResumenHistorialPrecios Resumen, List<ItemHistorialPrecio> Items)> ObtenerReporteHistorialPreciosAsync(

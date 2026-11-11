@@ -177,7 +177,7 @@ public class NuevaOrdenViewModel : BaseViewModel
         OnPropertyChanged(nameof(SuperaLimitePresupuestario));
     }
 
-    // RF-COM-08: Sugerencia automatizada de reabastecimiento
+    // Sugerencia automatizada de reabastecimiento
     private async Task CargarSugerenciasReabastecimientoAsync()
     {
         if (EstaOcupado) return;
@@ -210,7 +210,7 @@ public class NuevaOrdenViewModel : BaseViewModel
             }
 
             CalcularTotales();
-            await Shell.Current.DisplayAlert("Sugerencias Cargadas", $"Se precargaron {agregados} fármacos con stock crítico/debajo del punto de reorden conforme al algoritmo automatizado (RF-COM-08).", "OK");
+            await Shell.Current.DisplayAlert("Sugerencias Cargadas", $"Se precargaron {agregados} fármacos con stock crítico o debajo del punto de reorden conforme al cálculo automatizado de demanda.", "OK");
         }
         catch (Exception ex)
         {
@@ -256,7 +256,7 @@ public class NuevaOrdenViewModel : BaseViewModel
             {
                 await Shell.Current.DisplayAlert(
                     "Orden Pendiente de Autorización",
-                    $"El monto total ({TotalTexto}) excede el límite de gasto permitido ($1.000.000). La orden ha sido retenida y enviada a la bandeja de Aprobación Jerárquica de Gerencia (RF-COM-10 / RF-COM-13).",
+                    $"El monto total ({TotalTexto}) excede el límite de gasto permitido ($1.000.000). La orden ha sido retenida y enviada a la bandeja de Aprobación Jerárquica de Gerencia.",
                     "Aceptar");
             }
             else

@@ -6,7 +6,7 @@ using TISW_TUSSI_ERP.Services.Api;
 
 namespace TISW_TUSSI_ERP.ViewModels.Compras;
 
-// Mantenedor CRUD de Proveedores (RF-COM-01)
+// Mantenedor de Proveedores y Laboratorios
 public class ProveedoresViewModel : BaseViewModel
 {
     private readonly ComprasService _servicio;

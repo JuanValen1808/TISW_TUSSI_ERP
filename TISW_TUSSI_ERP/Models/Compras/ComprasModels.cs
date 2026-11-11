@@ -94,7 +94,7 @@ public class DetalleOrdenCompra
 }
 
 // ==========================================================
-// MODELOS PARA RECEPCIÓN Y LIQUIDACIÓN DE FACTURAS (RF-COM-03 & RF-COM-09)
+// MODELOS PARA RECEPCIÓN Y LIQUIDACIÓN DE FACTURAS
 // ==========================================================
 
 public class LineaRecepcionFacturaItem : BaseViewModel
@@ -173,7 +173,7 @@ public class RecepcionFacturaInput
 }
 
 // ==========================================================
-// SUGERENCIA AUTOMATIZADA DE REABASTECIMIENTO (RF-COM-08)
+// SUGERENCIA AUTOMATIZADA DE REABASTECIMIENTO
 // ==========================================================
 
 public class SugerenciaReabastecimientoItem
@@ -196,7 +196,7 @@ public class SugerenciaReabastecimientoItem
 }
 
 // ==========================================================
-// REPORTE 2: CUMPLIMIENTO DE ÓRDENES Y NIVEL DE SERVICIO (RF-COM-05 & RF-COM-12)
+// REPORTE 2: CUMPLIMIENTO DE ÓRDENES Y NIVEL DE SERVICIO
 // ==========================================================
 
 public class ItemCumplimientoOrden
@@ -226,6 +226,24 @@ public class ItemCumplimientoOrden
     public Color NivelServicioColor => PorcentajeCumplimiento >= 0.99 ? Paleta.Exito
         : PorcentajeCumplimiento >= 0.7 ? Paleta.Advertencia
         : Paleta.Peligro;
+
+    public Color NivelServicioFondo => PorcentajeCumplimiento >= 0.99 
+        ? Color.FromArgb("#DCFCE7") 
+        : (PorcentajeCumplimiento >= 0.7 
+            ? Color.FromArgb("#FEF3C7") 
+            : Color.FromArgb("#FEE2E2"));
+
+    public Color NivelServicioBorde => PorcentajeCumplimiento >= 0.99 
+        ? Color.FromArgb("#86EFAC") 
+        : (PorcentajeCumplimiento >= 0.7 
+            ? Color.FromArgb("#FDE68A") 
+            : Color.FromArgb("#FCA5A5"));
+
+    public Color NivelServicioTextoColor => PorcentajeCumplimiento >= 0.99 
+        ? Color.FromArgb("#15803D") 
+        : (PorcentajeCumplimiento >= 0.7 
+            ? Color.FromArgb("#B45309") 
+            : Color.FromArgb("#B91C1C"));
 }
 
 public class ResumenCumplimientoOrdenes
@@ -241,7 +259,7 @@ public class ResumenCumplimientoOrdenes
 }
 
 // ==========================================================
-// REPORTE 3: HISTORIAL DE PRECIOS Y COSTOS DE ADQUISICIÓN (RF-COM-06)
+// REPORTE 3: HISTORIAL DE PRECIOS Y COSTOS DE ADQUISICIÓN
 // ==========================================================
 
 public class ItemHistorialPrecio
@@ -266,7 +284,26 @@ public class ItemHistorialPrecio
     public string VariacionTexto => CostoAnterior.HasValue ? $"{VariacionPorcentaje:+0.0;-0.0;0.0}% ({Formato.Moneda(VariacionMonto)})" : "Base inicial";
 
     public Color VariacionColor => VariacionMonto > 0 ? Paleta.Peligro : (VariacionMonto < 0 ? Paleta.Exito : Paleta.Gris);
-    public string IndicadorTendencia => VariacionMonto > 0 ? "▲ Alza" : (VariacionMonto < 0 ? "▼ Baja" : "— Estable");
+
+    public string IndicadorTendencia => VariacionMonto > 0 ? "Alza" : (VariacionMonto < 0 ? "Baja" : "Estable");
+
+    public Color TendenciaFondo => VariacionMonto > 0 
+        ? Color.FromArgb("#FEE2E2") 
+        : (VariacionMonto < 0 
+            ? Color.FromArgb("#DCFCE7") 
+            : Color.FromArgb("#F1F5F9"));
+
+    public Color TendenciaBorde => VariacionMonto > 0 
+        ? Color.FromArgb("#FCA5A5") 
+        : (VariacionMonto < 0 
+            ? Color.FromArgb("#86EFAC") 
+            : Color.FromArgb("#CBD5E1"));
+
+    public Color TendenciaTextoColor => VariacionMonto > 0 
+        ? Color.FromArgb("#B91C1C") 
+        : (VariacionMonto < 0 
+            ? Color.FromArgb("#15803D") 
+            : Color.FromArgb("#475569"));
 }
 
 public class ResumenHistorialPrecios

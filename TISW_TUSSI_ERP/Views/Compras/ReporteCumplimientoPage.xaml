@@ -23,11 +23,11 @@
                 <!-- Título y acción de exportación -->
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
                     <VerticalStackLayout Spacing="2">
-                        <Label Text="Reporte: Cumplimiento de Órdenes y SLA de Proveedores (RF-COM-05 / RF-COM-12)" Style="{StaticResource ErpTitle}" />
+                        <Label Text="Cumplimiento de Órdenes y Nivel de Servicio (SLA)" Style="{StaticResource ErpTitle}" />
                         <Label Text="Monitoreo del porcentaje de entrega a tiempo y análisis de discrepancias entre cantidades solicitadas y recibidas."
                                Style="{StaticResource ErpSubtitle}" />
                     </VerticalStackLayout>
-                    <Button Grid.Column="1" Text="📥  Exportar CSV" Style="{StaticResource ErpGhostButton}"
+                    <Button Grid.Column="1" Text="Exportar CSV" Style="{StaticResource ErpGhostButton}"
                             Command="{Binding ComandoExportarCsv}" VerticalOptions="Center" />
                 </Grid>
 
@@ -55,12 +55,12 @@
                         <VerticalStackLayout Grid.Column="2" Spacing="4">
                             <Label Text="Proveedor / Laboratorio" Style="{StaticResource ErpCaption}" />
                             <Border Style="{StaticResource ErpInputBox}">
-                                <Picker Title="-- Todos los proveedores --"
-                                        ItemsSource="{Binding Proveedores}"
+                                <Picker ItemsSource="{Binding Proveedores}"
                                         ItemDisplayBinding="{Binding RazonSocial}"
                                         SelectedItem="{Binding ProveedorFiltro}"
                                         TextColor="{StaticResource ErpText}"
-                                        TitleColor="{StaticResource ErpMuted}" />
+                                        BackgroundColor="Transparent"
+                                        VerticalOptions="Center" />
                             </Border>
                         </VerticalStackLayout>
 
@@ -68,7 +68,9 @@
                         <VerticalStackLayout Grid.Column="3" Spacing="4">
                             <Label Text="Estado de la Orden" Style="{StaticResource ErpCaption}" />
                             <Border Style="{StaticResource ErpInputBox}">
-                                <Picker SelectedItem="{Binding EstadoFiltro}" TextColor="{StaticResource ErpText}">
+                                <Picker SelectedItem="{Binding EstadoFiltro}" TextColor="{StaticResource ErpText}"
+                                        BackgroundColor="Transparent"
+                                        VerticalOptions="Center">
                                     <Picker.ItemsSource>
                                         <x:Array Type="{x:Type x:String}">
                                             <x:String>TODAS</x:String>
@@ -176,12 +178,13 @@
                                                 <ProgressBar Progress="{Binding PorcentajeCumplimiento}" ProgressColor="{Binding NivelServicioColor}" WidthRequest="80" />
                                             </VerticalStackLayout>
 
-                                            <!-- Nivel de Servicio (RF-COM-12) -->
+                                            <!-- Nivel de Servicio (SLA) -->
                                             <Border Grid.Column="6" HorizontalOptions="Center" VerticalOptions="Center"
-                                                    BackgroundColor="{Binding NivelServicioColor, StringFormat='#20{0}'}"
-                                                    StrokeThickness="0" StrokeShape="RoundRectangle 8" Padding="8,4">
+                                                    BackgroundColor="{Binding NivelServicioFondo}"
+                                                    Stroke="{Binding NivelServicioBorde}"
+                                                    StrokeThickness="1" StrokeShape="RoundRectangle 8" Padding="10,4">
                                                 <Label Text="{Binding NivelServicio}" FontSize="10" FontAttributes="Bold"
-                                                       TextColor="{Binding NivelServicioColor}" HorizontalTextAlignment="Center" />
+                                                       TextColor="{Binding NivelServicioTextoColor}" HorizontalTextAlignment="Center" />
                                             </Border>
 
                                             <!-- Monto Total -->

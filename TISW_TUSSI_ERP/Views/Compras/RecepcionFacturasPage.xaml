@@ -23,8 +23,8 @@
 
                 <!-- Título y descripción -->
                 <VerticalStackLayout Spacing="2">
-                    <Label Text="Recepción y Liquidación de Factura (RF-COM-03)" Style="{StaticResource ErpTitle}" />
-                    <Label Text="Ingreso físico de medicamentos con asignación de lote, fecha de vencimiento y estado de cuarentena (RF-COM-09). La liquidación actualiza inventario, Kardex y contabilidad."
+                    <Label Text="Recepción y Liquidación de Facturas" Style="{StaticResource ErpTitle}" />
+                    <Label Text="Ingreso físico de medicamentos con asignación de lote, fecha de vencimiento y control de calidad. La liquidación actualiza inventario, Kardex y contabilidad."
                            Style="{StaticResource ErpSubtitle}" />
                 </VerticalStackLayout>
 
@@ -33,29 +33,48 @@
                     <VerticalStackLayout Spacing="12">
                         <Label Text="1. Orden de Compra a Recepcionar" Style="{StaticResource ErpCardTitle}" />
                         
-                        <Grid ColumnDefinitions="2*,*" ColumnSpacing="16">
+                        <Grid ColumnDefinitions="1.6*,*" ColumnSpacing="16">
                             <VerticalStackLayout Spacing="4">
                                 <Label Text="Seleccione la orden pendiente:" Style="{StaticResource ErpCaption}" />
                                 <Border Style="{StaticResource ErpInputBox}">
-                                    <Picker Title="-- Seleccione Orden de Compra --"
-                                            ItemsSource="{Binding OrdenesDisponibles}"
+                                    <Picker ItemsSource="{Binding OrdenesDisponibles}"
                                             ItemDisplayBinding="{Binding Numero}"
                                             SelectedItem="{Binding OrdenSeleccionada}"
                                             TextColor="{StaticResource ErpText}"
-                                            TitleColor="{StaticResource ErpMuted}" />
+                                            BackgroundColor="Transparent"
+                                            VerticalOptions="Center" />
                                 </Border>
                             </VerticalStackLayout>
 
-                            <!-- Resumen rápido del proveedor de la orden -->
+                            <!-- Resumen del proveedor si está seleccionada -->
                             <Border Grid.Column="1" BackgroundColor="#F8FAFC" Stroke="{StaticResource ErpBorder}"
-                                    StrokeShape="RoundRectangle 8" Padding="12" IsVisible="{Binding HayOrdenSeleccionada}">
-                                <VerticalStackLayout Spacing="2" VerticalOptions="Center">
+                                    StrokeShape="RoundRectangle 8" Padding="14,10" IsVisible="{Binding HayOrdenSeleccionada}">
+                                <VerticalStackLayout Spacing="3" VerticalOptions="Center">
                                     <Label Text="{Binding OrdenSeleccionada.Proveedor}" FontSize="13" FontAttributes="Bold" TextColor="{StaticResource ErpText}" />
                                     <Label Text="{Binding OrdenSeleccionada.RutTexto}" FontSize="11" TextColor="{StaticResource ErpMuted}" />
                                     <Label Text="{Binding OrdenSeleccionada.TotalTexto, StringFormat='Monto OC: {0}'}" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource ErpPrimary}" />
                                 </VerticalStackLayout>
                             </Border>
+
+                            <!-- Mensaje guía si no hay orden seleccionada -->
+                            <Border Grid.Column="1" BackgroundColor="#F8FAFC" Stroke="{StaticResource ErpBorder}"
+                                    StrokeShape="RoundRectangle 8" Padding="14,10" IsVisible="{Binding NoHayOrdenSeleccionada}">
+                                <VerticalStackLayout Spacing="2" VerticalOptions="Center">
+                                    <Label Text="Estado del selector" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource ErpMuted}" />
+                                    <Label Text="Elija una orden de la lista para cargar sus medicamentos y datos de facturación."
+                                           FontSize="11" TextColor="{StaticResource ErpMuted}" />
+                                </VerticalStackLayout>
+                            </Border>
                         </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Tarjeta guía visible cuando aún no se selecciona orden -->
+                <Border Style="{StaticResource ErpCard}" Padding="32" IsVisible="{Binding NoHayOrdenSeleccionada}">
+                    <VerticalStackLayout Spacing="8" HorizontalOptions="Center" VerticalOptions="Center">
+                        <Label Text="Ninguna orden de compra seleccionada" FontAttributes="Bold" FontSize="15" TextColor="{StaticResource ErpText}" HorizontalTextAlignment="Center" />
+                        <Label Text="Para recepcionar mercadería, seleccione una orden de compra pendiente en el menú desplegable superior. Una vez seleccionada, podrá ingresar el número de factura tributaria, registrar lotes y fechas de vencimiento sanitario, y liquidar la factura para actualizar Kardex y contabilidad."
+                               FontSize="13" TextColor="{StaticResource ErpMuted}" HorizontalTextAlignment="Center" MaximumWidthRequest="620" />
                     </VerticalStackLayout>
                 </Border>
 
@@ -153,7 +172,7 @@
                                             <Label Grid.Column="6" Text="{Binding SubtotalLineaTexto}" Style="{StaticResource ErpBody}"
                                                    FontAttributes="Bold" HorizontalTextAlignment="End" VerticalOptions="Center" />
 
-                                            <!-- Estado Cuarentena (RF-COM-09) -->
+                                            <!-- Control Cuarentena -->
                                             <VerticalStackLayout Grid.Column="7" HorizontalOptions="Center" VerticalOptions="Center" Spacing="2">
                                                 <CheckBox IsChecked="{Binding EnCuarentena}" Color="{StaticResource ErpWarning}" HorizontalOptions="Center" />
                                                 <Label Text="Retener" FontSize="9" TextColor="{StaticResource ErpMuted}" HorizontalOptions="Center" />
@@ -196,7 +215,7 @@
                                 <Label Grid.Column="1" Text="{Binding MontoTotalFacturadoTexto}" HorizontalOptions="End" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource ErpPrimary}"/>
                             </Grid>
 
-                            <Button Text="✓ Liquidar Factura e Ingresar al Inventario" Style="{StaticResource ErpPrimaryButton}"
+                            <Button Text="Liquidar Factura e Ingresar al Inventario" Style="{StaticResource ErpPrimaryButton}"
                                     BackgroundColor="{StaticResource ErpSuccess}"
                                     Command="{Binding ComandoLiquidarRecepcion}" Margin="0,15,0,0" HeightRequest="50"/>
                         </VerticalStackLayout>

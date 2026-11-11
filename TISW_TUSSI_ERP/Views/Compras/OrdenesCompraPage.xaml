@@ -28,9 +28,9 @@
                         <Label Text="{Binding Resumen.TotalComprometidoTexto, StringFormat='Seguimiento de pedidos a proveedores · Total comprometido {0}'}"
                                Style="{StaticResource ErpSubtitle}" />
                     </VerticalStackLayout>
-                    <Button Grid.Column="1" Text="📥  Exportar CSV" Style="{StaticResource ErpGhostButton}"
+                    <Button Grid.Column="1" Text="Exportar CSV" Style="{StaticResource ErpGhostButton}"
                             VerticalOptions="Center" Command="{Binding ComandoExportarCsv}" />
-                    <Button Grid.Column="2" Text="+  Nueva orden de compra" Style="{StaticResource ErpPrimaryButton}"
+                    <Button Grid.Column="2" Text="Nueva Orden de Compra" Style="{StaticResource ErpPrimaryButton}"
                             VerticalOptions="Center" Command="{Binding ComandoNuevaOrden}" />
                 </Grid>
 
@@ -188,16 +188,16 @@
                                     <!-- Acciones contextuales de la orden -->
                                     <HorizontalStackLayout Grid.Column="1" Spacing="8" VerticalOptions="Start">
                                         <!-- Registrar recepción (visible si está emitida o parcial) -->
-                                        <Button Text="📦 Registrar recepción" Style="{StaticResource ErpPrimaryButton}" HeightRequest="38"
+                                        <Button Text="Registrar Recepción" Style="{StaticResource ErpPrimaryButton}" HeightRequest="38"
                                                 IsVisible="{Binding OrdenSeleccionada.PuedeRecibirse}"
                                                 Command="{Binding ComandoRegistrarRecepcion}" />
 
-                                        <!-- Autorizar / Rechazar compras retenidas por presupuesto (RF-COM-10 / RF-COM-13) -->
-                                        <Button Text="✓ Aprobar orden" Style="{StaticResource ErpPrimaryButton}" BackgroundColor="{StaticResource ErpSuccess}" HeightRequest="38"
+                                        <!-- Autorizar / Rechazar compras retenidas por presupuesto -->
+                                        <Button Text="Aprobar Orden" Style="{StaticResource ErpPrimaryButton}" BackgroundColor="{StaticResource ErpSuccess}" HeightRequest="38"
                                                 IsVisible="{Binding OrdenSeleccionada.RequiereAutorizacion}"
                                                 Command="{Binding ComandoAprobar}" />
 
-                                        <Button Text="✕ Rechazar" Style="{StaticResource ErpGhostButton}" TextColor="{StaticResource ErpDanger}" HeightRequest="38"
+                                        <Button Text="Rechazar" Style="{StaticResource ErpGhostButton}" TextColor="{StaticResource ErpDanger}" HeightRequest="38"
                                                 IsVisible="{Binding OrdenSeleccionada.RequiereAutorizacion}"
                                                 Command="{Binding ComandoRechazar}" />
 

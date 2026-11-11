@@ -6,7 +6,7 @@ using TISW_TUSSI_ERP.Services.Api;
 
 namespace TISW_TUSSI_ERP.ViewModels.Compras;
 
-// Reporte 1: Registro de Compras por Laboratorio / Proveedor (RF-COM-04)
+// Reporte: Registro de Compras por Laboratorio / Proveedor
 public class ReporteComprasViewModel : BaseViewModel
 {
     private readonly ComprasService _servicio;

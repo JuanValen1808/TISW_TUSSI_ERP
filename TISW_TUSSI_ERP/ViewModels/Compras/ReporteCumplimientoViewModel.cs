@@ -6,7 +6,7 @@ using TISW_TUSSI_ERP.Services.Api;
 
 namespace TISW_TUSSI_ERP.ViewModels.Compras;
 
-// Reporte 2: Cumplimiento de Órdenes de Compra y Nivel de Servicio de Proveedores (RF-COM-05 & RF-COM-12)
+// Reporte: Cumplimiento de Órdenes de Compra y Nivel de Servicio de Proveedores
 public class ReporteCumplimientoViewModel : BaseViewModel
 {
     private readonly ComprasService _servicio;

@@ -6,7 +6,7 @@ using TISW_TUSSI_ERP.Services.Api;
 
 namespace TISW_TUSSI_ERP.ViewModels.Compras;
 
-// Reporte 3: Historial de Precios y Variación de Costos de Adquisición (RF-COM-06)
+// Reporte: Historial de Precios y Variación de Costos de Adquisición
 public class ReporteHistorialPreciosViewModel : BaseViewModel
 {
     private readonly ComprasService _servicio;

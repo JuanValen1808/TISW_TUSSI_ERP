@@ -18,9 +18,9 @@
 
                 <!-- Botones superiores -->
                 <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="12">
-                    <Button Text="← Volver a Órdenes" Style="{StaticResource ErpGhostButton}"
+                    <Button Text="Volver a Órdenes" Style="{StaticResource ErpGhostButton}"
                             HorizontalOptions="Start" Command="{Binding ComandoVolver}" />
-                    <Button Grid.Column="1" Text="⚡ Cargar Sugerencias de Reabastecimiento (RF-COM-08)" 
+                    <Button Grid.Column="1" Text="Cargar Sugerencias de Reabastecimiento" 
                             Style="{StaticResource ErpGhostButton}" TextColor="{StaticResource ErpPrimary}"
                             BorderColor="{StaticResource ErpPrimary}"
                             Command="{Binding ComandoCargarSugerencias}" />
@@ -33,12 +33,12 @@
                         <Label Text="Seleccione el proveedor al que se enviará la orden de compra:" Style="{StaticResource ErpSubtitle}" />
 
                         <Border Style="{StaticResource ErpInputBox}">
-                            <Picker Title="-- Seleccione Proveedor --" 
-                                    ItemsSource="{Binding Proveedores}" 
+                            <Picker ItemsSource="{Binding Proveedores}" 
                                     ItemDisplayBinding="{Binding RazonSocial}"
                                     SelectedItem="{Binding ProveedorSeleccionado}" 
                                     TextColor="{StaticResource ErpText}" 
-                                    TitleColor="{StaticResource ErpMuted}" />
+                                    BackgroundColor="Transparent"
+                                    VerticalOptions="Center" />
                         </Border>
                     </VerticalStackLayout>
                 </Border>
@@ -53,12 +53,12 @@
                             <VerticalStackLayout Spacing="4">
                                 <Label Text="Producto / Medicamento" Style="{StaticResource ErpCaption}" />
                                 <Border Style="{StaticResource ErpInputBox}">
-                                    <Picker Title="-- Seleccionar Medicamento --" 
-                                            ItemsSource="{Binding Productos}" 
+                                    <Picker ItemsSource="{Binding Productos}" 
                                             ItemDisplayBinding="{Binding DescripcionCompleta}"
                                             SelectedItem="{Binding ProductoSeleccionado}" 
                                             TextColor="{StaticResource ErpText}" 
-                                            TitleColor="{StaticResource ErpMuted}" />
+                                            BackgroundColor="Transparent"
+                                            VerticalOptions="Center" />
                                 </Border>
                             </VerticalStackLayout>
 
@@ -78,7 +78,7 @@
                                 </Border>
                             </VerticalStackLayout>
 
-                            <Button Grid.Column="3" Text="+ Agregar" Style="{StaticResource ErpPrimaryButton}" 
+                            <Button Grid.Column="3" Text="Agregar" Style="{StaticResource ErpPrimaryButton}" 
                                     Command="{Binding ComandoAgregarProducto}" HeightRequest="46" VerticalOptions="End" />
                         </Grid>
                     </VerticalStackLayout>
@@ -111,9 +111,9 @@
                                             <Label Grid.Column="2" Text="{Binding PrecioUnitario, StringFormat='${0:N0}'}" HorizontalOptions="End" VerticalOptions="Center" TextColor="{StaticResource ErpText}"/>
                                             <Label Grid.Column="3" Text="{Binding Subtotal, StringFormat='${0:N0}'}" FontAttributes="Bold" HorizontalOptions="End" VerticalOptions="Center" TextColor="{StaticResource ErpText}"/>
 
-                                            <Button Grid.Column="4" Text="✕" Command="{Binding Source={RelativeSource AncestorType={x:Type vm:NuevaOrdenViewModel}}, Path=ComandoEliminarProducto}" 
+                                            <Button Grid.Column="4" Text="Quitar" Command="{Binding Source={RelativeSource AncestorType={x:Type vm:NuevaOrdenViewModel}}, Path=ComandoEliminarProducto}" 
                                                     CommandParameter="{Binding .}" Style="{StaticResource ErpGhostButton}" TextColor="{StaticResource ErpDanger}"
-                                                    Padding="0" HeightRequest="32" WidthRequest="32" HorizontalOptions="Center" />
+                                                    Padding="0" HeightRequest="30" WidthRequest="56" FontSize="11" HorizontalOptions="Center" />
                                         </Grid>
                                     </Border>
                                 </DataTemplate>
@@ -126,11 +126,11 @@
                 <Border Style="{StaticResource ErpCard}" Padding="20">
                     <Grid ColumnDefinitions="*, 340" ColumnSpacing="20">
 
-                        <!-- Alerta de flujo de aprobación jerárquica (RF-COM-10 / RF-COM-13) -->
+                        <!-- Alerta de flujo de aprobación jerárquica -->
                         <Border Grid.Column="0" BackgroundColor="#FFF7ED" Stroke="#FDBA74" StrokeShape="RoundRectangle 8" Padding="16"
                                 IsVisible="{Binding SuperaLimitePresupuestario}" VerticalOptions="Center">
                             <VerticalStackLayout Spacing="6">
-                                <Label Text="⚠️ Control Presupuestario Activo (RF-COM-10 / RF-COM-13)" FontAttributes="Bold" FontSize="13" TextColor="#C2410C" />
+                                <Label Text="Control Presupuestario Activo" FontAttributes="Bold" FontSize="13" TextColor="#C2410C" />
                                 <Label Text="Esta orden excede el límite de gasto regular ($1.000.000). Al emitirse, quedará retenida en estado 'Pendiente de Autorización' hasta la aprobación explícita de Gerencia o Administración General."
                                        FontSize="12" TextColor="#9A3412" />
                             </VerticalStackLayout>
