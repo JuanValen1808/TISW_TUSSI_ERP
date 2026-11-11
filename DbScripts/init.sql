@@ -437,7 +437,8 @@ INSERT INTO proveedores (rut_proveedor, razon_social, nombre_contacto, telefono,
 
 INSERT INTO usuarios (rut_usuario, nombre, email, password_hash, id_rol, activo) VALUES
     ('12.345.678-9', 'María Vendedora', 'ventas@erp.cl', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 2, TRUE),
-    ('13.456.789-0', 'Pedro Bodega', 'bodega@erp.cl', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 3, TRUE);
+    ('13.456.789-0', 'Pedro Bodega', 'bodega@erp.cl', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 3, TRUE),
+    ('14.555.666-7', 'Carolina Soto (Contadora)', 'contador@erp.cl', SHA2('contador123', 256), 4, TRUE);
 
 INSERT INTO rol_permisos (id_rol, id_permiso) VALUES
     (2, 1),

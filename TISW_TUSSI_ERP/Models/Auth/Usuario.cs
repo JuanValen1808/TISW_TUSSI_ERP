@@ -10,4 +10,10 @@ public class Usuario
     public int IdRol { get; set; }
     public string NombreRol { get; set; } = string.Empty;
     public bool Activo { get; set; }
+
+    // Permisos RBAC cargados desde rol_permisos (RF-POR-03)
+    public HashSet<string> Permisos { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
+    public bool EsAdministrador =>
+        NombreRol.Equals("Administrador", StringComparison.OrdinalIgnoreCase) || IdRol == 1;
 }
