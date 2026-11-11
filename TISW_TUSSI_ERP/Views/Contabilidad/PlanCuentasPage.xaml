@@ -3,68 +3,316 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:viewmodels="clr-namespace:TISW_TUSSI_ERP.ViewModels.Contabilidad"
              xmlns:models="clr-namespace:TISW_TUSSI_ERP.Models.Contabilidad"
+             xmlns:ctrl="clr-namespace:TISW_TUSSI_ERP.Views.Shared"
              x:Class="TISW_TUSSI_ERP.Views.Contabilidad.PlanCuentasPage"
              x:DataType="viewmodels:PlanCuentasViewModel"
+             Shell.NavBarIsVisible="False"
              Title="{Binding Titulo}"
-             BackgroundColor="{StaticResource ErpBackground}">
+             BackgroundColor="{StaticResource ErpBg}">
 
-    <Grid RowDefinitions="Auto,*" Padding="20">
+    <Grid RowDefinitions="Auto,*">
+        <ctrl:PageHeader Grid.Row="0" Ruta="ERP › Contabilidad › RF-CON-01" Titulo="Plan de Cuentas Contables (SII / IFRS Chile)" />
 
-        <!-- HEADER MODERNO -->
-        <Grid Grid.Row="0" ColumnDefinitions="*, Auto" Margin="0,0,0,20">
-            <VerticalStackLayout>
-                <Label Text="Plan de Cuentas" Style="{StaticResource ErpTitle}" />
-                <Label Text="Catálogo oficial de cuentas contables." Style="{StaticResource ErpSubtitle}" Margin="0,0,0,10" />
-            </VerticalStackLayout>
-            <Button Grid.Column="1" Text="Actualizar Catálogo" Command="{Binding CargarCuentasCommand}" Style="{StaticResource ErpSecondaryButton}" VerticalOptions="Center" />
-        </Grid>
+        <Grid Grid.Row="1">
+            <ScrollView>
+                <VerticalStackLayout Padding="24" Spacing="18">
 
-        <!-- DATA GRID DE CUENTAS -->
-        <Border Grid.Row="1" Style="{StaticResource ErpCard}" Padding="0">
-            <RefreshView Command="{Binding CargarCuentasCommand}" IsRefreshing="{Binding EstaOcupado}">
-                <VerticalStackLayout>
+                    <!-- HERO BANNER -->
+                    <Border Style="{StaticResource CtbHero}">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="20">
+                            <VerticalStackLayout Spacing="6">
+                                <Label Text="CATÁLOGO OFICIAL · NORMATIVA PCGA / IFRS PYME Y SII CHILE" Style="{StaticResource CtbHeroEyebrow}" />
+                                <Label Text="Plan Jerárquico de Cuentas Contables" Style="{StaticResource CtbHeroTitle}" />
+                                <Label Text="Estructura multinivel de Activos, Pasivos, Patrimonio, Ingresos y Costos/Gastos con saldos acumulados en tiempo real."
+                                       Style="{StaticResource CtbHeroSubtitle}" />
+                                <HorizontalStackLayout Spacing="8" Margin="0,6,0,0">
+                                    <Border Style="{StaticResource CtbHeroChip}">
+                                        <Label Text="✓ Estructura Jerárquica" Style="{StaticResource CtbHeroChipText}" />
+                                    </Border>
+                                    <Border Style="{StaticResource CtbHeroChip}">
+                                        <Label Text="✓ Homologado SII (F22 / F29)" Style="{StaticResource CtbHeroChipText}" />
+                                    </Border>
+                                    <Border Style="{StaticResource CtbHeroChip}">
+                                        <Label Text="{Binding GeneradoTexto}" Style="{StaticResource CtbHeroChipText}" />
+                                    </Border>
+                                </HorizontalStackLayout>
+                            </VerticalStackLayout>
 
-                    <!-- Cabecera -->
-                    <Grid ColumnDefinitions="150, *, 150" Padding="20,12" BackgroundColor="#F1F5F9">
-                        <Label Grid.Column="0" Text="CÓDIGO" Style="{StaticResource ErpSmallLabel}" FontAttributes="Bold" />
-                        <Label Grid.Column="1" Text="NOMBRE DE LA CUENTA" Style="{StaticResource ErpSmallLabel}" FontAttributes="Bold" />
-                        <Label Grid.Column="2" Text="TIPO" Style="{StaticResource ErpSmallLabel}" FontAttributes="Bold" HorizontalTextAlignment="End" />
+                            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="8">
+                                <HorizontalStackLayout Spacing="8">
+                                    <Button Text="+ Nueva Cuenta" Command="{Binding NuevaCuentaCommand}" Style="{StaticResource CtbHeroButton}" />
+                                    <Button Text="Homologar SII" Command="{Binding HomologarPlanSiiCommand}" Style="{StaticResource CtbHeroGhostButton}" />
+                                </HorizontalStackLayout>
+                                <HorizontalStackLayout Spacing="8" HorizontalOptions="End">
+                                    <Button Text="Exportar PDF" Command="{Binding ExportarPdfCommand}" Style="{StaticResource CtbHeroGhostButton}" />
+                                    <Button Text="Exportar CSV" Command="{Binding ExportarCsvCommand}" Style="{StaticResource CtbHeroGhostButton}" />
+                                </HorizontalStackLayout>
+                            </VerticalStackLayout>
+                        </Grid>
+                    </Border>
+
+                    <!-- BANNERS DE ESTADO -->
+                    <Border Style="{StaticResource CtbErrorBanner}" IsVisible="{Binding HayError}">
+                        <Label Text="{Binding MensajeError}" TextColor="#991B1B" FontSize="13" FontAttributes="Bold" />
+                    </Border>
+                    <Border Style="{StaticResource CtbOkBanner}" IsVisible="{Binding HayExito}">
+                        <Label Text="{Binding MensajeExito}" TextColor="#065F46" FontSize="13" FontAttributes="Bold" />
+                    </Border>
+
+                    <!-- TARJETAS KPI -->
+                    <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="14">
+                        <Border Grid.Column="0" Style="{StaticResource CtbKpiCard}">
+                            <Grid ColumnDefinitions="4,*" Padding="16,14" ColumnSpacing="12">
+                                <BoxView Style="{StaticResource CtbKpiAccent}" BackgroundColor="#4F46E5" />
+                                <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                    <Label Text="CUENTAS EN CATÁLOGO" Style="{StaticResource CtbKpiLabel}" />
+                                    <Label Text="{Binding TotalCuentas}" Style="{StaticResource CtbKpiValue}" />
+                                    <Label Text="Rubros y cuentas operativas" Style="{StaticResource CtbKpiHint}" />
+                                </VerticalStackLayout>
+                            </Grid>
+                        </Border>
+
+                        <Border Grid.Column="1" Style="{StaticResource CtbKpiCard}">
+                            <Grid ColumnDefinitions="4,*" Padding="16,14" ColumnSpacing="12">
+                                <BoxView Style="{StaticResource CtbKpiAccent}" BackgroundColor="#0D9488" />
+                                <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                    <Label Text="CUENTAS IMPUTABLES" Style="{StaticResource CtbKpiLabel}" />
+                                    <Label Text="{Binding CuentasImputables}" Style="{StaticResource CtbKpiValue}" />
+                                    <Label Text="Habilitadas para asientos" Style="{StaticResource CtbKpiHint}" />
+                                </VerticalStackLayout>
+                            </Grid>
+                        </Border>
+
+                        <Border Grid.Column="2" Style="{StaticResource CtbKpiCard}">
+                            <Grid ColumnDefinitions="4,*" Padding="16,14" ColumnSpacing="12">
+                                <BoxView Style="{StaticResource CtbKpiAccent}" BackgroundColor="#1D6FD8" />
+                                <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                    <Label Text="SALDO TOTAL ACTIVOS" Style="{StaticResource CtbKpiLabel}" />
+                                    <Label Text="{Binding TotalActivosTexto}" Style="{StaticResource CtbKpiValue}" TextColor="#1D4ED8" />
+                                    <Label Text="Naturaleza Deudora" Style="{StaticResource CtbKpiHint}" />
+                                </VerticalStackLayout>
+                            </Grid>
+                        </Border>
+
+                        <Border Grid.Column="3" Style="{StaticResource CtbKpiCard}">
+                            <Grid ColumnDefinitions="4,*" Padding="16,14" ColumnSpacing="12">
+                                <BoxView Style="{StaticResource CtbKpiAccent}" BackgroundColor="#E11D48" />
+                                <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                    <Label Text="SALDO PASIVOS EXIGIBLES" Style="{StaticResource CtbKpiLabel}" />
+                                    <Label Text="{Binding TotalPasivosTexto}" Style="{StaticResource CtbKpiValue}" TextColor="#BE123C" />
+                                    <Label Text="Naturaleza Acreedora" Style="{StaticResource CtbKpiHint}" />
+                                </VerticalStackLayout>
+                            </Grid>
+                        </Border>
                     </Grid>
 
-                    <BoxView HeightRequest="1" Color="{StaticResource ErpBorder}" />
+                    <!-- BARRA DE FILTROS -->
+                    <Border Style="{StaticResource CtbFilterBar}">
+                        <Grid ColumnDefinitions="*,220,Auto" ColumnSpacing="14" VerticalOptions="Center">
+                            <VerticalStackLayout Grid.Column="0" Spacing="4">
+                                <Label Text="BUSCAR POR CÓDIGO O NOMBRE DE CUENTA" Style="{StaticResource CtbFieldLabel}" />
+                                <Border Style="{StaticResource CtbField}">
+                                    <Entry Placeholder="Ej: 1.1.04, IVA Crédito, Caja, Proveedores..."
+                                           Text="{Binding Busqueda}"
+                                           Style="{StaticResource ErpEntry}" />
+                                </Border>
+                            </VerticalStackLayout>
 
-                    <!-- Filas del Catálogo -->
-                    <CollectionView ItemsSource="{Binding Cuentas}">
-                        <CollectionView.ItemTemplate>
-                            <DataTemplate x:DataType="models:PlanCuentas">
-                                <VerticalStackLayout>
-                                    <Grid ColumnDefinitions="150, *, 150" Padding="20,12">
-                                        <Label Grid.Column="0" Text="{Binding CodigoCuenta}" Style="{StaticResource ErpLabel}" VerticalOptions="Center" />
+                            <VerticalStackLayout Grid.Column="1" Spacing="4">
+                                <Label Text="CLASIFICACIÓN / RUBRO" Style="{StaticResource CtbFieldLabel}" />
+                                <Border Style="{StaticResource CtbField}">
+                                    <Picker ItemsSource="{Binding TiposFiltro}"
+                                            SelectedItem="{Binding TipoSeleccionado}"
+                                            TextColor="#0F172A" />
+                                </Border>
+                            </VerticalStackLayout>
 
-                                        <!-- Aplicamos negrita si es una cuenta de Nivel 1 o 2 para simular jerarquía -->
-                                        <Label Grid.Column="1" Text="{Binding NombreCuenta}" VerticalOptions="Center">
-                                            <Label.Triggers>
-                                                <DataTrigger TargetType="Label" Binding="{Binding Nivel}" Value="1">
-                                                    <Setter Property="FontAttributes" Value="Bold" />
-                                                    <Setter Property="TextColor" Value="{StaticResource ErpPrimaryText}" />
-                                                </DataTrigger>
-                                                <DataTrigger TargetType="Label" Binding="{Binding Nivel}" Value="2">
-                                                    <Setter Property="FontAttributes" Value="Bold" />
-                                                    <Setter Property="TextColor" Value="{StaticResource ErpPrimaryText}" />
-                                                </DataTrigger>
-                                            </Label.Triggers>
-                                        </Label>
+                            <Button Grid.Column="2"
+                                    Text="Actualizar"
+                                    Command="{Binding CargarCuentasCommand}"
+                                    Style="{StaticResource CtbPrimaryButton}"
+                                    VerticalOptions="End" />
+                        </Grid>
+                    </Border>
 
-                                        <Label Grid.Column="2" Text="{Binding TipoCuenta}" Style="{StaticResource ErpSmallLabel}" HorizontalTextAlignment="End" VerticalOptions="Center" />
-                                    </Grid>
-                                    <BoxView HeightRequest="1" Color="{StaticResource ErpBorder}" Opacity="0.4" />
+                    <!-- TABLA JERÁRQUICA DEL PLAN DE CUENTAS -->
+                    <Border Style="{StaticResource CtbTable}">
+                        <ScrollView Orientation="Horizontal">
+                            <VerticalStackLayout MinimumWidthRequest="1120">
+
+                                <Grid Style="{StaticResource CtbTableHead}"
+                                      ColumnDefinitions="110,*,120,145,140,125,125,150">
+                                    <Label Grid.Column="0" Text="CÓDIGO" Style="{StaticResource CtbTh}" />
+                                    <Label Grid.Column="1" Text="ESTRUCTURA JERÁRQUICA DE LA CUENTA" Style="{StaticResource CtbTh}" />
+                                    <Label Grid.Column="2" Text="CLASIFICACIÓN" Style="{StaticResource CtbTh}" />
+                                    <Label Grid.Column="3" Text="NIVEL / TIPO" Style="{StaticResource CtbTh}" />
+                                    <Label Grid.Column="4" Text="NATURALEZA" Style="{StaticResource CtbTh}" />
+                                    <Label Grid.Column="5" Text="MOVIMIENTOS" Style="{StaticResource CtbThRight}" />
+                                    <Label Grid.Column="6" Text="SALDO ACTUAL" Style="{StaticResource CtbThRight}" />
+                                    <Label Grid.Column="7" Text="ACCIONES" Style="{StaticResource CtbThRight}" />
+                                </Grid>
+                                <BoxView Style="{StaticResource CtbDivider}" />
+
+                                <VerticalStackLayout BindableLayout.ItemsSource="{Binding Cuentas}">
+                                    <BindableLayout.ItemTemplate>
+                                        <DataTemplate x:DataType="models:PlanCuentas">
+                                            <VerticalStackLayout BackgroundColor="{Binding FondoFila}">
+                                                <Grid ColumnDefinitions="110,*,120,145,140,125,125,150"
+                                                      Padding="18,12"
+                                                      ColumnSpacing="12">
+                                                    <Label Grid.Column="0"
+                                                           Text="{Binding CodigoCuenta}"
+                                                           FontAttributes="Bold"
+                                                           TextColor="#1E293B"
+                                                           VerticalOptions="Center" />
+
+                                                    <VerticalStackLayout Grid.Column="1"
+                                                                         Padding="{Binding Sangria}"
+                                                                         VerticalOptions="Center"
+                                                                         Spacing="2">
+                                                        <Label Text="{Binding NombreCuenta}"
+                                                               FontAttributes="{Binding Fuente}"
+                                                               FontSize="{Binding TamanoFuente}"
+                                                               TextColor="#0F172A" />
+                                                        <Label Text="{Binding ClasificacionSii}"
+                                                               FontSize="11"
+                                                               TextColor="#64748B" />
+                                                    </VerticalStackLayout>
+
+                                                    <Border Grid.Column="2"
+                                                            Style="{StaticResource CtbPill}"
+                                                            BackgroundColor="{Binding TipoFondo}">
+                                                        <Label Text="{Binding TipoCuenta}"
+                                                               Style="{StaticResource CtbPillText}"
+                                                               TextColor="{Binding TipoColor}" />
+                                                    </Border>
+
+                                                    <Label Grid.Column="3"
+                                                           Text="{Binding NivelTexto}"
+                                                           Style="{StaticResource CtbTdMuted}" />
+
+                                                    <Label Grid.Column="4"
+                                                           Text="{Binding NaturalezaTexto}"
+                                                           FontSize="12"
+                                                           FontAttributes="Bold"
+                                                           TextColor="{Binding NaturalezaColor}"
+                                                           VerticalOptions="Center" />
+
+                                                    <Label Grid.Column="5"
+                                                           Text="{Binding MovimientosTexto}"
+                                                           Style="{StaticResource CtbTdMuted}"
+                                                           HorizontalTextAlignment="End" />
+
+                                                    <Label Grid.Column="6"
+                                                           Text="{Binding SaldoTexto}"
+                                                           Style="{StaticResource CtbMoneyStrong}" />
+
+                                                    <HorizontalStackLayout Grid.Column="7"
+                                                                           Spacing="6"
+                                                                           HorizontalOptions="End"
+                                                                           VerticalOptions="Center">
+                                                        <Button Text="Editar"
+                                                                Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:PlanCuentasViewModel}}, Path=EditarCuentaCommand}"
+                                                                CommandParameter="{Binding .}"
+                                                                BackgroundColor="#EFF6FF"
+                                                                TextColor="#1D4ED8"
+                                                                FontSize="11"
+                                                                FontAttributes="Bold"
+                                                                CornerRadius="8"
+                                                                HeightRequest="30"
+                                                                Padding="10,0" />
+                                                        <Button Text="Eliminar"
+                                                                IsVisible="{Binding EsImputable}"
+                                                                Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:PlanCuentasViewModel}}, Path=EliminarCuentaCommand}"
+                                                                CommandParameter="{Binding .}"
+                                                                BackgroundColor="#FEF2F2"
+                                                                TextColor="#DC2626"
+                                                                FontSize="11"
+                                                                FontAttributes="Bold"
+                                                                CornerRadius="8"
+                                                                HeightRequest="30"
+                                                                Padding="10,0" />
+                                                    </HorizontalStackLayout>
+                                                </Grid>
+                                                <BoxView Style="{StaticResource CtbDivider}" />
+                                            </VerticalStackLayout>
+                                        </DataTemplate>
+                                    </BindableLayout.ItemTemplate>
                                 </VerticalStackLayout>
-                            </DataTemplate>
-                        </CollectionView.ItemTemplate>
-                    </CollectionView>
-                </VerticalStackLayout>
-            </RefreshView>
-        </Border>
+                            </VerticalStackLayout>
+                        </ScrollView>
+                    </Border>
 
+                </VerticalStackLayout>
+            </ScrollView>
+
+            <!-- MODAL CREAR / EDITAR CUENTA CONTABLE -->
+            <Grid IsVisible="{Binding MostrarModal}" BackgroundColor="#800F172A">
+                <Border WidthRequest="520"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center"
+                        BackgroundColor="White"
+                        Stroke="#E2E8F0"
+                        StrokeShape="RoundRectangle 16"
+                        Padding="24">
+                    <VerticalStackLayout Spacing="14">
+                        <Label Text="{Binding TituloModal}" Style="{StaticResource CtbSectionTitle}" FontSize="18" />
+                        <Label Text="Define el código jerárquico (ej. 1.1.07), rubro financiero y cuenta padre."
+                               Style="{StaticResource CtbPageSubtitle}" />
+
+                        <Grid ColumnDefinitions="160,*" ColumnSpacing="12">
+                            <VerticalStackLayout Grid.Column="0" Spacing="4">
+                                <Label Text="CÓDIGO (EJ. 1.1.07)" Style="{StaticResource CtbFieldLabel}" />
+                                <Border Style="{StaticResource CtbField}">
+                                    <Entry Text="{Binding FormCodigo}" Placeholder="1.1.07" Style="{StaticResource ErpEntry}" />
+                                </Border>
+                            </VerticalStackLayout>
+
+                            <VerticalStackLayout Grid.Column="1" Spacing="4">
+                                <Label Text="NOMBRE DE LA CUENTA" Style="{StaticResource CtbFieldLabel}" />
+                                <Border Style="{StaticResource CtbField}">
+                                    <Entry Text="{Binding FormNombre}" Placeholder="Ej: Banco Santander Cta. Cte." Style="{StaticResource ErpEntry}" />
+                                </Border>
+                            </VerticalStackLayout>
+                        </Grid>
+
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                            <VerticalStackLayout Grid.Column="0" Spacing="4">
+                                <Label Text="RUBRO CONTABLE" Style="{StaticResource CtbFieldLabel}" />
+                                <Border Style="{StaticResource CtbField}">
+                                    <Picker ItemsSource="{Binding TiposCuentaFormulario}"
+                                            SelectedItem="{Binding FormTipo}"
+                                            TextColor="#0F172A" />
+                                </Border>
+                            </VerticalStackLayout>
+
+                            <VerticalStackLayout Grid.Column="1" Spacing="4">
+                                <Label Text="NIVEL JERÁRQUICO" Style="{StaticResource CtbFieldLabel}" />
+                                <Border Style="{StaticResource CtbField}">
+                                    <Picker ItemsSource="{Binding NivelesFormulario}"
+                                            SelectedItem="{Binding FormNivel}"
+                                            TextColor="#0F172A" />
+                                </Border>
+                            </VerticalStackLayout>
+                        </Grid>
+
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="CUENTA PADRE (AGRUPACIÓN)" Style="{StaticResource CtbFieldLabel}" />
+                            <Border Style="{StaticResource CtbField}">
+                                <Picker ItemsSource="{Binding CuentasPadreDisponibles}"
+                                        ItemDisplayBinding="{Binding Descripcion}"
+                                        SelectedItem="{Binding FormCuentaPadre}"
+                                        TextColor="#0F172A" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <HorizontalStackLayout HorizontalOptions="End" Spacing="10" Margin="0,10,0,0">
+                            <Button Text="Cancelar" Command="{Binding CerrarModalCommand}" Style="{StaticResource CtbGhostButton}" />
+                            <Button Text="Guardar Cuenta" Command="{Binding GuardarCuentaCommand}" Style="{StaticResource CtbPrimaryButton}" />
+                        </HorizontalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
+            </Grid>
+        </Grid>
     </Grid>
 </ContentPage>
