@@ -9,11 +9,11 @@
        x:Class="TISW_TUSSI_ERP.AppShell"
        Shell.NavBarIsVisible="False"
        FlyoutBehavior="Locked"
-       FlyoutWidth="260"
+       FlyoutWidth="268"
        Shell.FlyoutBackgroundColor="#FFFFFF"
        Title="FarmSalud ERP">
 
-    <!-- Menú lateral moderno tipo SaaS -->
+    <!-- Menú lateral moderno tipo SaaS (RF-POR-01) -->
     <Shell.FlyoutContent>
         <Grid RowDefinitions="Auto,*,Auto" BackgroundColor="#FFFFFF">
 
@@ -25,7 +25,7 @@
                 </Border>
                 <VerticalStackLayout VerticalOptions="Center" Spacing="0">
                     <Label Text="FarmSalud" FontSize="16" FontAttributes="Bold" TextColor="#0F172A" />
-                    <Label Text="ERP System" FontSize="11" TextColor="#64748B" />
+                    <Label Text="ERP Contable &amp; SII Chile" FontSize="11" TextColor="#64748B" />
                 </VerticalStackLayout>
             </HorizontalStackLayout>
 
@@ -54,24 +54,7 @@
         </Grid>
     </Shell.FlyoutContent>
 
-<<<<<<< HEAD
-    <!-- RESTAURACIÓN DE LAS RUTAS DE NAVEGACIÓN -->
-    <ShellContent Route="DashboardPage" Shell.FlyoutItemIsVisible="False" ContentTemplate="{DataTemplate dashboard:DashboardPage}" />
-    <ShellContent Route="OrdenesCompraPage" Shell.FlyoutItemIsVisible="False" ContentTemplate="{DataTemplate compras:OrdenesCompraPage}" />
-    <ShellContent Route="PlanCuentasPage" Shell.FlyoutItemIsVisible="False" ContentTemplate="{DataTemplate contabilidad:PlanCuentasPage}" />
-    <ShellContent Route="LibroDiarioPage" Shell.FlyoutItemIsVisible="False" ContentTemplate="{DataTemplate contabilidad:LibroDiarioPage}" />
-    <ShellContent Route="LibroMayorPage" Shell.FlyoutItemIsVisible="False" ContentTemplate="{DataTemplate contabilidad:LibroMayorPage}" />
-    <ShellContent Route="BalanceOchoColumnasPage" Shell.FlyoutItemIsVisible="False" ContentTemplate="{DataTemplate contabilidad:BalanceOchoColumnasPage}" />
-    <ShellContent Route="EstadoResultadosPage" Shell.FlyoutItemIsVisible="False" ContentTemplate="{DataTemplate contabilidad:EstadoResultadosPage}" />
-    <ShellContent Route="MayorCentralizadoPage" Shell.FlyoutItemIsVisible="False" ContentTemplate="{DataTemplate contabilidad:MayorCentralizadoPage}" />
-    <ShellContent Route="CuentasPorCobrarPage" Shell.FlyoutItemIsVisible="False" ContentTemplate="{DataTemplate contabilidad:CuentasPorCobrarPage}" />
-    <ShellContent Route="CuentasPorPagarPage" Shell.FlyoutItemIsVisible="False" ContentTemplate="{DataTemplate contabilidad:CuentasPorPagarPage}" />
-    <ShellContent Route="UsuariosPage" Shell.FlyoutItemIsVisible="False" ContentTemplate="{DataTemplate admin:UsuariosPage}" />
-    <ShellContent Route="PerfilesPage" Shell.FlyoutItemIsVisible="False" ContentTemplate="{DataTemplate admin:PerfilesPage}" />
-    <ShellContent Route="AccesosPage" Shell.FlyoutItemIsVisible="False" ContentTemplate="{DataTemplate admin:AccesosPage}" />
-
-</Shell>
-=======
+    <!-- RUTAS PRINCIPALES Y OPERACIONALES -->
     <ShellContent Route="DashboardPage" Shell.FlyoutItemIsVisible="False"
                   ContentTemplate="{DataTemplate dashboard:DashboardPage}" />
     <ShellContent Route="OrdenesCompraPage" Shell.FlyoutItemIsVisible="False"
@@ -88,6 +71,8 @@
                   ContentTemplate="{DataTemplate ventas:ConveniosPage}" />
     <ShellContent Route="RankingVentasPage" Shell.FlyoutItemIsVisible="False"
                   ContentTemplate="{DataTemplate ventas:RankingVentasPage}" />
+
+    <!-- RUTAS DE CONTABILIDAD (RF-CON-01 A RF-CON-09) -->
     <ShellContent Route="PlanCuentasPage" Shell.FlyoutItemIsVisible="False"
                   ContentTemplate="{DataTemplate contabilidad:PlanCuentasPage}" />
     <ShellContent Route="LibroDiarioPage" Shell.FlyoutItemIsVisible="False"
@@ -104,6 +89,16 @@
                   ContentTemplate="{DataTemplate contabilidad:CuentasPorCobrarPage}" />
     <ShellContent Route="CuentasPorPagarPage" Shell.FlyoutItemIsVisible="False"
                   ContentTemplate="{DataTemplate contabilidad:CuentasPorPagarPage}" />
+    <ShellContent Route="AntiguedadSaldosPage" Shell.FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate contabilidad:AntiguedadSaldosPage}" />
+    <ShellContent Route="CentralizadorImpuestosPage" Shell.FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate contabilidad:CentralizadorImpuestosPage}" />
+    <ShellContent Route="BalanceGeneralPage" Shell.FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate contabilidad:BalanceGeneralPage}" />
+    <ShellContent Route="FlujoCajaPage" Shell.FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate contabilidad:FlujoCajaPage}" />
+
+    <!-- RUTAS DE ADMINISTRACIÓN Y SEGURIDAD (RF-POR-02 / RF-POR-03) -->
     <ShellContent Route="UsuariosPage" Shell.FlyoutItemIsVisible="False"
                   ContentTemplate="{DataTemplate admin:UsuariosPage}" />
     <ShellContent Route="PerfilesPage" Shell.FlyoutItemIsVisible="False"
@@ -111,4 +106,3 @@
     <ShellContent Route="AccesosPage" Shell.FlyoutItemIsVisible="False"
                   ContentTemplate="{DataTemplate admin:AccesosPage}" />
 </Shell>
->>>>>>> a0f867ad90cd1e308d70330d2abd90a39f4b5680
