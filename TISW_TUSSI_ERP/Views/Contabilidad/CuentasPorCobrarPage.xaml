@@ -1,89 +1,206 @@
+<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:ctrl="clr-namespace:TISW_TUSSI_ERP.Views.Shared"
              xmlns:models="clr-namespace:TISW_TUSSI_ERP.Models.Contabilidad"
              x:Class="TISW_TUSSI_ERP.Views.Contabilidad.CuentasPorCobrarPage"
-             BackgroundColor="{StaticResource AppBackground}">
+             Shell.NavBarIsVisible="False"
+             Title="Cuentas por Cobrar"
+             BackgroundColor="{StaticResource CtbSurfaceAlt}">
 
-    <Grid RowDefinitions="Auto,*" Padding="20">
+    <Grid RowDefinitions="Auto, *">
+        <ctrl:PageHeader Grid.Row="0" Ruta="ERP › Contabilidad › RF-CON-07" Titulo="Gestión de Cuentas por Cobrar a Clientes" />
 
-        <!-- Header Moderno -->
-        <Border Grid.Row="0" Style="{StaticResource CardStyle}" Margin="0,0,0,20">
-            <Grid ColumnDefinitions="*, Auto">
-                <VerticalStackLayout>
-                    <Label Text="Cuentas por Cobrar" Style="{StaticResource HeaderTitleStyle}" />
-                    <Label Text="Documentos pendientes de clientes." TextColor="{StaticResource SecondaryText}" FontSize="14" />
-                </VerticalStackLayout>
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="24" Spacing="18">
 
-                <VerticalStackLayout Grid.Column="1" HorizontalOptions="End" VerticalOptions="Center">
-                    <Label Text="Total por Cobrar" TextColor="{StaticResource SecondaryText}" FontSize="12" HorizontalOptions="End"/>
-                    <Label Text="{Binding TotalCobrar, StringFormat='{0:C0}'}" FontAttributes="Bold" FontSize="22" TextColor="{StaticResource Primary}" />
-                </VerticalStackLayout>
-            </Grid>
-        </Border>
-
-        <!-- Lista de Documentos tipo Tarjeta -->
-        <RefreshView Grid.Row="1" Command="{Binding CargarDocumentosCommand}" IsRefreshing="{Binding EstaOcupado}">
-            <CollectionView ItemsSource="{Binding Documentos}">
-                <CollectionView.ItemTemplate>
-                    <DataTemplate x:DataType="models:CuentaPorCobrar">
-                        <!-- Tarjeta de fila -->
-                        <Border Style="{StaticResource CardStyle}" Margin="0,0,0,10" Padding="15">
-                            <Grid ColumnDefinitions="100, 2*, *, *, 100">
-
-                                <VerticalStackLayout Grid.Column="0" VerticalOptions="Center">
-                                    <Label Text="NRO DOC" FontSize="10" TextColor="{StaticResource SecondaryText}" />
-                                    <Label Text="{Binding NumeroDocumento}" FontAttributes="Bold" TextColor="{StaticResource PrimaryText}" />
-                                </VerticalStackLayout>
-
-                                <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
-                                    <Label Text="CLIENTE" FontSize="10" TextColor="{StaticResource SecondaryText}" />
-                                    <Label Text="{Binding Cliente}" TextColor="{StaticResource PrimaryText}" />
-                                </VerticalStackLayout>
-
-                                <VerticalStackLayout Grid.Column="2" VerticalOptions="Center">
-                                    <Label Text="VENCIMIENTO" FontSize="10" TextColor="{StaticResource SecondaryText}" />
-                                    <Label Text="{Binding FechaVencimiento, StringFormat='{0:dd/MM/yyyy}'}" TextColor="{StaticResource PrimaryText}" />
-                                </VerticalStackLayout>
-
-                                <VerticalStackLayout Grid.Column="3" VerticalOptions="Center" HorizontalOptions="End">
-                                    <Label Text="SALDO" FontSize="10" TextColor="{StaticResource SecondaryText}" />
-                                    <Label Text="{Binding SaldoPendiente, StringFormat='{0:C0}'}" FontAttributes="Bold" TextColor="{StaticResource PrimaryText}" />
-                                </VerticalStackLayout>
-
-                                <!-- Badge de Estado Tipo Píldora -->
-                                <Border Grid.Column="4" HorizontalOptions="End" VerticalOptions="Center" 
-                                        StrokeThickness="0" StrokeShape="RoundRectangle 15" Padding="12,6">
-                                    <Border.Triggers>
-                                        <DataTrigger TargetType="Border" Binding="{Binding Estado}" Value="Pagado">
-                                            <Setter Property="BackgroundColor" Value="{StaticResource SuccessBg}" />
-                                        </DataTrigger>
-                                        <DataTrigger TargetType="Border" Binding="{Binding Estado}" Value="Vencido">
-                                            <Setter Property="BackgroundColor" Value="{StaticResource DangerBg}" />
-                                        </DataTrigger>
-                                        <DataTrigger TargetType="Border" Binding="{Binding Estado}" Value="Pendiente">
-                                            <Setter Property="BackgroundColor" Value="{StaticResource WarningBg}" />
-                                        </DataTrigger>
-                                    </Border.Triggers>
-                                    <Label Text="{Binding Estado}" FontSize="12" FontAttributes="Bold">
-                                        <Label.Triggers>
-                                            <DataTrigger TargetType="Label" Binding="{Binding Estado}" Value="Pagado">
-                                                <Setter Property="TextColor" Value="{StaticResource SuccessText}" />
-                                            </DataTrigger>
-                                            <DataTrigger TargetType="Label" Binding="{Binding Estado}" Value="Vencido">
-                                                <Setter Property="TextColor" Value="{StaticResource DangerText}" />
-                                            </DataTrigger>
-                                            <DataTrigger TargetType="Label" Binding="{Binding Estado}" Value="Pendiente">
-                                                <Setter Property="TextColor" Value="{StaticResource WarningText}" />
-                                            </DataTrigger>
-                                        </Label.Triggers>
-                                    </Label>
+                <!-- HERO BANNER -->
+                <Border Style="{StaticResource CtbHero}">
+                    <Grid ColumnDefinitions="*, Auto" ColumnSpacing="20">
+                        <VerticalStackLayout Spacing="4">
+                            <HorizontalStackLayout Spacing="8">
+                                <Border BackgroundColor="#2563EB" StrokeThickness="0" Padding="8,3" StrokeShape="RoundRectangle 6">
+                                    <Label Text="RF-CON-07 · CARTERA DE CLIENTES" TextColor="White" FontSize="10" FontAttributes="Bold" />
                                 </Border>
+                                <Border BackgroundColor="#1E293B" Stroke="#334155" StrokeThickness="1" Padding="8,3" StrokeShape="RoundRectangle 6">
+                                    <Label Text="CUENTA 1.1.03 CLIENTES NACIONALES" TextColor="#93C5FD" FontSize="10" FontAttributes="Bold" />
+                                </Border>
+                            </HorizontalStackLayout>
+                            <Label Text="Gestión de Cuentas por Cobrar (Clientes)" Style="{StaticResource CtbHeroTitle}" />
+                            <Label Text="Consulta de facturas emitidas, seguimiento de vencimientos y registro de cobros con asiento automático." Style="{StaticResource CtbHeroSubtitle}" />
+                        </VerticalStackLayout>
 
-                            </Grid>
+                        <HorizontalStackLayout Grid.Column="1" Spacing="10" VerticalOptions="Center">
+                            <Button Text="Actualizar Cartera" Command="{Binding RefrescarCommand}" Style="{StaticResource CtbBtnPrimary}" />
+                            <Button Text="Exportar CSV" Command="{Binding ExportarCsvCommand}" Style="{StaticResource CtbBtnOutline}" BackgroundColor="#1E293B" TextColor="White" BorderColor="#475569" />
+                        </HorizontalStackLayout>
+                    </Grid>
+                </Border>
+
+                <!-- KPIS -->
+                <Grid ColumnDefinitions="*, *, *, *" ColumnSpacing="14">
+                    <Border Grid.Column="0" Style="{StaticResource CtbKpiCard}" Stroke="#BFDBFE">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="SALDO PENDIENTE DE COBRO" Style="{StaticResource CtbKpiLabel}" TextColor="#1D4ED8" />
+                            <Label Text="{Binding TotalPorCobrarTexto}" Style="{StaticResource CtbKpiValue}" TextColor="#1D4ED8" />
+                            <Label Text="{Binding CantidadPendientes, StringFormat='{0} facturas con saldo abierto'}" Style="{StaticResource CtbKpiFoot}" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border Grid.Column="1" Style="{StaticResource CtbKpiCard}" Stroke="#FECDD3">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="CARTERA VENCIDA (MORA)" Style="{StaticResource CtbKpiLabel}" TextColor="#BE123C" />
+                            <Label Text="{Binding TotalVencidoTexto}" Style="{StaticResource CtbKpiValue}" TextColor="#BE123C" />
+                            <Label Text="{Binding CantidadVencidas, StringFormat='{0} documentos vencidos'}" Style="{StaticResource CtbKpiFoot}" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border Grid.Column="2" Style="{StaticResource CtbKpiCard}" Stroke="#A7F3D0">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="CARTERA VIGENTE (AL DÍA)" Style="{StaticResource CtbKpiLabel}" TextColor="#047857" />
+                            <Label Text="{Binding TotalVigenteTexto}" Style="{StaticResource CtbKpiValue}" TextColor="#047857" />
+                            <Label Text="Dentro de plazo comercial" Style="{StaticResource CtbKpiFoot}" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border Grid.Column="3" Style="{StaticResource CtbKpiCard}">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="TOTAL RECAUDADO / ABONADO" Style="{StaticResource CtbKpiLabel}" />
+                            <Label Text="{Binding TotalRecaudadoTexto}" Style="{StaticResource CtbKpiValue}" />
+                            <Label Text="Cobros contabilizados en Libro Diario" Style="{StaticResource CtbKpiFoot}" />
+                        </VerticalStackLayout>
+                    </Border>
+                </Grid>
+
+                <!-- BARRA DE FILTROS -->
+                <Border Style="{StaticResource CtbFilterBar}">
+                    <Grid ColumnDefinitions="*, Auto" ColumnSpacing="16" VerticalOptions="Center">
+                        <VerticalStackLayout Grid.Column="0">
+                            <Label Text="BUSCAR CLIENTE, RUT O N° DE FACTURA" Style="{StaticResource CtbFieldLabel}" />
+                            <Border Style="{StaticResource CtbInputBox}">
+                                <Entry Text="{Binding TextoBusqueda}" Placeholder="Ej: Farmacia, 76.543.210-K, FAC-00001..." TextColor="{StaticResource CtbText}" FontSize="13" ClearButtonVisibility="WhileEditing" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <HorizontalStackLayout Grid.Column="1" Spacing="8" VerticalOptions="End">
+                            <Button Text="Todos" Command="{Binding FiltrarEstadoCommand}" CommandParameter="TODOS" Style="{StaticResource CtbChip}" />
+                            <Button Text="Con Saldo Pendiente" Command="{Binding FiltrarEstadoCommand}" CommandParameter="PENDIENTES" Style="{StaticResource CtbChip}" />
+                            <Button Text="Vencidos" Command="{Binding FiltrarEstadoCommand}" CommandParameter="VENCIDO" Style="{StaticResource CtbChip}" TextColor="#BE123C" />
+                            <Button Text="Vigentes" Command="{Binding FiltrarEstadoCommand}" CommandParameter="VIGENTE" Style="{StaticResource CtbChip}" TextColor="#1D4ED8" />
+                            <Button Text="Pagados" Command="{Binding FiltrarEstadoCommand}" CommandParameter="PAGADO" Style="{StaticResource CtbChip}" TextColor="#047857" />
+                        </HorizontalStackLayout>
+                    </Grid>
+                </Border>
+
+                <!-- TABLA DE DOCUMENTOS POR COBRAR -->
+                <Border Style="{StaticResource CtbTable}">
+                    <VerticalStackLayout Spacing="0">
+                        <Grid Style="{StaticResource CtbTableHeader}" ColumnDefinitions="115, *, 110, 95, 115, 130, 125, 110, 130">
+                            <Label Grid.Column="0" Text="DOCUMENTO" Style="{StaticResource CtbTableHeaderText}" />
+                            <Label Grid.Column="1" Text="CLIENTE" Style="{StaticResource CtbTableHeaderText}" />
+                            <Label Grid.Column="2" Text="RUT" Style="{StaticResource CtbTableHeaderText}" />
+                            <Label Grid.Column="3" Text="EMISIÓN" Style="{StaticResource CtbTableHeaderText}" HorizontalTextAlignment="Center" />
+                            <Label Grid.Column="4" Text="VENCIMIENTO" Style="{StaticResource CtbTableHeaderText}" HorizontalTextAlignment="Center" />
+                            <Label Grid.Column="5" Text="MONTO TOTAL" Style="{StaticResource CtbTableHeaderText}" HorizontalTextAlignment="End" />
+                            <Label Grid.Column="6" Text="SALDO PEND." Style="{StaticResource CtbTableHeaderText}" HorizontalTextAlignment="End" />
+                            <Label Grid.Column="7" Text="ESTADO" Style="{StaticResource CtbTableHeaderText}" HorizontalTextAlignment="Center" />
+                            <Label Grid.Column="8" Text="ACCIÓN" Style="{StaticResource CtbTableHeaderText}" HorizontalTextAlignment="Center" />
+                        </Grid>
+
+                        <CollectionView ItemsSource="{Binding Documentos}">
+                            <CollectionView.EmptyView>
+                                <VerticalStackLayout Padding="36" Spacing="8" HorizontalOptions="Center">
+                                    <Label Text="No se encontraron cuentas por cobrar para el criterio seleccionado." FontAttributes="Bold" TextColor="{StaticResource CtbText}" HorizontalTextAlignment="Center" />
+                                </VerticalStackLayout>
+                            </CollectionView.EmptyView>
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="models:CuentaPorCobrar">
+                                    <VerticalStackLayout Spacing="0">
+                                        <Grid Padding="16,12" ColumnDefinitions="115, *, 110, 95, 115, 130, 125, 110, 130" BackgroundColor="White">
+                                            <Label Grid.Column="0" Text="{Binding NumeroDocumento}" FontAttributes="Bold" TextColor="{StaticResource CtbPrimary}" FontSize="12" VerticalOptions="Center" />
+                                            <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                                <Label Text="{Binding Cliente}" FontAttributes="Bold" FontSize="13" TextColor="{StaticResource CtbText}" LineBreakMode="TailTruncation" />
+                                                <Label Text="{Binding AvanceCobroTexto, StringFormat='Cobrado: {0}'}" FontSize="11" TextColor="{StaticResource CtbTextMuted}" />
+                                            </VerticalStackLayout>
+                                            <Label Grid.Column="2" Text="{Binding RutCliente}" FontSize="12" TextColor="{StaticResource CtbTextMuted}" VerticalOptions="Center" />
+                                            <Label Grid.Column="3" Text="{Binding FechaEmisionTexto}" FontSize="12" TextColor="{StaticResource CtbText}" HorizontalTextAlignment="Center" VerticalOptions="Center" />
+                                            <VerticalStackLayout Grid.Column="4" Spacing="1" HorizontalOptions="Center" VerticalOptions="Center">
+                                                <Label Text="{Binding FechaVencimientoTexto}" FontSize="12" TextColor="{StaticResource CtbText}" HorizontalTextAlignment="Center" />
+                                                <Label Text="{Binding DiasMoraTexto}" FontSize="10" TextColor="{Binding EstadoColor}" HorizontalTextAlignment="Center" />
+                                            </VerticalStackLayout>
+                                            <Label Grid.Column="5" Text="{Binding MontoTotalTexto}" FontSize="12" TextColor="{StaticResource CtbText}" HorizontalTextAlignment="End" VerticalOptions="Center" />
+                                            <Label Grid.Column="6" Text="{Binding SaldoPendienteTexto}" FontAttributes="Bold" FontSize="13" TextColor="{Binding EstadoColor}" HorizontalTextAlignment="End" VerticalOptions="Center" />
+                                            <Border Grid.Column="7" BackgroundColor="{Binding EstadoFondo}" StrokeThickness="0" Padding="8,4" StrokeShape="RoundRectangle 6" HorizontalOptions="Center" VerticalOptions="Center">
+                                                <Label Text="{Binding Estado}" TextColor="{Binding EstadoColor}" FontSize="10" FontAttributes="Bold" />
+                                            </Border>
+                                            <Button Grid.Column="8"
+                                                    Text="Registrar Cobro"
+                                                    IsEnabled="{Binding PuedeCobrar}"
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.AbrirModalCobroCommand}"
+                                                    CommandParameter="{Binding .}"
+                                                    Style="{StaticResource CtbBtnPrimary}"
+                                                    Padding="10,6"
+                                                    FontSize="11"
+                                                    HeightRequest="34"
+                                                    HorizontalOptions="Center"
+                                                    VerticalOptions="Center" />
+                                        </Grid>
+                                        <BoxView Style="{StaticResource CtbDivider}" />
+                                    </VerticalStackLayout>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </VerticalStackLayout>
+                </Border>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- MODAL REGISTRAR COBRO DE CLIENTE -->
+        <Grid Grid.RowSpan="2" BackgroundColor="#800F172A" IsVisible="{Binding MostrarModalCobro}" Padding="24">
+            <Border BackgroundColor="White" Stroke="{StaticResource CtbBorder}" StrokeThickness="1" StrokeShape="RoundRectangle 16" WidthRequest="520" HorizontalOptions="Center" VerticalOptions="Center" Padding="24">
+                <VerticalStackLayout Spacing="16">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="REGISTRAR COBRO DE CLIENTE" FontSize="16" FontAttributes="Bold" TextColor="{StaticResource CtbText}" />
+                        <Label Text="Actualiza automáticamente el saldo de la factura y genera el asiento en Libro Diario." FontSize="12" TextColor="{StaticResource CtbTextMuted}" />
+                    </VerticalStackLayout>
+
+                    <Border BackgroundColor="#EFF6FF" Stroke="#BFDBFE" Padding="14,10" StrokeShape="RoundRectangle 10">
+                        <Grid ColumnDefinitions="*, Auto" RowDefinitions="Auto, Auto" RowSpacing="4">
+                            <Label Text="{Binding DocumentoSeleccionado.NumeroDocumento, StringFormat='Documento: {0}'}" FontAttributes="Bold" TextColor="#1E40AF" FontSize="13" />
+                            <Label Grid.Column="1" Text="{Binding DocumentoSeleccionado.SaldoPendienteTexto, StringFormat='Saldo: {0}'}" FontAttributes="Bold" TextColor="#1D4ED8" FontSize="13" />
+                            <Label Grid.Row="1" Grid.ColumnSpan="2" Text="{Binding DocumentoSeleccionado.Cliente, StringFormat='Cliente: {0}'}" TextColor="#3B82F6" FontSize="12" />
+                        </Grid>
+                    </Border>
+
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="MONTO A COBRAR (CLP)" Style="{StaticResource CtbFieldLabel}" />
+                        <Border Style="{StaticResource CtbInputBox}">
+                            <Entry Text="{Binding MontoCobroTexto}" Keyboard="Numeric" Placeholder="Monto en pesos" TextColor="{StaticResource CtbText}" FontSize="14" FontAttributes="Bold" />
                         </Border>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
-        </RefreshView>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="MEDIO DE RECAUDACIÓN (CUENTA DESTINO)" Style="{StaticResource CtbFieldLabel}" />
+                        <Border Style="{StaticResource CtbInputBox}">
+                            <Picker ItemsSource="{Binding MediosCobro}" SelectedItem="{Binding MedioCobro}" TextColor="{StaticResource CtbText}" FontSize="13" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="GLOSA / REFERENCIA BANCARIA" Style="{StaticResource CtbFieldLabel}" />
+                        <Border Style="{StaticResource CtbInputBox}">
+                            <Entry Text="{Binding ReferenciaCobro}" Placeholder="Ej: Transferencia Banco Estado #94821" TextColor="{StaticResource CtbText}" FontSize="13" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <HorizontalStackLayout Spacing="12" HorizontalOptions="End">
+                        <Button Text="Cancelar" Command="{Binding CerrarModalCobroCommand}" Style="{StaticResource CtbBtnOutline}" />
+                        <Button Text="Confirmar y Contabilizar Cobro" Command="{Binding ConfirmarCobroCommand}" Style="{StaticResource CtbBtnSuccess}" />
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+        </Grid>
+
     </Grid>
 </ContentPage>
