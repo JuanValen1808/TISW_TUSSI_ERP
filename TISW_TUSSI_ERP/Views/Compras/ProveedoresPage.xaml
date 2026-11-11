@@ -25,16 +25,13 @@
                         <Label Text="Proveedores" Style="{StaticResource ErpTitle}" />
                         <Label Text="Mantenedor de proveedores y laboratorios" Style="{StaticResource ErpSubtitle}" />
                     </VerticalStackLayout>
-                    <Button Grid.Column="1" Text="+  Nuevo proveedor" Style="{StaticResource ErpPrimaryButton}"
+                    <Button Grid.Column="1" Text="Nuevo Proveedor" Style="{StaticResource ErpPrimaryButton}"
                             VerticalOptions="Center" Command="{Binding ComandoNuevo}" />
                 </Grid>
 
                 <Border Style="{StaticResource ErpInputBox}" WidthRequest="340" HorizontalOptions="Start">
-                    <Grid ColumnDefinitions="Auto,*">
-                        <Label Text="🔎" TextColor="{StaticResource ErpMuted}" VerticalOptions="Center" />
-                        <Entry Grid.Column="1" Style="{StaticResource ErpEntry}" Placeholder="Buscar por nombre o RUT..."
-                               Text="{Binding Busqueda}" />
-                    </Grid>
+                    <Entry Style="{StaticResource ErpEntry}" Placeholder="Buscar proveedor por nombre o RUT..."
+                           Text="{Binding Busqueda}" />
                 </Border>
 
                 <ActivityIndicator IsRunning="{Binding EstaOcupado}" IsVisible="{Binding EstaOcupado}" Color="{StaticResource ErpPrimary}" />

@@ -1,12 +1,12 @@
-﻿using System.Collections.ObjectModel;
-using System.Text.RegularExpressions;
+using System.Collections.ObjectModel;
 using System.Windows.Input;
+using TISW_TUSSI_ERP.Helpers;
 using TISW_TUSSI_ERP.Models.Compras;
 using TISW_TUSSI_ERP.Services.Api;
 
 namespace TISW_TUSSI_ERP.ViewModels.Compras;
 
-// Mantenedor CRUD de Proveedores (RF-COM-01)
+// Mantenedor de Proveedores y Laboratorios
 public class ProveedoresViewModel : BaseViewModel
 {
     private readonly ComprasService _servicio;
@@ -58,10 +58,6 @@ public class ProveedoresViewModel : BaseViewModel
     public ICommand ComandoEliminar { get; }
     public ICommand ComandoGuardar { get; }
     public ICommand ComandoCancelar { get; }
-
-    // Validaciones de operación (RNF transversal): RUT chileno, email y campos obligatorios
-    private static readonly Regex RegexRut = new(@"^\d{1,2}\.?\d{3}\.?\d{3}-[\dkK]$", RegexOptions.Compiled);
-    private static readonly Regex RegexEmail = new(@"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.Compiled);
 
     public ProveedoresViewModel(ComprasService servicio)
     {
@@ -148,14 +144,17 @@ public class ProveedoresViewModel : BaseViewModel
             ErrorFormulario = "La razón social es obligatoria.";
             return;
         }
-        if (string.IsNullOrWhiteSpace(Rut) || !RegexRut.IsMatch(Rut.Trim()))
+
+        if (!Validaciones.ValidarRut(Rut, out string rutLimpio, out string errorRut))
         {
-            ErrorFormulario = "Ingresa un RUT válido (ej: 76.123.456-7).";
+            ErrorFormulario = errorRut;
             return;
         }
-        if (!string.IsNullOrWhiteSpace(Email) && !RegexEmail.IsMatch(Email.Trim()))
+        Rut = rutLimpio;
+
+        if (!string.IsNullOrWhiteSpace(Email) && !Validaciones.ValidarEmail(Email, out string errorEmail))
         {
-            ErrorFormulario = "El correo electrónico no tiene un formato válido.";
+            ErrorFormulario = errorEmail;
             return;
         }
 

@@ -110,6 +110,7 @@ CREATE TABLE lotes (
     numero_lote VARCHAR(100) NOT NULL,
     fecha_vencimiento DATE NOT NULL,
     stock_actual INT NOT NULL DEFAULT 0,
+    estado_cuarentena ENUM('CUARENTENA', 'LIBERADO', 'RECHAZADO') NOT NULL DEFAULT 'LIBERADO',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_lotes_producto
         FOREIGN KEY (id_producto) REFERENCES productos(id_producto),
@@ -177,7 +178,7 @@ CREATE TABLE ordenes_compra (
     numero_oc VARCHAR(50) NOT NULL UNIQUE,
     id_proveedor INT NOT NULL,
     fecha_emision DATE NOT NULL,
-    estado ENUM('BORRADOR', 'EMITIDA', 'PARCIAL', 'RECIBIDA', 'ANULADA') NOT NULL,
+    estado ENUM('BORRADOR', 'EMITIDA', 'PARCIAL', 'RECIBIDA', 'ANULADA', 'PENDIENTE_AUTORIZACION') NOT NULL,
     monto_subtotal DECIMAL(15,2) NOT NULL DEFAULT 0,
     monto_iva DECIMAL(15,2) NOT NULL DEFAULT 0,
     monto_total DECIMAL(15,2) NOT NULL DEFAULT 0,
@@ -414,8 +415,8 @@ INSERT INTO categorias_producto (nombre_categoria) VALUES
 INSERT INTO productos (sku, codigo_barras, nombre_comercial, principio_activo, registro_sanitario, formato_presentacion, id_categoria, precio_venta_base, costo_promedio_ponderado, stock_minimo, punto_reorden, activo) VALUES
     ('MED-0001', '7801234567890', 'Paracetamol 500mg', 'Paracetamol', 'ISP-12345', 'Caja x 20 comprimidos', 1, 2500.00, 1200.00, 50, 80, TRUE);
 
-INSERT INTO lotes (id_producto, numero_lote, fecha_vencimiento, stock_actual) VALUES
-    (1, 'LOTE-2026-001', '2028-06-30', 150);
+INSERT INTO lotes (id_producto, numero_lote, fecha_vencimiento, stock_actual, estado_cuarentena) VALUES
+    (1, 'LOTE-2026-001', '2028-06-30', 150, 'LIBERADO');
 
 INSERT INTO plan_cuentas (codigo_cuenta, nombre_cuenta, tipo_cuenta, nivel, cuenta_padre_id) VALUES
     ('1', 'ACTIVOS', 'ACTIVO', 1, NULL),
@@ -449,9 +450,9 @@ INSERT INTO productos (sku, codigo_barras, nombre_comercial, principio_activo, r
     ('MED-0002', '7801234567891', 'Ibuprofeno 400mg', 'Ibuprofeno', 'ISP-12346', 'Caja x 10 comprimidos', 1, 1500.00, 800.00, 100, 150, TRUE),
     ('INS-0001', '7801234567892', 'Jeringa 5ml', 'N/A', 'ISP-12347', 'Unidad', 2, 300.00, 100.00, 500, 1000, TRUE);
 
-INSERT INTO lotes (id_producto, numero_lote, fecha_vencimiento, stock_actual) VALUES
-    (2, 'LOTE-2026-002', '2027-12-31', 300),
-    (3, 'LOTE-2026-003', '2029-01-01', 1500);
+INSERT INTO lotes (id_producto, numero_lote, fecha_vencimiento, stock_actual, estado_cuarentena) VALUES
+    (2, 'LOTE-2026-002', '2027-12-31', 300, 'LIBERADO'),
+    (3, 'LOTE-2026-003', '2029-01-01', 1500, 'LIBERADO');
 
 INSERT INTO libro_diario_asientos (numero_asiento, fecha_asiento, glosa_descripcion, origen, id_usuario) VALUES
     (1, '2026-10-15', 'Apertura de caja inicial', 'AJUSTE', 1);
@@ -547,17 +548,17 @@ INSERT INTO productos (id_producto, sku, codigo_barras, nombre_comercial, princi
     (18, 'CAR-0002', '7809999999999', 'Atenolol 50mg', 'Atenolol', 'ISP-C222', 'Caja x 20 comp', 14, 1800.00, 600.00, 40, 80, TRUE),
     (19, 'DER-0001', '7801010101010', 'Crema Hidratante Urea 10%', 'Urea', 'ISP-D111', 'Pote 250g', 3, 12000.00, 6000.00, 10, 25, TRUE);
 
-INSERT INTO lotes (id_lote, id_producto, numero_lote, fecha_vencimiento, stock_actual) VALUES
-    (10, 10, 'LOT-VIT-01', '2027-05-30', 200),
-    (11, 11, 'LOT-VIT-02', '2028-01-15', 150),
-    (12, 12, 'LOT-HIG-01', '2026-12-30', 80),
-    (13, 13, 'LOT-PAX-01', '2029-08-01', 500),
-    (14, 14, 'LOT-PAX-02', '2028-11-30', 120),
-    (15, 15, 'LOT-ALE-01', '2027-04-20', 300),
-    (16, 16, 'LOT-ALE-02', '2027-09-10', 250),
-    (17, 17, 'LOT-CAR-01', '2028-02-28', 400),
-    (18, 18, 'LOT-CAR-02', '2027-06-30', 350),
-    (19, 19, 'LOT-DER-01', '2026-10-31', 60);
+INSERT INTO lotes (id_lote, id_producto, numero_lote, fecha_vencimiento, stock_actual, estado_cuarentena) VALUES
+    (10, 10, 'LOT-VIT-01', '2027-05-30', 200, 'LIBERADO'),
+    (11, 11, 'LOT-VIT-02', '2028-01-15', 150, 'LIBERADO'),
+    (12, 12, 'LOT-HIG-01', '2026-12-30', 80, 'LIBERADO'),
+    (13, 13, 'LOT-PAX-01', '2029-08-01', 500, 'LIBERADO'),
+    (14, 14, 'LOT-PAX-02', '2028-11-30', 120, 'LIBERADO'),
+    (15, 15, 'LOT-ALE-01', '2027-04-20', 300, 'LIBERADO'),
+    (16, 16, 'LOT-ALE-02', '2027-09-10', 250, 'LIBERADO'),
+    (17, 17, 'LOT-CAR-01', '2028-02-28', 400, 'LIBERADO'),
+    (18, 18, 'LOT-CAR-02', '2027-06-30', 350, 'LIBERADO'),
+    (19, 19, 'LOT-DER-01', '2026-10-31', 60, 'LIBERADO');
 
 INSERT INTO plan_cuentas (id_cuenta, codigo_cuenta, nombre_cuenta, tipo_cuenta, nivel, cuenta_padre_id) VALUES
     (10, '1.1.03', 'Cuentas por Cobrar Clientes', 'ACTIVO', 2, 1),
@@ -575,26 +576,34 @@ INSERT INTO proveedores (id_proveedor, rut_proveedor, razon_social, nombre_conta
 INSERT INTO ordenes_compra (id_orden_compra, numero_oc, id_proveedor, fecha_emision, estado, monto_subtotal, monto_iva, monto_total, id_usuario_creador) VALUES
     (10, 'OC-2026-002', 10, '2026-10-10', 'RECIBIDA', 160000.00, 30400.00, 190400.00, 1),
     (11, 'OC-2026-003', 11, '2026-10-11', 'RECIBIDA', 50000.00, 9500.00, 59500.00, 1),
-    (12, 'OC-2026-004', 12, '2026-10-14', 'EMITIDA', 300000.00, 57000.00, 357000.00, 1);
+    (12, 'OC-2026-004', 12, '2026-10-14', 'EMITIDA', 300000.00, 57000.00, 357000.00, 1),
+    (13, 'OC-2026-005', 10, '2026-10-15', 'PENDIENTE_AUTORIZACION', 1200000.00, 228000.00, 1428000.00, 1),
+    (14, 'OC-2026-006', 11, '2026-10-16', 'PARCIAL', 200000.00, 38000.00, 238000.00, 1);
 
 INSERT INTO detalle_orden_compra (id_detalle_oc, id_orden_compra, id_producto, cantidad_solicitada, cantidad_recibida, costo_pactado_unitario) VALUES
     (10, 10, 17, 200, 200, 800.00),
     (11, 11, 13, 100, 100, 400.00),
     (12, 11, 14, 10, 10, 1000.00),
-    (13, 12, 10, 150, 0, 2000.00);
+    (13, 12, 10, 150, 0, 2000.00),
+    (14, 13, 11, 500, 0, 2400.00),
+    (15, 14, 15, 100, 50, 1500.00),
+    (16, 14, 16, 50, 0, 2500.00);
 
 INSERT INTO recepciones_facturas_compra (id_recepcion, id_orden_compra, numero_factura_proveedor, fecha_factura, monto_total_facturado, id_asiento_contable) VALUES
     (10, 10, 'FACT-PROV-1100', '2026-10-12', 190400.00, NULL),
-    (11, 11, 'FACT-PROV-3321', '2026-10-13', 59500.00, NULL);
+    (11, 11, 'FACT-PROV-3321', '2026-10-13', 59500.00, NULL),
+    (12, 14, 'FACT-PROV-4410', '2026-10-17', 89250.00, NULL);
 
 INSERT INTO detalle_recepcion_lotes (id_detalle_recepcion, id_recepcion, id_producto, numero_lote, fecha_vencimiento, cantidad_ingresada, costo_adquisicion_unitario) VALUES
     (10, 10, 17, 'LOT-CAR-01', '2028-02-28', 200, 800.00),
     (11, 11, 13, 'LOT-PAX-01', '2029-08-01', 100, 400.00),
-    (12, 11, 14, 'LOT-PAX-02', '2028-11-30', 10, 1000.00);
+    (12, 11, 14, 'LOT-PAX-02', '2028-11-30', 10, 1000.00),
+    (13, 12, 15, 'LOT-ALE-01', '2027-04-20', 50, 1500.00);
 
 INSERT INTO cuentas_por_pagar (id_cuenta_pagar, id_recepcion, id_proveedor, numero_documento, fecha_emision, fecha_vencimiento, monto_total, monto_pagado, estado_pago, id_asiento_contable) VALUES
     (10, 10, 10, 'FACT-PROV-1100', '2026-10-12', '2026-12-12', 190400.00, 0.00, 'PENDIENTE', NULL),
-    (11, 11, 11, 'FACT-PROV-3321', '2026-10-13', '2026-10-13', 59500.00, 59500.00, 'PAGADO', NULL);
+    (11, 11, 11, 'FACT-PROV-3321', '2026-10-13', '2026-10-13', 59500.00, 59500.00, 'PAGADO', NULL),
+    (12, 12, 11, 'FACT-PROV-4410', '2026-10-17', '2026-11-17', 89250.00, 0.00, 'PENDIENTE', NULL);
 
 INSERT INTO ventas_encabezado (id_venta, folio_documento, tipo_documento, id_cliente, id_convenio, estado_documento, forma_pago, monto_neto, monto_iva, monto_descuento, monto_total, id_usuario_cajero, id_asiento_contable) VALUES
     (10, 'BOL-00002', 'BOLETA', 10, NULL, 'EMITIDO', 'TARJETA', 5882.35, 1117.65, 0.00, 7000.00, 12, NULL),
@@ -646,95 +655,88 @@ INSERT INTO detalle_asiento_contable (id_detalle_asiento, id_asiento, id_cuenta,
     (16, 11, 12, 0.00, 11894.96);
 
 -- ==========================================================
--- BLOQUE 4: PROCEDIMIENTOS ALMACENADOS
+-- PROCEDIMIENTOS ALMACENADOS (OPTIMIZACIÓN TRANSACCIONAL ERP)
+-- Conforme a la Arquitectura Técnica (Capítulo 9.1)
 -- ==========================================================
 
-DELIMITER $$
-
--- 1. Sugerencia de Reabastecimiento de Compras
--- Calcula la cantidad sugerida a comprar basándose en el punto de reorden y el stock actual en lotes.
+DROP PROCEDURE IF EXISTS sp_sugerencia_reabastecimiento;
+DELIMITER //
 CREATE PROCEDURE sp_sugerencia_reabastecimiento()
 BEGIN
     SELECT 
-        p.id_producto, 
-        p.sku, 
-        p.nombre_comercial, 
-        p.stock_minimo, 
+        p.id_producto,
+        p.sku,
+        p.nombre_comercial,
         p.punto_reorden,
-        COALESCE(SUM(l.stock_actual), 0) AS stock_total,
-        (p.punto_reorden - COALESCE(SUM(l.stock_actual), 0)) AS cantidad_sugerida
+        p.stock_minimo,
+        COALESCE(SUM(l.stock_actual), 0) AS stock_actual,
+        p.costo_promedio_ponderado,
+        GREATEST((p.punto_reorden * 2) - COALESCE(SUM(l.stock_actual), 0), p.stock_minimo) AS cantidad_sugerida
     FROM productos p
-    LEFT JOIN lotes l ON p.id_producto = l.id_producto
-    WHERE p.activo = TRUE
-    GROUP BY p.id_producto
-    HAVING stock_total <= p.punto_reorden;
-END$$
+    LEFT JOIN lotes l ON l.id_producto = p.id_producto
+    WHERE p.activo = 1
+    GROUP BY p.id_producto, p.sku, p.nombre_comercial, p.punto_reorden, p.stock_minimo, p.costo_promedio_ponderado
+    HAVING stock_actual <= p.punto_reorden
+    ORDER BY (stock_actual - p.punto_reorden) ASC;
+END //
+DELIMITER ;
 
--- 2. Registrar Merma e Inyectar a Kardex
--- Registra una merma y rebaja de forma transaccional el stock del lote, insertando el movimiento de salida.
+DROP PROCEDURE IF EXISTS sp_actualizar_estado_oc;
+DELIMITER //
+CREATE PROCEDURE sp_actualizar_estado_oc(IN p_id_oc INT)
+BEGIN
+    DECLARE v_total_solicitado INT DEFAULT 0;
+    DECLARE v_total_recibido INT DEFAULT 0;
+
+    SELECT COALESCE(SUM(cantidad_solicitada), 0), COALESCE(SUM(cantidad_recibida), 0)
+    INTO v_total_solicitado, v_total_recibido
+    FROM detalle_orden_compra
+    WHERE id_orden_compra = p_id_oc;
+
+    IF v_total_recibido >= v_total_solicitado AND v_total_solicitado > 0 THEN
+        UPDATE ordenes_compra SET estado = 'RECIBIDA' WHERE id_orden_compra = p_id_oc;
+    ELSEIF v_total_recibido > 0 THEN
+        UPDATE ordenes_compra SET estado = 'PARCIAL' WHERE id_orden_compra = p_id_oc;
+    END IF;
+END //
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS sp_registrar_pago_proveedor;
+DELIMITER //
+CREATE PROCEDURE sp_registrar_pago_proveedor(IN p_id_cuenta_pagar INT, IN p_monto_abono DECIMAL(15,2))
+BEGIN
+    UPDATE cuentas_por_pagar
+    SET monto_pagado = LEAST(monto_pagado + p_monto_abono, monto_total),
+        estado_pago = CASE 
+            WHEN (monto_pagado + p_monto_abono) >= monto_total THEN 'PAGADO'
+            WHEN (monto_pagado + p_monto_abono) > 0 THEN 'PARCIAL'
+            ELSE estado_pago 
+        END
+    WHERE id_cuenta_pagar = p_id_cuenta_pagar;
+END //
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS sp_registrar_merma_y_kardex;
+DELIMITER //
 CREATE PROCEDURE sp_registrar_merma_y_kardex(
     IN p_id_producto INT,
     IN p_id_lote INT,
     IN p_cantidad INT,
     IN p_motivo VARCHAR(50),
+    IN p_costo_total DECIMAL(15,2),
     IN p_id_usuario INT
 )
 BEGIN
-    DECLARE v_costo DECIMAL(15,2);
-    DECLARE v_saldo_nuevo INT;
-    
     START TRANSACTION;
-    
-    SELECT costo_promedio_ponderado INTO v_costo FROM productos WHERE id_producto = p_id_producto;
-    
     INSERT INTO registro_mermas (id_producto, id_lote, cantidad, motivo, costo_total_perdida, id_usuario)
-    VALUES (p_id_producto, p_id_lote, p_cantidad, p_motivo, v_costo * p_cantidad, p_id_usuario);
-    
-    UPDATE lotes SET stock_actual = stock_actual - p_cantidad WHERE id_lote = p_id_lote;
-    
-    SELECT COALESCE(SUM(stock_actual), 0) INTO v_saldo_nuevo FROM lotes WHERE id_producto = p_id_producto;
-    
+    VALUES (p_id_producto, p_id_lote, p_cantidad, p_motivo, p_costo_total, p_id_usuario);
+
+    UPDATE lotes 
+    SET stock_actual = GREATEST(stock_actual - p_cantidad, 0)
+    WHERE id_lote = p_id_lote;
+
     INSERT INTO kardex_movimientos (id_producto, id_lote, tipo_movimiento, origen_documento, id_referencia_origen, cantidad, costo_unitario, saldo_stock_producto, id_usuario)
-    VALUES (p_id_producto, p_id_lote, 'SALIDA', 'MERMA', LAST_INSERT_ID(), p_cantidad, v_costo, v_saldo_nuevo, p_id_usuario);
-    
+    VALUES (p_id_producto, p_id_lote, 'MERMA', 'MERMA', LAST_INSERT_ID(), p_cantidad, (p_costo_total / p_cantidad), (SELECT COALESCE(SUM(stock_actual), 0) FROM lotes WHERE id_producto = p_id_producto), p_id_usuario);
     COMMIT;
-END$$
-
--- 3. Actualizar Estado Automático de Orden de Compra
--- Comprueba la cantidad recepcionada vs la solicitada para marcar la OC como PARCIAL o RECIBIDA.
-CREATE PROCEDURE sp_actualizar_estado_oc(
-    IN p_id_orden INT
-)
-BEGIN
-    DECLARE v_solicitado INT;
-    DECLARE v_recibido INT;
-    
-    SELECT SUM(cantidad_solicitada), SUM(cantidad_recibida) 
-    INTO v_solicitado, v_recibido
-    FROM detalle_orden_compra
-    WHERE id_orden_compra = p_id_orden;
-    
-    IF v_recibido >= v_solicitado THEN
-        UPDATE ordenes_compra SET estado = 'RECIBIDA' WHERE id_orden_compra = p_id_orden;
-    ELSEIF v_recibido > 0 THEN
-        UPDATE ordenes_compra SET estado = 'PARCIAL' WHERE id_orden_compra = p_id_orden;
-    END IF;
-END$$
-
--- 4. Registrar Pago a Proveedor
--- Actualiza el estado de la cuenta por pagar y su monto abonado.
-CREATE PROCEDURE sp_registrar_pago_proveedor(
-    IN p_id_cuenta_pagar INT,
-    IN p_monto_abono DECIMAL(15,2)
-)
-BEGIN
-    UPDATE cuentas_por_pagar
-    SET monto_pagado = monto_pagado + p_monto_abono,
-        estado_pago = CASE
-                        WHEN (monto_pagado + p_monto_abono) >= monto_total THEN 'PAGADO'
-                        ELSE 'PENDIENTE'
-                      END
-    WHERE id_cuenta_pagar = p_id_cuenta_pagar;
-END$$
-
+END //
 DELIMITER ;

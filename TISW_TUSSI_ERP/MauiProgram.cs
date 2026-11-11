@@ -58,6 +58,12 @@ namespace TISW_TUSSI_ERP
             builder.Services.AddTransient<ReporteComprasPage>();
             builder.Services.AddTransient<NuevaOrdenViewModel>();
             builder.Services.AddTransient<NuevaOrdenPage>();
+            builder.Services.AddTransient<RecepcionFacturasViewModel>();
+            builder.Services.AddTransient<RecepcionFacturasPage>();
+            builder.Services.AddTransient<ReporteCumplimientoViewModel>();
+            builder.Services.AddTransient<ReporteCumplimientoPage>();
+            builder.Services.AddTransient<ReporteHistorialPreciosViewModel>();
+            builder.Services.AddTransient<ReporteHistorialPreciosPage>();
 
             // Ventas
             builder.Services.AddTransient<PosViewModel>();

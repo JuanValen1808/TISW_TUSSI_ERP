@@ -21,19 +21,21 @@
                     <Label Text="{Binding MensajeError}" TextColor="#B91C1C" FontSize="12" />
                 </Border>
 
-                <!-- Título + acción -->
-                <Grid ColumnDefinitions="*,Auto">
+                <!-- Título + acciones -->
+                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
                     <VerticalStackLayout Spacing="2">
                         <Label Text="Órdenes de Compra" Style="{StaticResource ErpTitle}" />
                         <Label Text="{Binding Resumen.TotalComprometidoTexto, StringFormat='Seguimiento de pedidos a proveedores · Total comprometido {0}'}"
                                Style="{StaticResource ErpSubtitle}" />
                     </VerticalStackLayout>
-                    <Button Grid.Column="1" Text="+  Nueva orden de compra" Style="{StaticResource ErpPrimaryButton}"
+                    <Button Grid.Column="1" Text="Exportar CSV" Style="{StaticResource ErpGhostButton}"
+                            VerticalOptions="Center" Command="{Binding ComandoExportarCsv}" />
+                    <Button Grid.Column="2" Text="Nueva Orden de Compra" Style="{StaticResource ErpPrimaryButton}"
                             VerticalOptions="Center" Command="{Binding ComandoNuevaOrden}" />
                 </Grid>
 
                 <!-- KPIs -->
-                <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="16">
+                <Grid ColumnDefinitions="*,*,*,*,*" ColumnSpacing="14">
                     <Border Grid.Column="0" Style="{StaticResource ErpCard}">
                         <VerticalStackLayout Spacing="2">
                             <Label Text="ÓRDENES PENDIENTES" Style="{StaticResource ErpCaption}" />
@@ -48,11 +50,17 @@
                     </Border>
                     <Border Grid.Column="2" Style="{StaticResource ErpCard}">
                         <VerticalStackLayout Spacing="2">
+                            <Label Text="PEND. AUTORIZACIÓN" Style="{StaticResource ErpCaption}" />
+                            <Label Text="{Binding Resumen.OrdenesPendientesAutorizacion}" Style="{StaticResource ErpKpi}" TextColor="#C2410C" />
+                        </VerticalStackLayout>
+                    </Border>
+                    <Border Grid.Column="3" Style="{StaticResource ErpCard}">
+                        <VerticalStackLayout Spacing="2">
                             <Label Text="MONTO POR RECIBIR" Style="{StaticResource ErpCaption}" />
                             <Label Text="{Binding Resumen.MontoPorRecibirTexto}" Style="{StaticResource ErpKpi}" />
                         </VerticalStackLayout>
                     </Border>
-                    <Border Grid.Column="3" Style="{StaticResource ErpCard}">
+                    <Border Grid.Column="4" Style="{StaticResource ErpCard}">
                         <VerticalStackLayout Spacing="2">
                             <Label Text="PROVEEDORES" Style="{StaticResource ErpCaption}" />
                             <Label Text="{Binding Resumen.Proveedores}" Style="{StaticResource ErpKpi}" />
@@ -89,6 +97,22 @@
                     <Button Text="Liquidada" Style="{StaticResource ErpTab}" Command="{Binding ComandoFiltrar}" CommandParameter="LIQUIDADA">
                         <Button.Triggers>
                             <DataTrigger TargetType="Button" Binding="{Binding FiltroActual}" Value="LIQUIDADA">
+                                <Setter Property="BackgroundColor" Value="{StaticResource ErpPrimary}" />
+                                <Setter Property="TextColor" Value="White" />
+                            </DataTrigger>
+                        </Button.Triggers>
+                    </Button>
+                    <Button Text="Pend. Autorización" Style="{StaticResource ErpTab}" Command="{Binding ComandoFiltrar}" CommandParameter="PENDIENTE_AUTORIZACION">
+                        <Button.Triggers>
+                            <DataTrigger TargetType="Button" Binding="{Binding FiltroActual}" Value="PENDIENTE_AUTORIZACION">
+                                <Setter Property="BackgroundColor" Value="#EA580C" />
+                                <Setter Property="TextColor" Value="White" />
+                            </DataTrigger>
+                        </Button.Triggers>
+                    </Button>
+                    <Button Text="Anulada" Style="{StaticResource ErpTab}" Command="{Binding ComandoFiltrar}" CommandParameter="ANULADA">
+                        <Button.Triggers>
+                            <DataTrigger TargetType="Button" Binding="{Binding FiltroActual}" Value="ANULADA">
                                 <Setter Property="BackgroundColor" Value="{StaticResource ErpPrimary}" />
                                 <Setter Property="TextColor" Value="White" />
                             </DataTrigger>
@@ -160,9 +184,27 @@
                                         <Label Text="{Binding OrdenSeleccionada.Proveedor}" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource ErpText}" />
                                         <Label Text="{Binding OrdenSeleccionada.RutTexto}" FontSize="11" TextColor="{StaticResource ErpMuted}" />
                                     </VerticalStackLayout>
+
+                                    <!-- Acciones contextuales de la orden -->
                                     <HorizontalStackLayout Grid.Column="1" Spacing="8" VerticalOptions="Start">
-                                        <Button Text="Registrar recepción" Style="{StaticResource ErpPrimaryButton}" HeightRequest="38" Command="{Binding ComandoRegistrarRecepcion}" />
-                                        <Button Text="Imprimir" Style="{StaticResource ErpGhostButton}" HeightRequest="38" Command="{Binding ComandoImprimir}" />
+                                        <!-- Registrar recepción (visible si está emitida o parcial) -->
+                                        <Button Text="Registrar Recepción" Style="{StaticResource ErpPrimaryButton}" HeightRequest="38"
+                                                IsVisible="{Binding OrdenSeleccionada.PuedeRecibirse}"
+                                                Command="{Binding ComandoRegistrarRecepcion}" />
+
+                                        <!-- Autorizar / Rechazar compras retenidas por presupuesto -->
+                                        <Button Text="Aprobar Orden" Style="{StaticResource ErpPrimaryButton}" BackgroundColor="{StaticResource ErpSuccess}" HeightRequest="38"
+                                                IsVisible="{Binding OrdenSeleccionada.RequiereAutorizacion}"
+                                                Command="{Binding ComandoAprobar}" />
+
+                                        <Button Text="Rechazar" Style="{StaticResource ErpGhostButton}" TextColor="{StaticResource ErpDanger}" HeightRequest="38"
+                                                IsVisible="{Binding OrdenSeleccionada.RequiereAutorizacion}"
+                                                Command="{Binding ComandoRechazar}" />
+
+                                        <!-- Anular orden emitida/borrador -->
+                                        <Button Text="Anular" Style="{StaticResource ErpGhostButton}" TextColor="{StaticResource ErpDanger}" HeightRequest="38"
+                                                IsVisible="{Binding OrdenSeleccionada.PuedeAnularse}"
+                                                Command="{Binding ComandoAnular}" />
                                     </HorizontalStackLayout>
                                 </Grid>
 
@@ -188,7 +230,7 @@
                                     <Border Grid.Column="3" Style="{StaticResource ErpCard}" BackgroundColor="#F8FAFC" Padding="12">
                                         <VerticalStackLayout Spacing="2">
                                             <Label Text="MONEDA" Style="{StaticResource ErpCaption}" />
-                                            <Label Text="CLP" Style="{StaticResource ErpBody}" FontAttributes="Bold" />
+                                            <Label Text="CLP ($)" Style="{StaticResource ErpBody}" FontAttributes="Bold" />
                                         </VerticalStackLayout>
                                     </Border>
                                 </Grid>
@@ -201,7 +243,7 @@
                                         <Label Grid.Column="2" Text="PEDIDO" Style="{StaticResource ErpCaption}" HorizontalTextAlignment="End" />
                                         <Label Grid.Column="3" Text="RECIBIDO" Style="{StaticResource ErpCaption}" HorizontalTextAlignment="End" />
                                         <Label Grid.Column="4" Text="PENDIENTE" Style="{StaticResource ErpCaption}" HorizontalTextAlignment="End" />
-                                        <Label Grid.Column="5" Text="COSTO" Style="{StaticResource ErpCaption}" HorizontalTextAlignment="End" />
+                                        <Label Grid.Column="5" Text="COSTO PACTADO" Style="{StaticResource ErpCaption}" HorizontalTextAlignment="End" />
                                         <Label Grid.Column="6" Text="SUBTOTAL" Style="{StaticResource ErpCaption}" HorizontalTextAlignment="End" />
                                     </Grid>
                                     <BoxView HeightRequest="1" Color="{StaticResource ErpBorder}" />
@@ -226,7 +268,7 @@
                                 <!-- Totales -->
                                 <VerticalStackLayout Spacing="6" HorizontalOptions="End" WidthRequest="280">
                                     <Grid ColumnDefinitions="*,Auto">
-                                        <Label Text="Subtotal" Style="{StaticResource ErpBody}" TextColor="{StaticResource ErpMuted}" />
+                                        <Label Text="Subtotal neto" Style="{StaticResource ErpBody}" TextColor="{StaticResource ErpMuted}" />
                                         <Label Grid.Column="1" Text="{Binding OrdenSeleccionada.SubtotalTexto}" Style="{StaticResource ErpBody}" />
                                     </Grid>
                                     <Grid ColumnDefinitions="*,Auto">
@@ -235,7 +277,7 @@
                                     </Grid>
                                     <BoxView HeightRequest="1" Color="{StaticResource ErpBorder}" />
                                     <Grid ColumnDefinitions="*,Auto">
-                                        <Label Text="Total" Style="{StaticResource ErpBody}" FontAttributes="Bold" />
+                                        <Label Text="Total Orden" Style="{StaticResource ErpBody}" FontAttributes="Bold" />
                                         <Label Grid.Column="1" Text="{Binding OrdenSeleccionada.TotalTexto}" FontSize="22" FontAttributes="Bold" TextColor="{StaticResource ErpText}" />
                                     </Grid>
                                 </VerticalStackLayout>

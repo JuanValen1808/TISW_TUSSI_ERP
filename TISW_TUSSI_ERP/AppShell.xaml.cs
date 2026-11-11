@@ -21,7 +21,10 @@ public partial class AppShell : Shell
         "ConveniosPage",
         "RankingVentasPage",
         "ProveedoresPage",
+        "RecepcionFacturasPage",
         "ReporteComprasPage",
+        "ReporteCumplimientoPage",
+        "ReporteHistorialPreciosPage",
         "PlanCuentasPage",
         "LibroDiarioPage",
         "LibroMayorPage",
@@ -63,8 +66,10 @@ public partial class AppShell : Shell
         {
             new ItemMenu("", "Proveedores", "ProveedoresPage", "COMPRAS"),
             new ItemMenu("", "Órdenes de Compra", "OrdenesCompraPage", "COMPRAS"),
-            new ItemMenu("", "Recepción Facturas", "RecepcionPage", "COMPRAS"),
-            new ItemMenu("", "Reporte de Compras", "ReporteComprasPage", "COMPRAS"),
+            new ItemMenu("", "Recepción Facturas", "RecepcionFacturasPage", "COMPRAS"),
+            new ItemMenu("", "Reporte Compras Lab.", "ReporteComprasPage", "COMPRAS"),
+            new ItemMenu("", "Reporte Cumplimiento", "ReporteCumplimientoPage", "COMPRAS"),
+            new ItemMenu("", "Historial de Precios", "ReporteHistorialPreciosPage", "COMPRAS"),
         }),
         new("CONTABILIDAD", new[]
         {
@@ -95,6 +100,7 @@ public partial class AppShell : Shell
     {
         InitializeComponent();
         Routing.RegisterRoute(nameof(Views.Compras.NuevaOrdenPage), typeof(Views.Compras.NuevaOrdenPage));
+        Routing.RegisterRoute(nameof(Views.Compras.RecepcionFacturasPage), typeof(Views.Compras.RecepcionFacturasPage));
         ConstruirMenu();
 
         var u = Sesion.UsuarioActual;
