@@ -142,18 +142,3 @@ public class LoteModel
         _ => "#DCFCE7"
     };
 }
-
-public class KardexMovimientoModel
-{
-    public int IdKardex { get; set; }
-    public int IdProducto { get; set; }
-    public string NombreProducto { get; set; } = string.Empty;
-    public string Sku { get; set; } = string.Empty;
-    public string NumeroLote { get; set; } = string.Empty;
-    public string TipoMovimiento { get; set; } = string.Empty;
-    public string OrigenDocumento { get; set; } = string.Empty;
-    public int Cantidad { get; set; }
-    public decimal CostoUnitario { get; set; }
-    public int SaldoStockProducto { get; set; }
-    public DateTime FechaMovimiento { get; set; }
-}

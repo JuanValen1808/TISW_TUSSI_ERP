@@ -118,4 +118,174 @@ public class ReporteService
             });
         }).GeneratePdf();
     }
+
+
+    public byte[] GenerarReporteKardexPdf(List<KardexMovimientoModel> movimientos, string filtroProducto = "Todos")
+    {
+        return Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                page.Size(PageSizes.A4.Landscape()); // Horizontal para que quepan bien todas las columnas del Kardex
+                page.Margin(1.5f, Unit.Centimetre);
+                page.PageColor(QuestPDF.Helpers.Colors.White);
+                page.DefaultTextStyle(x => x.FontSize(9));
+
+                // Encabezado del Reporte
+                page.Header().Row(row =>
+                {
+                    row.RelativeItem().Column(col =>
+                    {
+                        col.Item().Text("FarmSalud ERP").FontSize(18).Bold().FontColor("#1D6FD8");
+                        col.Item().Text($"Informe Oficial de Kardex y Trazabilidad · Filtro: {filtroProducto}").FontSize(11).SemiBold().FontColor("#4B5563");
+                    });
+
+                    row.ConstantItem(180).Column(col =>
+                    {
+                        col.Item().AlignRight().Text($"Fecha: {DateTime.Now:dd/MM/yyyy HH:mm}").FontSize(8).FontColor("#6B7280");
+                        col.Item().AlignRight().Text("Trazabilidad de Lotes").FontSize(8).Bold().FontColor("#15803D");
+                    });
+                });
+
+                // Cuerpo del informe con la tabla de movimientos
+                page.Content().PaddingVertical(1, Unit.Centimetre).Column(col =>
+                {
+                    col.Item().Table(table =>
+                    {
+                        table.ColumnsDefinition(columns =>
+                        {
+                            columns.ConstantColumn(90);  // Fecha
+                            columns.ConstantColumn(80);  // SKU
+                            columns.RelativeColumn(2);   // Producto
+                            columns.ConstantColumn(80);  // Lote
+                            columns.ConstantColumn(75);  // Movimiento
+                            columns.ConstantColumn(75);  // Origen
+                            columns.ConstantColumn(55);  // Cantidad
+                            columns.ConstantColumn(70);  // Costo U.
+                            columns.ConstantColumn(70);  // Stock Final
+                        });
+
+                        // Encabezados de Tabla
+                        table.Header(header =>
+                        {
+                            header.Cell().Background("#E8F1FD").Padding(5).Text("Fecha").Bold();
+                            header.Cell().Background("#E8F1FD").Padding(5).Text("SKU").Bold();
+                            header.Cell().Background("#E8F1FD").Padding(5).Text("Producto").Bold();
+                            header.Cell().Background("#E8F1FD").Padding(5).Text("N° Lote").Bold();
+                            header.Cell().Background("#E8F1FD").Padding(5).Text("Movimiento").Bold();
+                            header.Cell().Background("#E8F1FD").Padding(5).Text("Origen").Bold();
+                            header.Cell().Background("#E8F1FD").Padding(5).AlignRight().Text("Cant.").Bold();
+                            header.Cell().Background("#E8F1FD").Padding(5).AlignRight().Text("Costo U.").Bold();
+                            header.Cell().Background("#E8F1FD").Padding(5).AlignRight().Text("Stock Fin.").Bold();
+                        });
+
+                        // Filas de movimientos
+                        foreach (var m in movimientos)
+                        {
+                            table.Cell().BorderBottom(1).BorderColor("#E5E7EB").Padding(4).Text(m.FechaTexto);
+                            table.Cell().BorderBottom(1).BorderColor("#E5E7EB").Padding(4).Text(m.Sku);
+                            table.Cell().BorderBottom(1).BorderColor("#E5E7EB").Padding(4).Text(m.NombreProducto);
+                            table.Cell().BorderBottom(1).BorderColor("#E5E7EB").Padding(4).Text(m.NumeroLote);
+                            table.Cell().BorderBottom(1).BorderColor("#E5E7EB").Padding(4).Text(m.TipoMovimiento);
+                            table.Cell().BorderBottom(1).BorderColor("#E5E7EB").Padding(4).Text(m.OrigenDocumento);
+                            table.Cell().BorderBottom(1).BorderColor("#E5E7EB").Padding(4).AlignRight().Text(m.Cantidad.ToString());
+                            table.Cell().BorderBottom(1).BorderColor("#E5E7EB").Padding(4).AlignRight().Text(m.CostoUnitarioTexto);
+                            table.Cell().BorderBottom(1).BorderColor("#E5E7EB").Padding(4).AlignRight().Text(m.SaldoStockProducto.ToString());
+                        }
+                    });
+                });
+
+                // Pie de página
+                page.Footer().AlignRight().Text(x =>
+                {
+                    x.Span("Página ");
+                    x.CurrentPageNumber();
+                    x.Span(" de ");
+                    x.TotalPages();
+                });
+            });
+        }).GeneratePdf();
+    }
+
+public byte[] GenerarReporteMermasPdf(List<MermaModel> mermas)
+    {
+        return Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                page.Size(PageSizes.A4);
+                page.Margin(1.5f, Unit.Centimetre);
+                page.PageColor(QuestPDF.Helpers.Colors.White);
+                page.DefaultTextStyle(x => x.FontSize(9));
+
+                // Encabezado del Reporte
+                page.Header().Row(row =>
+                {
+                    row.RelativeItem().Column(col =>
+                    {
+                        col.Item().Text("FarmSalud ERP").FontSize(18).Bold().FontColor("#1D6FD8");
+                        col.Item().Text("Informe Oficial de Control de Mermas y Bajas Operacionales").FontSize(11).SemiBold().FontColor("#4B5563");
+                    });
+
+                    row.ConstantItem(180).Column(col =>
+                    {
+                        col.Item().AlignRight().Text($"Fecha: {DateTime.Now:dd/MM/yyyy HH:mm}").FontSize(8).FontColor("#6B7280");
+                        col.Item().AlignRight().Text("Auditoría de Bodega").FontSize(8).Bold().FontColor("#DC2626");
+                    });
+                });
+
+                // Cuerpo del informe con la tabla detallada
+                page.Content().PaddingVertical(1, Unit.Centimetre).Column(col =>
+                {
+                    col.Item().Table(table =>
+                    {
+                        table.ColumnsDefinition(columns =>
+                        {
+                            columns.ConstantColumn(90);  // Fecha
+                            columns.ConstantColumn(80);  // SKU
+                            columns.RelativeColumn(2);   // Producto
+                            columns.ConstantColumn(70);  // N° Lote
+                            columns.ConstantColumn(60);  // Cantidad
+                            columns.ConstantColumn(80);  // Motivo
+                            columns.ConstantColumn(90);  // Responsable
+                        });
+
+                        // Encabezados de Tabla
+                        table.Header(header =>
+                        {
+                            header.Cell().Background("#E8F1FD").Padding(5).Text("Fecha").Bold();
+                            header.Cell().Background("#E8F1FD").Padding(5).Text("SKU").Bold();
+                            header.Cell().Background("#E8F1FD").Padding(5).Text("Producto").Bold();
+                            header.Cell().Background("#E8F1FD").Padding(5).Text("N° Lote").Bold();
+                            header.Cell().Background("#E8F1FD").Padding(5).AlignRight().Text("Cant.").Bold();
+                            header.Cell().Background("#E8F1FD").Padding(5).Text("Motivo").Bold();
+                            header.Cell().Background("#E8F1FD").Padding(5).Text("Responsable").Bold();
+                        });
+
+                        // Filas de registros de mermas
+                        foreach (var m in mermas)
+                        {
+                            table.Cell().BorderBottom(1).BorderColor("#E5E7EB").Padding(4).Text(m.FechaTexto);
+                            table.Cell().BorderBottom(1).BorderColor("#E5E7EB").Padding(4).Text(m.Sku);
+                            table.Cell().BorderBottom(1).BorderColor("#E5E7EB").Padding(4).Text(m.NombreProducto);
+                            table.Cell().BorderBottom(1).BorderColor("#E5E7EB").Padding(4).Text(m.NumeroLote);
+                            table.Cell().BorderBottom(1).BorderColor("#E5E7EB").Padding(4).AlignRight().Text($"{m.CantidadBaja} un.");
+                            table.Cell().BorderBottom(1).BorderColor("#E5E7EB").Padding(4).Text(m.Motivo);
+                            table.Cell().BorderBottom(1).BorderColor("#E5E7EB").Padding(4).Text(m.UsuarioResponsable);
+                        }
+                    });
+                });
+
+                // Pie de página
+                page.Footer().AlignRight().Text(x =>
+                {
+                    x.Span("Página ");
+                    x.CurrentPageNumber();
+                    x.Span(" de ");
+                    x.TotalPages();
+                });
+            });
+        }).GeneratePdf();
+    }
+
 }

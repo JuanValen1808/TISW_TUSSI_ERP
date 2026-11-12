@@ -149,39 +149,74 @@ public class InventarioService
                    COALESCE(l.numero_lote, '—') AS numero_lote, k.tipo_movimiento, 
                    k.origen_documento, k.cantidad, k.costo_unitario, 
                    k.saldo_stock_producto, k.fecha_movimiento
-            FROM kardex_movimiento k
+            FROM kardex_movimientos k
             JOIN productos p ON p.id_producto = k.id_producto
             LEFT JOIN lotes l ON l.id_lote = k.id_lote";
 
-        if (idProducto.HasValue)
+        if (idProducto.HasValue && idProducto.Value > 0)
             sql += " WHERE k.id_producto = @idProducto";
 
-        sql += " ORDER BY k.fecha_movimiento DESC, k.id_kardex DESC LIMIT 100";
+        sql += " ORDER BY k.fecha_movimiento DESC, k.id_kardex DESC LIMIT 150";
 
         await using var cn = _db.CrearConexion();
         await cn.OpenAsync();
         await using var cmd = new MySqlCommand(sql, cn);
-        if (idProducto.HasValue)
+        if (idProducto.HasValue && idProducto.Value > 0)
             cmd.Parameters.AddWithValue("@idProducto", idProducto.Value);
 
         await using var rd = await cmd.ExecuteReaderAsync();
-
         var lista = new List<KardexMovimientoModel>();
+
         while (await rd.ReadAsync())
         {
             lista.Add(new KardexMovimientoModel
             {
-                IdKardex = rd.GetInt32(0),
+                IdKardex = rd.GetInt64(0),
                 IdProducto = rd.GetInt32(1),
                 NombreProducto = rd.GetString(2),
                 Sku = rd.GetString(3),
                 NumeroLote = rd.GetString(4),
                 TipoMovimiento = rd.GetString(5),
                 OrigenDocumento = rd.GetString(6),
-                Cantidad = Ent(rd, 7),
-                CostoUnitario = Dec(rd, 8),
-                SaldoStockProducto = Ent(rd, 9),
-                FechaMovimiento = Convert.ToDateTime(rd.GetValue(10))
+                Cantidad = rd.IsDBNull(7) ? 0 : rd.GetInt32(7),
+                CostoUnitario = rd.IsDBNull(8) ? 0m : rd.GetDecimal(8),
+                SaldoStockProducto = rd.IsDBNull(9) ? 0 : rd.GetInt32(9),
+                FechaMovimiento = rd.GetDateTime(10)
+            });
+        }
+        return lista;
+    }
+
+    public async Task<List<MermaModel>> ObtenerMermasAsync()
+    {
+        const string sql = @"
+        SELECT m.id_merma, m.id_lote, l.numero_lote, p.sku, p.nombre_comercial, 
+               m.cantidad, m.motivo, m.fecha_merma, m.costo_total_perdida, COALESCE(u.nombre, 'Sistema') AS usuario
+        FROM registro_mermas m
+        JOIN lotes l ON l.id_lote = m.id_lote
+        JOIN productos p ON p.id_producto = m.id_producto
+        LEFT JOIN usuarios u ON u.id_usuario = m.id_usuario
+        ORDER BY m.fecha_merma DESC LIMIT 100";
+
+        await using var cn = _db.CrearConexion();
+        await cn.OpenAsync();
+        await using var cmd = new MySqlCommand(sql, cn);
+        await using var rd = await cmd.ExecuteReaderAsync();
+
+        var lista = new List<MermaModel>();
+        while (await rd.ReadAsync())
+        {
+            lista.Add(new MermaModel
+            {
+                IdMerma = rd.GetInt32(0),
+                IdLote = rd.GetInt32(1),
+                NumeroLote = rd.GetString(2),
+                Sku = rd.GetString(3),
+                NombreProducto = rd.GetString(4),
+                CantidadBaja = rd.GetInt32(5),
+                Motivo = rd.GetString(6),
+                FechaRegistro = rd.GetDateTime(7),
+                UsuarioResponsable = rd.GetString(9)
             });
         }
         return lista;

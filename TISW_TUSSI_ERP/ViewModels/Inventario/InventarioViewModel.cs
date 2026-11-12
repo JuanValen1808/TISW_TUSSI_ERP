@@ -13,6 +13,7 @@ namespace TISW_TUSSI_ERP.ViewModels.Inventario;
 public class InventarioViewModel : BaseViewModel
 {
     private readonly InventarioService _servicio;
+    private readonly ReporteService _reporteService;
     private List<ProductoModel> _todosProductos = new();
 
     // Colecciones observables para la UI
@@ -98,9 +99,10 @@ public class InventarioViewModel : BaseViewModel
     public ICommand ComandoVerKardex { get; }
     public ICommand ComandoExportarDocumento { get; }
 
-    public InventarioViewModel(InventarioService servicio)
+    public InventarioViewModel(InventarioService servicio, ReporteService reporteService)
     {
         _servicio = servicio;
+        _reporteService = reporteService;
         Titulo = "Gestión de Inventario";
 
         ComandoFiltrar = new Command<string>(f =>
@@ -122,9 +124,9 @@ public class InventarioViewModel : BaseViewModel
             await Aviso("Editar Ficha", "La edición de productos estará disponible en la siguiente versión."));
 
         ComandoVerKardex = new Command(async () =>
-            await Aviso("Consultar Kardex", "La vista detallada de movimientos del Kardex se integrará en el siguiente sprint."));
+            await Aviso("Consultar Kardex", "Dirígete a la sección Kardex y Lotes en el menú lateral."));
 
-        ComandoExportarDocumento = new Command(async () => await ExportarDocumentoAsync());
+        ComandoExportarDocumento = new Command(async () => await ExportarDocumentoPdfAsync());
     }
 
     public async Task CargarAsync()
@@ -151,13 +153,13 @@ public class InventarioViewModel : BaseViewModel
         }
     }
 
-    private async Task ExportarDocumentoAsync()
+    private async Task ExportarDocumentoPdfAsync()
     {
         if (EstaOcupado) return;
 
         if (!Productos.Any())
         {
-            await Aviso("Exportar Documento", "No hay productos disponibles en el catálogo para exportar.");
+            await Aviso("Exportar Reporte", "No hay productos disponibles en el catálogo para exportar.");
             return;
         }
 
@@ -165,27 +167,23 @@ public class InventarioViewModel : BaseViewModel
         {
             EstaOcupado = true;
 
-            var sb = new StringBuilder();
-            sb.AppendLine("SKU;Nombre Comercial;Principio Activo;Categoría;Stock Actual;Stock Mínimo;Estado;Precio Venta;Valorización");
+            // Generar PDF usando QuestPDF a través del ReporteService
+            byte[] pdfBytes = _reporteService.GenerarReporteInventarioPdf(Resumen, Productos.ToList());
 
-            foreach (var p in Productos)
-            {
-                sb.AppendLine($"{p.Sku};{p.NombreComercial};{p.PrincipioActivo};{p.CategoriaNombre};{p.StockActual};{p.StockMinimo};{p.EstadoStock};{p.PrecioVenta};{p.ValorizacionTotal}");
-            }
-
-            string nombreArchivo = $"Catalogo_Inventario_{DateTime.Now:yyyyMMdd_HHmm}.csv";
+            string nombreArchivo = $"Informe_Inventario_{DateTime.Now:yyyyMMdd_HHmm}.pdf";
             string rutaArchivo = Path.Combine(FileSystem.CacheDirectory, nombreArchivo);
-            await File.WriteAllTextAsync(rutaArchivo, sb.ToString(), Encoding.UTF8);
+
+            await File.WriteAllBytesAsync(rutaArchivo, pdfBytes);
 
             await Share.Default.RequestAsync(new ShareFileRequest
             {
-                Title = "Exportar Informe de Catálogo de Inventario",
+                Title = "Informe Consolidado de Inventario (PDF)",
                 File = new ShareFile(rutaArchivo)
             });
         }
         catch (Exception ex)
         {
-            MensajeError = "Error al generar el documento: " + ex.Message;
+            MensajeError = "Error al generar el reporte PDF: " + ex.Message;
         }
         finally
         {

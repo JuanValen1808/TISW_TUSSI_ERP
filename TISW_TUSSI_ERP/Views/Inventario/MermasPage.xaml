@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:TISW_TUSSI_ERP.ViewModels.Inventario"
+             xmlns:m="clr-namespace:TISW_TUSSI_ERP.Models.Inventario"
+             xmlns:ctrl="clr-namespace:TISW_TUSSI_ERP.Views.Shared"
+             x:Class="TISW_TUSSI_ERP.Views.Inventario.MermasPage"
+             x:DataType="vm:MermasViewModel"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource ErpBg}"
+             Title="Control de Mermas">
+
+    <Grid RowDefinitions="Auto,*">
+        <!-- Encabezado del ERP -->
+        <ctrl:PageHeader Grid.Row="0" Ruta="ERP › Inventario › Mermas" Titulo="Control de Mermas y Bajas Operacionales" />
+
+        <Grid Grid.Row="1" RowDefinitions="Auto,*" Padding="24" RowSpacing="16">
+
+            <!-- Acciones y Título -->
+            <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                <VerticalStackLayout Spacing="2">
+                    <Label Text="Registro Histórico de Pérdidas y Vencimientos" Style="{StaticResource ErpTitle}" />
+                    <Label Text="{Binding Mermas.Count, StringFormat='Total de registros de bajas en bodega: {0}'}" Style="{StaticResource ErpSubtitle}" />
+                </VerticalStackLayout>
+
+                <HorizontalStackLayout Grid.Column="1" Spacing="8" VerticalOptions="Center">
+                    <Button Text="📄 Exportar PDF" 
+                            Style="{StaticResource ErpPrimaryButton}" 
+                            Command="{Binding ComandoExportarPdf}" 
+                            HeightRequest="38" />
+
+                    <Button Text="🔄 Actualizar" 
+                            Style="{StaticResource ErpGhostButton}" 
+                            Command="{Binding ComandoRecargar}" 
+                            HeightRequest="38" />
+                </HorizontalStackLayout>
+            </Grid>
+
+            <!-- Tabla de Mermas -->
+            <Border Grid.Row="1" Style="{StaticResource ErpCard}" Padding="0">
+                <Grid RowDefinitions="Auto,*">
+                    <!-- Cabecera de la Tabla -->
+                    <Grid Grid.Row="0" ColumnDefinitions="110,120,*,100,110,130" ColumnSpacing="8" Padding="16,12" BackgroundColor="#F8FAFC">
+                        <Label Text="FECHA" Style="{StaticResource ErpCaption}" />
+                        <Label Grid.Column="1" Text="SKU / LOTE" Style="{StaticResource ErpCaption}" />
+                        <Label Grid.Column="2" Text="PRODUCTO" Style="{StaticResource ErpCaption}" />
+                        <Label Grid.Column="3" Text="CANTIDAD" Style="{StaticResource ErpCaption}" HorizontalTextAlignment="End" />
+                        <Label Grid.Column="4" Text="MOTIVO" Style="{StaticResource ErpCaption}" HorizontalTextAlignment="Center" />
+                        <Label Grid.Column="5" Text="RESPONSABLE" Style="{StaticResource ErpCaption}" HorizontalTextAlignment="Center" />
+                    </Grid>
+                    <BoxView Grid.Row="0" HeightRequest="1" Color="{StaticResource ErpBorder}" VerticalOptions="End" />
+
+                    <!-- Contenido de Filas -->
+                    <CollectionView Grid.Row="1" ItemsSource="{Binding Mermas}">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="m:MermaModel">
+                                <VerticalStackLayout>
+                                    <Grid ColumnDefinitions="110,120,*,100,110,130" ColumnSpacing="8" Padding="16,10" VerticalOptions="Center">
+                                        <Label Text="{Binding FechaTexto}" FontSize="11" TextColor="{StaticResource ErpMuted}" VerticalOptions="Center" />
+
+                                        <VerticalStackLayout Grid.Row="0" Grid.Column="1" Spacing="1" VerticalOptions="Center">
+                                            <Label Text="{Binding Sku}" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource ErpText}" />
+                                            <Label Text="{Binding NumeroLote}" FontSize="10" TextColor="{StaticResource ErpMuted}" />
+                                        </VerticalStackLayout>
+
+                                        <Label Grid.Column="2" Text="{Binding NombreProducto}" Style="{StaticResource ErpBody}" VerticalOptions="Center" />
+                                        <Label Grid.Column="3" Text="{Binding CantidadBaja, StringFormat='-{0} un.'}" Style="{StaticResource ErpBody}" FontAttributes="Bold" TextColor="#B91C1C" HorizontalTextAlignment="End" VerticalOptions="Center" />
+
+                                        <Border Grid.Column="4" BackgroundColor="{Binding FondoMotivo}" StrokeThickness="0" StrokeShape="RoundRectangle 8" Padding="6,2" HorizontalOptions="Center" VerticalOptions="Center">
+                                            <Label Text="{Binding Motivo}" FontSize="10" FontAttributes="Bold" TextColor="{Binding ColorMotivo}" />
+                                        </Border>
+
+                                        <Label Grid.Column="5" Text="{Binding UsuarioResponsable}" FontSize="11" TextColor="{StaticResource ErpMuted}" HorizontalTextAlignment="Center" VerticalOptions="Center" />
+                                    </Grid>
+                                    <BoxView HeightRequest="1" Color="#F1F5F9" />
+                                </VerticalStackLayout>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </Grid>
+            </Border>
+
+        </Grid>
+    </Grid>
+</ContentPage>
