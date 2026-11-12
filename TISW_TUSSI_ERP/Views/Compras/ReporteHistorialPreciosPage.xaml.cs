@@ -16,7 +16,14 @@ public partial class ReporteHistorialPreciosPage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        await _viewModel.CargarInicialAsync();
+        try
+        {
+            await _viewModel.CargarInicialAsync();
+        }
+        catch
+        {
+            // Evita excepciones no controladas en ciclo de vida de la vista
+        }
     }
 }
 

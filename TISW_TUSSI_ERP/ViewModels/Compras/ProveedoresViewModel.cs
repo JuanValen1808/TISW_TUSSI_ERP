@@ -30,12 +30,25 @@ public class ProveedoresViewModel : BaseViewModel
     public string TituloFormulario => EsEdicion ? "Editar proveedor" : "Nuevo proveedor";
 
     private int _idEnEdicion;
-    public string Rut { get; set; } = string.Empty;
-    public string RazonSocial { get; set; } = string.Empty;
-    public string Contacto { get; set; } = string.Empty;
-    public string Telefono { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
-    public string CondicionesComerciales { get; set; } = string.Empty;
+    private string _rut = string.Empty;
+    public string Rut { get => _rut; set => SetProperty(ref _rut, value); }
+
+    private string _razonSocial = string.Empty;
+    public string RazonSocial { get => _razonSocial; set => SetProperty(ref _razonSocial, value); }
+
+    private string _contacto = string.Empty;
+    public string Contacto { get => _contacto; set => SetProperty(ref _contacto, value); }
+
+    private string _telefono = string.Empty;
+    public string Telefono { get => _telefono; set => SetProperty(ref _telefono, value); }
+
+    private string _email = string.Empty;
+    public string Email { get => _email; set => SetProperty(ref _email, value); }
+
+    private string _condicionesComerciales = string.Empty;
+    public string CondicionesComerciales { get => _condicionesComerciales; set => SetProperty(ref _condicionesComerciales, value); }
+
+    public bool NoEstaOcupado => !EstaOcupado;
 
     private string _errorFormulario = string.Empty;
     public string ErrorFormulario
@@ -64,11 +77,24 @@ public class ProveedoresViewModel : BaseViewModel
         _servicio = servicio;
         Titulo = "Proveedores";
 
-        ComandoNuevo = new Command(AbrirNuevo);
-        ComandoEditar = new Command<Proveedor>(AbrirEdicion);
-        ComandoEliminar = new Command<Proveedor>(async p => await EliminarAsync(p));
-        ComandoGuardar = new Command(async () => await GuardarAsync());
-        ComandoCancelar = new Command(() => FormularioVisible = false);
+        ComandoNuevo = new Command(AbrirNuevo, () => NoEstaOcupado);
+        ComandoEditar = new Command<Proveedor>(AbrirEdicion, _ => NoEstaOcupado);
+        ComandoEliminar = new Command<Proveedor>(async p => await EliminarAsync(p), _ => NoEstaOcupado);
+        ComandoGuardar = new Command(async () => await GuardarAsync(), () => NoEstaOcupado);
+        ComandoCancelar = new Command(() => { if (!EstaOcupado) FormularioVisible = false; }, () => NoEstaOcupado);
+
+        PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(EstaOcupado))
+            {
+                OnPropertyChanged(nameof(NoEstaOcupado));
+                (ComandoNuevo as Command)?.ChangeCanExecute();
+                (ComandoEditar as Command)?.ChangeCanExecute();
+                (ComandoEliminar as Command)?.ChangeCanExecute();
+                (ComandoGuardar as Command)?.ChangeCanExecute();
+                (ComandoCancelar as Command)?.ChangeCanExecute();
+            }
+        };
     }
 
     public async Task CargarAsync()
@@ -78,8 +104,7 @@ public class ProveedoresViewModel : BaseViewModel
         MensajeError = string.Empty;
         try
         {
-            _todos = await _servicio.ObtenerProveedoresAsync();
-            AplicarFiltro();
+            await CargarInternoAsync();
         }
         catch (Exception ex)
         {
@@ -89,6 +114,13 @@ public class ProveedoresViewModel : BaseViewModel
         {
             EstaOcupado = false;
         }
+    }
+
+    private async Task CargarInternoAsync()
+    {
+        MensajeError = string.Empty;
+        _todos = await _servicio.ObtenerProveedoresAsync();
+        AplicarFiltro();
     }
 
     private void AplicarFiltro()
@@ -105,39 +137,36 @@ public class ProveedoresViewModel : BaseViewModel
 
     private void AbrirNuevo()
     {
+        if (EstaOcupado) return;
         _idEnEdicion = 0;
         Rut = RazonSocial = Contacto = Telefono = Email = CondicionesComerciales = string.Empty;
-        NotificarCamposFormulario();
+        OnPropertyChanged(nameof(TituloFormulario));
         EsEdicion = false;
+        OnPropertyChanged(nameof(TituloFormulario));
         ErrorFormulario = string.Empty;
         FormularioVisible = true;
     }
 
     private void AbrirEdicion(Proveedor? p)
     {
-        if (p is null) return;
+        if (EstaOcupado || p is null) return;
         _idEnEdicion = p.Id;
-        Rut = p.Rut; RazonSocial = p.RazonSocial; Contacto = p.Contacto;
-        Telefono = p.Telefono; Email = p.Email; CondicionesComerciales = p.CondicionesComerciales;
-        NotificarCamposFormulario();
+        Rut = p.Rut;
+        RazonSocial = p.RazonSocial;
+        Contacto = p.Contacto;
+        Telefono = p.Telefono;
+        Email = p.Email;
+        CondicionesComerciales = p.CondicionesComerciales;
         EsEdicion = true;
+        OnPropertyChanged(nameof(TituloFormulario));
         ErrorFormulario = string.Empty;
         FormularioVisible = true;
     }
 
-    private void NotificarCamposFormulario()
-    {
-        OnPropertyChanged(nameof(Rut));
-        OnPropertyChanged(nameof(RazonSocial));
-        OnPropertyChanged(nameof(Contacto));
-        OnPropertyChanged(nameof(Telefono));
-        OnPropertyChanged(nameof(Email));
-        OnPropertyChanged(nameof(CondicionesComerciales));
-        OnPropertyChanged(nameof(TituloFormulario));
-    }
-
     private async Task GuardarAsync()
     {
+        if (EstaOcupado) return;
+
         // ---- Validaciones de operación del sistema ----
         if (string.IsNullOrWhiteSpace(RazonSocial))
         {
@@ -171,21 +200,25 @@ public class ProveedoresViewModel : BaseViewModel
             var proveedor = new Proveedor
             {
                 Id = _idEnEdicion,
-                Rut = Rut,
-                RazonSocial = RazonSocial,
-                Contacto = Contacto,
-                Telefono = Telefono,
-                Email = Email,
-                CondicionesComerciales = CondicionesComerciales
+                Rut = Rut.Trim(),
+                RazonSocial = RazonSocial.Trim(),
+                Contacto = (Contacto ?? string.Empty).Trim(),
+                Telefono = (Telefono ?? string.Empty).Trim(),
+                Email = (Email ?? string.Empty).Trim(),
+                CondicionesComerciales = (CondicionesComerciales ?? string.Empty).Trim()
             };
 
-            if (_idEnEdicion == 0)
+            bool esNuevo = _idEnEdicion == 0;
+            if (esNuevo)
                 await _servicio.CrearProveedorAsync(proveedor);
             else
                 await _servicio.ActualizarProveedorAsync(proveedor);
 
             FormularioVisible = false;
-            await CargarAsync();
+            if (esNuevo && !string.IsNullOrWhiteSpace(Busqueda))
+                Busqueda = string.Empty;
+
+            await CargarInternoAsync();
         }
         catch (Exception ex)
         {
@@ -199,20 +232,25 @@ public class ProveedoresViewModel : BaseViewModel
 
     private async Task EliminarAsync(Proveedor? p)
     {
-        if (p is null) return;
-        var confirmar = await Shell.Current.DisplayAlert(
-            "Eliminar proveedor", $"¿Eliminar a \"{p.RazonSocial}\"? Esta acción no se puede deshacer.",
-            "Eliminar", "Cancelar");
-        if (!confirmar) return;
-
+        if (EstaOcupado || p is null) return;
+        EstaOcupado = true;
         try
         {
+            var confirmar = await Shell.Current.DisplayAlert(
+                "Eliminar proveedor", $"¿Eliminar a \"{p.RazonSocial}\"? Esta acción no se puede deshacer.",
+                "Eliminar", "Cancelar");
+            if (!confirmar) return;
+
             await _servicio.EliminarProveedorAsync(p.Id);
-            await CargarAsync();
+            await CargarInternoAsync();
         }
         catch (Exception ex)
         {
             await Shell.Current.DisplayAlert("No se pudo eliminar", ex.Message, "OK");
+        }
+        finally
+        {
+            EstaOcupado = false;
         }
     }
 }

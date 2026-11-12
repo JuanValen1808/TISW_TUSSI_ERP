@@ -29,7 +29,7 @@
                                Style="{StaticResource ErpSubtitle}" />
                     </VerticalStackLayout>
                     <Button Grid.Column="1" Text="Exportar CSV" Style="{StaticResource ErpGhostButton}"
-                            Command="{Binding ComandoExportarCsv}" VerticalOptions="Center" />
+                            Command="{Binding ComandoExportarCsv}" IsEnabled="{Binding NoEstaOcupado}" VerticalOptions="Center" />
                 </Grid>
 
                 <!-- Filtros -->
@@ -67,8 +67,8 @@
 
                         <!-- Botones -->
                         <HorizontalStackLayout Grid.Column="3" Spacing="10" VerticalOptions="End">
-                            <Button Text="Limpiar" Command="{Binding ComandoLimpiarFiltros}" Style="{StaticResource ErpGhostButton}" HeightRequest="46"/>
-                            <Button Text="Filtrar" Command="{Binding ComandoGenerar}" Style="{StaticResource ErpPrimaryButton}" HeightRequest="46"/>
+                            <Button Text="Limpiar" Command="{Binding ComandoLimpiarFiltros}" IsEnabled="{Binding NoEstaOcupado}" Style="{StaticResource ErpGhostButton}" HeightRequest="46"/>
+                            <Button Text="Filtrar" Command="{Binding ComandoGenerar}" IsEnabled="{Binding NoEstaOcupado}" Style="{StaticResource ErpPrimaryButton}" HeightRequest="46"/>
                         </HorizontalStackLayout>
                     </Grid>
                 </Border>

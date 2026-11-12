@@ -29,8 +29,16 @@ public partial class RecepcionFacturasPage : ContentPage, IQueryAttributable
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        await _viewModel.CargarOrdenesDisponiblesAsync(_idOrdenInicial);
+        int? idPreseleccion = _idOrdenInicial;
         _idOrdenInicial = null;
+        try
+        {
+            await _viewModel.CargarOrdenesDisponiblesAsync(idPreseleccion);
+        }
+        catch
+        {
+            // Evita excepciones no controladas en ciclo de vida de la vista
+        }
     }
 }
 

@@ -22,11 +22,15 @@
                 </Border>
 
                 <!-- Título y descripción -->
-                <VerticalStackLayout Spacing="2">
-                    <Label Text="Recepción y Liquidación de Facturas" Style="{StaticResource ErpTitle}" />
-                    <Label Text="Ingreso físico de medicamentos con asignación de lote, fecha de vencimiento y control de calidad. La liquidación actualiza inventario, Kardex y contabilidad."
-                           Style="{StaticResource ErpSubtitle}" />
-                </VerticalStackLayout>
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="Recepción y Liquidación de Facturas" Style="{StaticResource ErpTitle}" />
+                        <Label Text="Ingreso físico de medicamentos con asignación de lote, fecha de vencimiento y control de calidad. La liquidación actualiza inventario, Kardex y contabilidad."
+                               Style="{StaticResource ErpSubtitle}" />
+                    </VerticalStackLayout>
+                    <ActivityIndicator Grid.Column="1" IsRunning="{Binding EstaOcupado}" IsVisible="{Binding EstaOcupado}"
+                                       Color="{StaticResource ErpPrimary}" VerticalOptions="Center" />
+                </Grid>
 
                 <!-- 1. Selección de Orden de Compra -->
                 <Border Style="{StaticResource ErpCard}" Padding="18">
@@ -40,6 +44,7 @@
                                     <Picker ItemsSource="{Binding OrdenesDisponibles}"
                                             ItemDisplayBinding="{Binding Numero}"
                                             SelectedItem="{Binding OrdenSeleccionada}"
+                                            IsEnabled="{Binding NoEstaOcupado}"
                                             TextColor="{StaticResource ErpText}"
                                             BackgroundColor="Transparent"
                                             VerticalOptions="Center" />
@@ -87,14 +92,16 @@
                             <VerticalStackLayout Spacing="4">
                                 <Label Text="Número de Factura Proveedor *" Style="{StaticResource ErpCaption}" />
                                 <Border Style="{StaticResource ErpInputBox}">
-                                    <Entry Text="{Binding NumeroFactura}" Placeholder="Ej: FACT-10293" Style="{StaticResource ErpEntry}" />
+                                    <Entry Text="{Binding NumeroFactura}" Placeholder="Ej: FACT-10293" Style="{StaticResource ErpEntry}"
+                                           IsEnabled="{Binding NoEstaOcupado}" />
                                 </Border>
                             </VerticalStackLayout>
 
                             <VerticalStackLayout Grid.Column="1" Spacing="4">
                                 <Label Text="Fecha de Emisión Factura *" Style="{StaticResource ErpCaption}" />
                                 <Border Style="{StaticResource ErpInputBox}">
-                                    <DatePicker Date="{Binding FechaFactura}" Format="dd/MM/yyyy" TextColor="{StaticResource ErpText}" VerticalOptions="Center" />
+                                    <DatePicker Date="{Binding FechaFactura}" Format="dd/MM/yyyy" TextColor="{StaticResource ErpText}" VerticalOptions="Center"
+                                                IsEnabled="{Binding NoEstaOcupado}" />
                                 </Border>
                             </VerticalStackLayout>
 
@@ -217,7 +224,8 @@
 
                             <Button Text="Liquidar Factura e Ingresar al Inventario" Style="{StaticResource ErpPrimaryButton}"
                                     BackgroundColor="{StaticResource ErpSuccess}"
-                                    Command="{Binding ComandoLiquidarRecepcion}" Margin="0,15,0,0" HeightRequest="50"/>
+                                    Command="{Binding ComandoLiquidarRecepcion}" IsEnabled="{Binding NoEstaOcupado}"
+                                    Margin="0,15,0,0" HeightRequest="50"/>
                         </VerticalStackLayout>
                     </Grid>
                 </Border>

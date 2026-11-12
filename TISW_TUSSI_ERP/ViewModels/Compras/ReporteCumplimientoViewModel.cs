@@ -39,6 +39,7 @@ public class ReporteCumplimientoViewModel : BaseViewModel
 
     private bool _sinResultados;
     public bool SinResultados { get => _sinResultados; private set => SetProperty(ref _sinResultados, value); }
+    public bool NoEstaOcupado => !EstaOcupado;
 
     public ICommand ComandoGenerar { get; }
     public ICommand ComandoLimpiarFiltros { get; }
@@ -49,31 +50,56 @@ public class ReporteCumplimientoViewModel : BaseViewModel
         _servicio = servicio;
         Titulo = "Reporte de Cumplimiento y SLA";
 
-        ComandoGenerar = new Command(async () => await GenerarReporteAsync());
+        ComandoGenerar = new Command(async () => await GenerarReporteAsync(), () => NoEstaOcupado);
         ComandoLimpiarFiltros = new Command(async () =>
         {
+            if (EstaOcupado) return;
             FechaDesde = DateTime.Today.AddDays(-60);
             FechaHasta = DateTime.Today;
             EstadoFiltro = "TODAS";
             ProveedorFiltro = null;
             await GenerarReporteAsync();
-        });
-        ComandoExportarCsv = new Command(async () => await ExportarCsvAsync());
+        }, () => NoEstaOcupado);
+        ComandoExportarCsv = new Command(async () => await ExportarCsvAsync(), () => NoEstaOcupado);
+
+        PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(EstaOcupado))
+            {
+                OnPropertyChanged(nameof(NoEstaOcupado));
+                (ComandoGenerar as Command)?.ChangeCanExecute();
+                (ComandoLimpiarFiltros as Command)?.ChangeCanExecute();
+                (ComandoExportarCsv as Command)?.ChangeCanExecute();
+            }
+        };
     }
 
     public async Task CargarInicialAsync()
     {
+        if (EstaOcupado) return;
+        EstaOcupado = true;
+        MensajeError = string.Empty;
+
         try
         {
+            int? idProvActual = ProveedorFiltro?.Id;
             var provs = await _servicio.ObtenerProveedoresAsync();
             Proveedores.Clear();
             foreach (var p in provs) Proveedores.Add(p);
 
-            await GenerarReporteAsync();
+            ProveedorFiltro = idProvActual.HasValue
+                ? Proveedores.FirstOrDefault(p => p.Id == idProvActual.Value)
+                : null;
+
+            await GenerarInternoAsync();
         }
         catch (Exception ex)
         {
             MensajeError = "Error al iniciar: " + ex.Message;
+        }
+        finally
+        {
+            EstaOcupado = false;
         }
     }
 
@@ -93,17 +119,7 @@ public class ReporteCumplimientoViewModel : BaseViewModel
 
         try
         {
-            int? idProv = ProveedorFiltro?.Id;
-            var (resumen, lista) = await _servicio.ObtenerReporteCumplimientoAsync(FechaDesde, FechaHasta, EstadoFiltro, idProv);
-
-            Resumen = resumen;
-            Items.Clear();
-            foreach (var item in lista)
-            {
-                Items.Add(item);
-            }
-
-            SinResultados = Items.Count == 0;
+            await GenerarInternoAsync();
         }
         catch (Exception ex)
         {
@@ -115,16 +131,41 @@ public class ReporteCumplimientoViewModel : BaseViewModel
         }
     }
 
-    private async Task ExportarCsvAsync()
+    private async Task GenerarInternoAsync()
     {
-        if (Items.Count == 0)
+        if (FechaDesde > FechaHasta)
         {
-            await Shell.Current.DisplayAlert("Aviso", "No hay datos para exportar en el reporte actual.", "OK");
+            MensajeError = "La fecha 'Desde' no puede ser posterior a la fecha 'Hasta'.";
             return;
         }
 
+        MensajeError = string.Empty;
+        int? idProv = ProveedorFiltro?.Id;
+        var (resumen, lista) = await _servicio.ObtenerReporteCumplimientoAsync(FechaDesde, FechaHasta, EstadoFiltro, idProv);
+
+        Resumen = resumen;
+        Items.Clear();
+        foreach (var item in lista)
+        {
+            Items.Add(item);
+        }
+
+        SinResultados = Items.Count == 0;
+    }
+
+    private async Task ExportarCsvAsync()
+    {
+        if (EstaOcupado) return;
+        EstaOcupado = true;
+
         try
         {
+            if (Items.Count == 0)
+            {
+                await Shell.Current.DisplayAlert("Aviso", "No hay datos para exportar en el reporte actual.", "OK");
+                return;
+            }
+
             var headers = new[] { "Número OC", "Fecha Emisión", "Proveedor", "RUT", "Estado", "Unidades Solicitadas", "Unidades Recibidas", "Discrepancia", "Tasa Cumplimiento", "Nivel de Servicio (SLA)", "Monto Total" };
             var rows = Items.Select(i => new[]
             {
@@ -146,6 +187,10 @@ public class ReporteCumplimientoViewModel : BaseViewModel
         catch (Exception ex)
         {
             await Shell.Current.DisplayAlert("Error", "No se pudo exportar a CSV: " + ex.Message, "OK");
+        }
+        finally
+        {
+            EstaOcupado = false;
         }
     }
 }

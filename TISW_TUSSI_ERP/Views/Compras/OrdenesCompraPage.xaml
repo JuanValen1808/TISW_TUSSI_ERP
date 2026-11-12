@@ -22,16 +22,18 @@
                 </Border>
 
                 <!-- Título + acciones -->
-                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
+                <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="10">
                     <VerticalStackLayout Spacing="2">
                         <Label Text="Órdenes de Compra" Style="{StaticResource ErpTitle}" />
                         <Label Text="{Binding Resumen.TotalComprometidoTexto, StringFormat='Seguimiento de pedidos a proveedores · Total comprometido {0}'}"
                                Style="{StaticResource ErpSubtitle}" />
                     </VerticalStackLayout>
-                    <Button Grid.Column="1" Text="Exportar CSV" Style="{StaticResource ErpGhostButton}"
-                            VerticalOptions="Center" Command="{Binding ComandoExportarCsv}" />
-                    <Button Grid.Column="2" Text="Nueva Orden de Compra" Style="{StaticResource ErpPrimaryButton}"
-                            VerticalOptions="Center" Command="{Binding ComandoNuevaOrden}" />
+                    <ActivityIndicator Grid.Column="1" IsRunning="{Binding EstaOcupado}" IsVisible="{Binding EstaOcupado}"
+                                       Color="{StaticResource ErpPrimary}" VerticalOptions="Center" />
+                    <Button Grid.Column="2" Text="Exportar CSV" Style="{StaticResource ErpGhostButton}"
+                            VerticalOptions="Center" Command="{Binding ComandoExportarCsv}" IsEnabled="{Binding NoEstaOcupado}" />
+                    <Button Grid.Column="3" Text="Nueva Orden de Compra" Style="{StaticResource ErpPrimaryButton}"
+                            VerticalOptions="Center" Command="{Binding ComandoNuevaOrden}" IsEnabled="{Binding NoEstaOcupado}" />
                 </Grid>
 
                 <!-- KPIs -->
@@ -70,7 +72,7 @@
 
                 <!-- Pestañas de filtro -->
                 <HorizontalStackLayout Spacing="6">
-                    <Button Text="Todas" Style="{StaticResource ErpTab}" Command="{Binding ComandoFiltrar}" CommandParameter="TODAS">
+                    <Button Text="Todas" Style="{StaticResource ErpTab}" Command="{Binding ComandoFiltrar}" CommandParameter="TODAS" IsEnabled="{Binding NoEstaOcupado}">
                         <Button.Triggers>
                             <DataTrigger TargetType="Button" Binding="{Binding FiltroActual}" Value="TODAS">
                                 <Setter Property="BackgroundColor" Value="{StaticResource ErpPrimary}" />
@@ -78,7 +80,7 @@
                             </DataTrigger>
                         </Button.Triggers>
                     </Button>
-                    <Button Text="Pendiente" Style="{StaticResource ErpTab}" Command="{Binding ComandoFiltrar}" CommandParameter="PENDIENTE">
+                    <Button Text="Pendiente" Style="{StaticResource ErpTab}" Command="{Binding ComandoFiltrar}" CommandParameter="PENDIENTE" IsEnabled="{Binding NoEstaOcupado}">
                         <Button.Triggers>
                             <DataTrigger TargetType="Button" Binding="{Binding FiltroActual}" Value="PENDIENTE">
                                 <Setter Property="BackgroundColor" Value="{StaticResource ErpPrimary}" />
@@ -86,7 +88,7 @@
                             </DataTrigger>
                         </Button.Triggers>
                     </Button>
-                    <Button Text="Recibida Parcial" Style="{StaticResource ErpTab}" Command="{Binding ComandoFiltrar}" CommandParameter="PARCIAL">
+                    <Button Text="Recibida Parcial" Style="{StaticResource ErpTab}" Command="{Binding ComandoFiltrar}" CommandParameter="PARCIAL" IsEnabled="{Binding NoEstaOcupado}">
                         <Button.Triggers>
                             <DataTrigger TargetType="Button" Binding="{Binding FiltroActual}" Value="PARCIAL">
                                 <Setter Property="BackgroundColor" Value="{StaticResource ErpPrimary}" />
@@ -94,7 +96,7 @@
                             </DataTrigger>
                         </Button.Triggers>
                     </Button>
-                    <Button Text="Liquidada" Style="{StaticResource ErpTab}" Command="{Binding ComandoFiltrar}" CommandParameter="LIQUIDADA">
+                    <Button Text="Liquidada" Style="{StaticResource ErpTab}" Command="{Binding ComandoFiltrar}" CommandParameter="LIQUIDADA" IsEnabled="{Binding NoEstaOcupado}">
                         <Button.Triggers>
                             <DataTrigger TargetType="Button" Binding="{Binding FiltroActual}" Value="LIQUIDADA">
                                 <Setter Property="BackgroundColor" Value="{StaticResource ErpPrimary}" />
@@ -102,7 +104,7 @@
                             </DataTrigger>
                         </Button.Triggers>
                     </Button>
-                    <Button Text="Pend. Autorización" Style="{StaticResource ErpTab}" Command="{Binding ComandoFiltrar}" CommandParameter="PENDIENTE_AUTORIZACION">
+                    <Button Text="Pend. Autorización" Style="{StaticResource ErpTab}" Command="{Binding ComandoFiltrar}" CommandParameter="PENDIENTE_AUTORIZACION" IsEnabled="{Binding NoEstaOcupado}">
                         <Button.Triggers>
                             <DataTrigger TargetType="Button" Binding="{Binding FiltroActual}" Value="PENDIENTE_AUTORIZACION">
                                 <Setter Property="BackgroundColor" Value="#EA580C" />
@@ -110,7 +112,7 @@
                             </DataTrigger>
                         </Button.Triggers>
                     </Button>
-                    <Button Text="Anulada" Style="{StaticResource ErpTab}" Command="{Binding ComandoFiltrar}" CommandParameter="ANULADA">
+                    <Button Text="Anulada" Style="{StaticResource ErpTab}" Command="{Binding ComandoFiltrar}" CommandParameter="ANULADA" IsEnabled="{Binding NoEstaOcupado}">
                         <Button.Triggers>
                             <DataTrigger TargetType="Button" Binding="{Binding FiltroActual}" Value="ANULADA">
                                 <Setter Property="BackgroundColor" Value="{StaticResource ErpPrimary}" />
@@ -190,20 +192,24 @@
                                         <!-- Registrar recepción (visible si está emitida o parcial) -->
                                         <Button Text="Registrar Recepción" Style="{StaticResource ErpPrimaryButton}" HeightRequest="38"
                                                 IsVisible="{Binding OrdenSeleccionada.PuedeRecibirse}"
+                                                IsEnabled="{Binding NoEstaOcupado}"
                                                 Command="{Binding ComandoRegistrarRecepcion}" />
 
                                         <!-- Autorizar / Rechazar compras retenidas por presupuesto -->
                                         <Button Text="Aprobar Orden" Style="{StaticResource ErpPrimaryButton}" BackgroundColor="{StaticResource ErpSuccess}" HeightRequest="38"
                                                 IsVisible="{Binding OrdenSeleccionada.RequiereAutorizacion}"
+                                                IsEnabled="{Binding NoEstaOcupado}"
                                                 Command="{Binding ComandoAprobar}" />
 
                                         <Button Text="Rechazar" Style="{StaticResource ErpGhostButton}" TextColor="{StaticResource ErpDanger}" HeightRequest="38"
                                                 IsVisible="{Binding OrdenSeleccionada.RequiereAutorizacion}"
+                                                IsEnabled="{Binding NoEstaOcupado}"
                                                 Command="{Binding ComandoRechazar}" />
 
                                         <!-- Anular orden emitida/borrador -->
                                         <Button Text="Anular" Style="{StaticResource ErpGhostButton}" TextColor="{StaticResource ErpDanger}" HeightRequest="38"
                                                 IsVisible="{Binding OrdenSeleccionada.PuedeAnularse}"
+                                                IsEnabled="{Binding NoEstaOcupado}"
                                                 Command="{Binding ComandoAnular}" />
                                     </HorizontalStackLayout>
                                 </Grid>

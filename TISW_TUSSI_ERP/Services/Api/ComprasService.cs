@@ -40,6 +40,9 @@ public class ComprasService
     // Límite de compra que activa la aprobación jerárquica obligatoria
     public const decimal LimiteGastoAutorizacion = 1_000_000m;
 
+    // Estado transitorio compartido entre vistas del módulo Compras para resaltar/refrescar órdenes creadas
+    public int? UltimaOrdenCreadaId { get; set; }
+
     public async Task<ResumenCompras> ObtenerResumenAsync()
     {
         await using var cn = _db.CrearConexion();
@@ -286,8 +289,11 @@ public class ComprasService
         return lista;
     }
 
-    public async Task<string> CrearOrdenCompraAsync(int idProveedor, int idUsuario, bool esAdminOGerente, decimal subtotal, decimal iva, decimal total, List<CarritoItem> carrito)
+    public async Task<(int IdOrden, string NumeroOc, string Estado)> CrearOrdenCompraAsync(int idProveedor, int idUsuario, bool esAdminOGerente, decimal subtotal, decimal iva, decimal total, List<CarritoItem> carrito)
     {
+        if (carrito == null || carrito.Count == 0 || carrito.Any(c => c.Cantidad <= 0 || c.PrecioUnitario < 0))
+            throw new InvalidOperationException("La orden de compra debe incluir al menos un ítem válido con cantidad mayor a cero.");
+
         await using var cn = _db.CrearConexion();
         await cn.OpenAsync();
         await using var transaccion = await cn.BeginTransactionAsync();
@@ -300,7 +306,20 @@ public class ComprasService
                 ? "PENDIENTE_AUTORIZACION"
                 : "EMITIDA";
 
-            string numeroOc = $"OC-{DateTime.Now.Year}-{new Random().Next(1000, 9999)}";
+            // Generar número de orden único y libre de colisiones dentro de la transacción
+            const string sqlNextSeq = "SELECT COALESCE(MAX(id_orden_compra), 0) + 1 FROM ordenes_compra";
+            int seq = Convert.ToInt32(await new MySqlCommand(sqlNextSeq, cn, transaccion).ExecuteScalarAsync());
+            string numeroOc;
+            while (true)
+            {
+                numeroOc = $"OC-{DateTime.Now.Year}-{seq:D4}";
+                const string sqlExisteNum = "SELECT COUNT(*) FROM ordenes_compra WHERE numero_oc = @numOC";
+                await using var cmdCheckNum = new MySqlCommand(sqlExisteNum, cn, transaccion);
+                cmdCheckNum.Parameters.AddWithValue("@numOC", numeroOc);
+                if (Convert.ToInt32(await cmdCheckNum.ExecuteScalarAsync()) == 0)
+                    break;
+                seq++;
+            }
 
             const string sqlOrden = @"
                 INSERT INTO ordenes_compra (numero_oc, id_proveedor, fecha_emision, estado, monto_subtotal, monto_iva, monto_total, id_usuario_creador)
@@ -334,7 +353,8 @@ public class ComprasService
             }
 
             await transaccion.CommitAsync();
-            return estadoInicial;
+            UltimaOrdenCreadaId = idOrdenGenerada;
+            return (idOrdenGenerada, numeroOc, estadoInicial);
         }
         catch
         {
@@ -350,17 +370,21 @@ public class ComprasService
         await cn.OpenAsync();
         await using var cmd = new MySqlCommand(sql, cn);
         cmd.Parameters.AddWithValue("@id", idOrden);
-        await cmd.ExecuteNonQueryAsync();
+        int afectadas = await cmd.ExecuteNonQueryAsync();
+        if (afectadas == 0)
+            throw new InvalidOperationException("La orden ya fue procesada o no se encuentra pendiente de autorización.");
     }
 
     public async Task RechazarOrdenCompraAsync(int idOrden, string motivo)
     {
-        const string sql = "UPDATE ordenes_compra SET estado = 'ANULADA' WHERE id_orden_compra = @id";
+        const string sql = "UPDATE ordenes_compra SET estado = 'ANULADA' WHERE id_orden_compra = @id AND estado = 'PENDIENTE_AUTORIZACION'";
         await using var cn = _db.CrearConexion();
         await cn.OpenAsync();
         await using var cmd = new MySqlCommand(sql, cn);
         cmd.Parameters.AddWithValue("@id", idOrden);
-        await cmd.ExecuteNonQueryAsync();
+        int afectadas = await cmd.ExecuteNonQueryAsync();
+        if (afectadas == 0)
+            throw new InvalidOperationException("La orden ya fue procesada o no se encuentra pendiente de autorización.");
     }
 
     public async Task AnularOrdenCompraAsync(int idOrden)
@@ -370,7 +394,9 @@ public class ComprasService
         await cn.OpenAsync();
         await using var cmd = new MySqlCommand(sql, cn);
         cmd.Parameters.AddWithValue("@id", idOrden);
-        await cmd.ExecuteNonQueryAsync();
+        int afectadas = await cmd.ExecuteNonQueryAsync();
+        if (afectadas == 0)
+            throw new InvalidOperationException("La orden ya fue anulada, recibida o cambió de estado.");
     }
 
     // =========================================================
@@ -509,12 +535,94 @@ public class ComprasService
 
     public async Task<(int IdRecepcion, string NumeroRecepcion)> RegistrarRecepcionFacturaAsync(RecepcionFacturaInput input, int idUsuario)
     {
+        string numeroFactura = input.NumeroFactura?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(numeroFactura))
+            throw new InvalidOperationException("Debe ingresar el número de factura del proveedor.");
+
+        var lineasARecibir = input.Lineas.Where(l => l.CantidadARecibir > 0).ToList();
+        if (lineasARecibir.Count == 0)
+            throw new InvalidOperationException("Debe ingresar al menos un ítem con cantidad a recibir mayor a cero.");
+
         await using var cn = _db.CrearConexion();
         await cn.OpenAsync();
         await using var transaccion = await cn.BeginTransactionAsync();
 
         try
         {
+            // 0. Bloquear y validar estado actual de la orden de compra (previene liquidaciones duplicadas / fantasmas)
+            string? estadoOcActual = null;
+            int idProveedorOc = 0;
+            const string sqlLockOc = @"
+                SELECT estado, id_proveedor
+                FROM ordenes_compra
+                WHERE id_orden_compra = @idOc
+                FOR UPDATE;";
+            await using (var cmdLock = new MySqlCommand(sqlLockOc, cn, transaccion))
+            {
+                cmdLock.Parameters.AddWithValue("@idOc", input.IdOrdenCompra);
+                await using var rdOc = await cmdLock.ExecuteReaderAsync();
+                if (await rdOc.ReadAsync())
+                {
+                    estadoOcActual = rdOc.GetString(0);
+                    idProveedorOc = rdOc.GetInt32(1);
+                }
+            }
+
+            if (estadoOcActual is null)
+                throw new InvalidOperationException("La orden de compra seleccionada ya no existe.");
+
+            if (estadoOcActual != "EMITIDA" && estadoOcActual != "PARCIAL")
+                throw new InvalidOperationException($"La orden de compra ya cambió a estado '{estadoOcActual}' y no admite más recepciones.");
+
+            // Verificar factura duplicada para el proveedor y para la orden antes de insertar
+            const string sqlDupCxP = "SELECT COUNT(*) FROM cuentas_por_pagar WHERE id_proveedor = @idProv AND numero_documento = @numFactura";
+            await using (var cmdDupCxP = new MySqlCommand(sqlDupCxP, cn, transaccion))
+            {
+                cmdDupCxP.Parameters.AddWithValue("@idProv", idProveedorOc);
+                cmdDupCxP.Parameters.AddWithValue("@numFactura", numeroFactura);
+                if (Convert.ToInt32(await cmdDupCxP.ExecuteScalarAsync()) > 0)
+                    throw new InvalidOperationException($"Ya existe una factura registrada con el número '{numeroFactura}' para este proveedor.");
+            }
+
+            const string sqlDupRec = "SELECT COUNT(*) FROM recepciones_facturas_compra WHERE id_orden_compra = @idOc AND numero_factura_proveedor = @numFactura";
+            await using (var cmdDupRec = new MySqlCommand(sqlDupRec, cn, transaccion))
+            {
+                cmdDupRec.Parameters.AddWithValue("@idOc", input.IdOrdenCompra);
+                cmdDupRec.Parameters.AddWithValue("@numFactura", numeroFactura);
+                if (Convert.ToInt32(await cmdDupRec.ExecuteScalarAsync()) > 0)
+                    throw new InvalidOperationException($"La factura '{numeroFactura}' ya fue liquidada anteriormente para esta orden.");
+            }
+
+            // Bloquear y validar saldos pendientes línea por línea antes de registrar movimientos
+            foreach (var item in lineasARecibir)
+            {
+                if (string.IsNullOrWhiteSpace(item.NumeroLote))
+                    throw new InvalidOperationException($"Debe ingresar el número de lote para '{item.NombreProducto}'.");
+
+                if (item.CostoFacturado < 0)
+                    throw new InvalidOperationException($"El costo facturado de '{item.NombreProducto}' no puede ser negativo.");
+
+                const string sqlLockDet = @"
+                    SELECT cantidad_solicitada, cantidad_recibida
+                    FROM detalle_orden_compra
+                    WHERE id_detalle_oc = @idDetOc AND id_orden_compra = @idOc
+                    FOR UPDATE;";
+                await using var cmdLockDet = new MySqlCommand(sqlLockDet, cn, transaccion);
+                cmdLockDet.Parameters.AddWithValue("@idDetOc", item.IdDetalleOc);
+                cmdLockDet.Parameters.AddWithValue("@idOc", input.IdOrdenCompra);
+
+                await using var rdDet = await cmdLockDet.ExecuteReaderAsync();
+                if (!await rdDet.ReadAsync())
+                    throw new InvalidOperationException($"El ítem '{item.NombreProducto}' no pertenece a la orden seleccionada.");
+
+                int cantSolicitada = rdDet.GetInt32(0);
+                int cantRecibidaPrevia = rdDet.GetInt32(1);
+                int saldoDisponible = Math.Max(0, cantSolicitada - cantRecibidaPrevia);
+
+                if (item.CantidadARecibir > saldoDisponible)
+                    throw new InvalidOperationException($"La cantidad a recibir para '{item.NombreProducto}' ({item.CantidadARecibir} un.) excede el saldo pendiente ({saldoDisponible} un.). Es posible que la orden ya haya sido liquidada.");
+            }
+
             // 1. Insertar encabezado de recepción de factura
             const string sqlRecepcion = @"
                 INSERT INTO recepciones_facturas_compra 
@@ -525,15 +633,30 @@ public class ComprasService
 
             await using var cmdRec = new MySqlCommand(sqlRecepcion, cn, transaccion);
             cmdRec.Parameters.AddWithValue("@idOc", input.IdOrdenCompra);
-            cmdRec.Parameters.AddWithValue("@numFactura", input.NumeroFactura.Trim());
+            cmdRec.Parameters.AddWithValue("@numFactura", numeroFactura);
             cmdRec.Parameters.AddWithValue("@fechaFactura", input.FechaFactura.Date);
             cmdRec.Parameters.AddWithValue("@montoTotal", input.MontoTotalFacturado);
 
             int idRecepcion = Convert.ToInt32(await cmdRec.ExecuteScalarAsync());
 
-            // 2. Procesar cada ítem recibido (Detalle, Lote, Stock, Kardex)
-            foreach (var item in input.Lineas.Where(l => l.CantidadARecibir > 0))
+            // Verificar si la tabla lotes en la base de datos activa tiene la columna estado_cuarentena
+            const string sqlHasCuarentena = @"
+                SELECT COUNT(*)
+                FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_SCHEMA = DATABASE()
+                  AND TABLE_NAME = 'lotes'
+                  AND COLUMN_NAME = 'estado_cuarentena';";
+            bool soportaEstadoCuarentena;
+            await using (var cmdCol = new MySqlCommand(sqlHasCuarentena, cn, transaccion))
             {
+                soportaEstadoCuarentena = Convert.ToInt32(await cmdCol.ExecuteScalarAsync()) > 0;
+            }
+
+            // 2. Procesar cada ítem recibido (Detalle, Lote, Cuarentena, Stock, Kardex)
+            foreach (var item in lineasARecibir)
+            {
+                string codigoLote = item.NumeroLote.Trim().ToUpperInvariant();
+
                 // 2.1 Insertar en detalle_recepcion_lotes
                 const string sqlDetRec = @"
                     INSERT INTO detalle_recepcion_lotes
@@ -544,18 +667,18 @@ public class ComprasService
                 await using var cmdDetRec = new MySqlCommand(sqlDetRec, cn, transaccion);
                 cmdDetRec.Parameters.AddWithValue("@idRec", idRecepcion);
                 cmdDetRec.Parameters.AddWithValue("@idProd", item.IdProducto);
-                cmdDetRec.Parameters.AddWithValue("@lote", item.NumeroLote.Trim().ToUpperInvariant());
+                cmdDetRec.Parameters.AddWithValue("@lote", codigoLote);
                 cmdDetRec.Parameters.AddWithValue("@vence", item.FechaVencimiento.Date);
                 cmdDetRec.Parameters.AddWithValue("@cant", item.CantidadARecibir);
                 cmdDetRec.Parameters.AddWithValue("@costo", item.CostoFacturado);
                 await cmdDetRec.ExecuteNonQueryAsync();
 
-                // 2.2 Buscar o crear lote en la tabla lotes
+                // 2.2 Buscar o crear lote en la tabla lotes (persistiendo estado_cuarentena si la columna existe)
                 int idLoteFinal;
                 const string sqlCheckLote = "SELECT id_lote, stock_actual FROM lotes WHERE id_producto = @idProd AND numero_lote = @lote LIMIT 1";
                 await using var cmdLote = new MySqlCommand(sqlCheckLote, cn, transaccion);
                 cmdLote.Parameters.AddWithValue("@idProd", item.IdProducto);
-                cmdLote.Parameters.AddWithValue("@lote", item.NumeroLote.Trim().ToUpperInvariant());
+                cmdLote.Parameters.AddWithValue("@lote", codigoLote);
 
                 await using (var rdLote = await cmdLote.ExecuteReaderAsync())
                 {
@@ -571,11 +694,35 @@ public class ComprasService
 
                 if (idLoteFinal > 0)
                 {
-                    const string sqlUpdLote = "UPDATE lotes SET stock_actual = stock_actual + @cant WHERE id_lote = @idLote";
+                    string sqlUpdLote = soportaEstadoCuarentena
+                        ? @"
+                            UPDATE lotes
+                            SET stock_actual = stock_actual + @cant,
+                                estado_cuarentena = CASE WHEN @cuarentena = 1 THEN 'CUARENTENA' ELSE estado_cuarentena END
+                            WHERE id_lote = @idLote"
+                        : "UPDATE lotes SET stock_actual = stock_actual + @cant WHERE id_lote = @idLote";
+
                     await using var cmdUpdLote = new MySqlCommand(sqlUpdLote, cn, transaccion);
                     cmdUpdLote.Parameters.AddWithValue("@cant", item.CantidadARecibir);
+                    if (soportaEstadoCuarentena)
+                        cmdUpdLote.Parameters.AddWithValue("@cuarentena", item.EnCuarentena ? 1 : 0);
                     cmdUpdLote.Parameters.AddWithValue("@idLote", idLoteFinal);
                     await cmdUpdLote.ExecuteNonQueryAsync();
+                }
+                else if (soportaEstadoCuarentena)
+                {
+                    string estadoCuarentena = item.EnCuarentena ? "CUARENTENA" : "LIBERADO";
+                    const string sqlInsLote = @"
+                        INSERT INTO lotes (id_producto, numero_lote, fecha_vencimiento, stock_actual, estado_cuarentena)
+                        VALUES (@idProd, @lote, @vence, @cant, @estadoCuarentena);
+                        SELECT LAST_INSERT_ID();";
+                    await using var cmdInsLote = new MySqlCommand(sqlInsLote, cn, transaccion);
+                    cmdInsLote.Parameters.AddWithValue("@idProd", item.IdProducto);
+                    cmdInsLote.Parameters.AddWithValue("@lote", codigoLote);
+                    cmdInsLote.Parameters.AddWithValue("@vence", item.FechaVencimiento.Date);
+                    cmdInsLote.Parameters.AddWithValue("@cant", item.CantidadARecibir);
+                    cmdInsLote.Parameters.AddWithValue("@estadoCuarentena", estadoCuarentena);
+                    idLoteFinal = Convert.ToInt32(await cmdInsLote.ExecuteScalarAsync());
                 }
                 else
                 {
@@ -585,7 +732,7 @@ public class ComprasService
                         SELECT LAST_INSERT_ID();";
                     await using var cmdInsLote = new MySqlCommand(sqlInsLote, cn, transaccion);
                     cmdInsLote.Parameters.AddWithValue("@idProd", item.IdProducto);
-                    cmdInsLote.Parameters.AddWithValue("@lote", item.NumeroLote.Trim().ToUpperInvariant());
+                    cmdInsLote.Parameters.AddWithValue("@lote", codigoLote);
                     cmdInsLote.Parameters.AddWithValue("@vence", item.FechaVencimiento.Date);
                     cmdInsLote.Parameters.AddWithValue("@cant", item.CantidadARecibir);
                     idLoteFinal = Convert.ToInt32(await cmdInsLote.ExecuteScalarAsync());
