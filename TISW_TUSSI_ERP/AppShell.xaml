@@ -4,6 +4,7 @@
        xmlns:dashboard="clr-namespace:TISW_TUSSI_ERP.Views.Dashboard"
        xmlns:compras="clr-namespace:TISW_TUSSI_ERP.Views.Compras"
        xmlns:ventas="clr-namespace:TISW_TUSSI_ERP.Views.Ventas"
+       xmlns:inventario="clr-namespace:TISW_TUSSI_ERP.Views.Inventario"
        xmlns:contabilidad="clr-namespace:TISW_TUSSI_ERP.Views.Contabilidad"
        xmlns:admin="clr-namespace:TISW_TUSSI_ERP.Views.Admin"
        x:Class="TISW_TUSSI_ERP.AppShell"
@@ -81,6 +82,12 @@
     <!-- RUTAS DE CONTABILIDAD (RF-CON-01 A RF-CON-09) -->
     <ShellContent Route="PlanCuentasPage" Shell.FlyoutItemIsVisible="False"
                   ContentTemplate="{DataTemplate contabilidad:PlanCuentasPage}" />
+    <ShellContent Route="InventarioPage" Shell.FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate inventario:InventarioPage}" />
+    <ShellContent Route="KardexPage" Shell.FlyoutItemIsVisible="False"
+              ContentTemplate="{DataTemplate inventario:KardexPage}" />
+    <ShellContent Route="MermasPage" Shell.FlyoutItemIsVisible="False"
+              ContentTemplate="{DataTemplate inventario:MermasPage}" />
     <ShellContent Route="LibroDiarioPage" Shell.FlyoutItemIsVisible="False"
                   ContentTemplate="{DataTemplate contabilidad:LibroDiarioPage}" />
     <ShellContent Route="LibroMayorPage" Shell.FlyoutItemIsVisible="False"

@@ -11,6 +11,8 @@ using TISW_TUSSI_ERP.Views.Dashboard;
 using TISW_TUSSI_ERP.Views.Ventas;
 using TISW_TUSSI_ERP.ViewModels.Contabilidad;
 using TISW_TUSSI_ERP.Views.Contabilidad;
+using TISW_TUSSI_ERP.ViewModels.Inventario;
+using TISW_TUSSI_ERP.Views.Inventario;
 
 namespace TISW_TUSSI_ERP
 {
@@ -40,6 +42,8 @@ namespace TISW_TUSSI_ERP
             builder.Services.AddSingleton<DashboardService>();
             builder.Services.AddSingleton<VentasService>();
             builder.Services.AddSingleton<ConveniosService>();
+            builder.Services.AddSingleton<InventarioService>();
+            builder.Services.AddTransient<ReporteService>();
 
             // Auth
             builder.Services.AddTransient<LoginViewModel>();
@@ -130,6 +134,14 @@ namespace TISW_TUSSI_ERP
             builder.Services.AddTransient<TISW_TUSSI_ERP.Views.Admin.PerfilesPage>();
             builder.Services.AddTransient<TISW_TUSSI_ERP.ViewModels.Seguridad.AccesosViewModel>();
             builder.Services.AddTransient<TISW_TUSSI_ERP.Views.Admin.AccesosPage>();
+
+            // Inventario
+            builder.Services.AddTransient<InventarioViewModel>();
+            builder.Services.AddTransient<InventarioPage>();
+            builder.Services.AddTransient<KardexViewModel>();
+            builder.Services.AddTransient<KardexPage>();
+            builder.Services.AddTransient<MermasViewModel>();
+            builder.Services.AddTransient<MermasPage>();
 
             return builder.Build();
         }

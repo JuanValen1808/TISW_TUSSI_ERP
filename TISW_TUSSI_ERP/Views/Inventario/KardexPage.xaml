@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:TISW_TUSSI_ERP.ViewModels.Inventario"
+             xmlns:m="clr-namespace:TISW_TUSSI_ERP.Models.Inventario"
+             xmlns:ctrl="clr-namespace:TISW_TUSSI_ERP.Views.Shared"
+             x:Class="TISW_TUSSI_ERP.Views.Inventario.KardexPage"
+             x:DataType="vm:KardexViewModel"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource ErpBg}"
+             Title="Kardex y Trazabilidad">
+
+    <Grid RowDefinitions="Auto,*">
+        <!-- Encabezado superior unificado del ERP -->
+        <ctrl:PageHeader Grid.Row="0" Ruta="ERP › Inventario › Kardex" Titulo="Kardex de Movimientos y Lotes" />
+
+        <Grid Grid.Row="1" RowDefinitions="Auto,Auto,*" Padding="24" RowSpacing="16">
+
+            <!-- Barra de Filtros y Acciones -->
+            <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="12">
+                <!-- Selector / Filtro por Producto -->
+                <Border Style="{StaticResource ErpCard}" Padding="12,4" VerticalOptions="Center">
+                    <Picker Title="Filtrar por producto específico..."
+                            ItemsSource="{Binding ProductosDisponibles}"
+                            ItemDisplayBinding="{Binding NombreComercial}"
+                            SelectedItem="{Binding ProductoSeleccionado, Mode=TwoWay}"
+                            FontSize="13"
+                            BackgroundColor="Transparent" />
+                </Border>
+
+                <Button Grid.Column="1" Text="🔄 Todos" 
+                        Style="{StaticResource ErpGhostButton}" 
+                        Command="{Binding ComandoLimpiarFiltro}" 
+                        HeightRequest="42" />
+
+                <Button Grid.Column="2" Text="📄 Exportar PDF" 
+                        Style="{StaticResource ErpPrimaryButton}" 
+                        Command="{Binding ComandoExportarKardex}" 
+                        HeightRequest="42" />
+            </Grid>
+
+            <!-- Resumen de Cantidad de Registros -->
+            <Label Grid.Row="1" Text="{Binding Movimientos.Count, StringFormat='Registros de Trazabilidad en Historial ({0})'}" 
+                   Style="{StaticResource ErpCardTitle}" />
+
+            <!-- Tabla / Lista de Movimientos del Kardex -->
+            <Border Grid.Row="2" Style="{StaticResource ErpCard}" Padding="0">
+                <Grid RowDefinitions="Auto,*">
+                    <!-- Cabecera de la Tabla -->
+                    <Grid Grid.Row="0" ColumnDefinitions="100,120,*,110,90,90,90,130" ColumnSpacing="8" Padding="16,12" BackgroundColor="#F8FAFC">
+                        <Label Text="FECHA" Style="{StaticResource ErpCaption}" />
+                        <Label Grid.Column="1" Text="SKU / LOTE" Style="{StaticResource ErpCaption}" />
+                        <Label Grid.Column="2" Text="PRODUCTO" Style="{StaticResource ErpCaption}" />
+                        <Label Grid.Column="3" Text="MOVIMIENTO" Style="{StaticResource ErpCaption}" HorizontalTextAlignment="Center" />
+                        <Label Grid.Column="4" Text="ORIGEN" Style="{StaticResource ErpCaption}" HorizontalTextAlignment="Center" />
+                        <Label Grid.Column="5" Text="CANTIDAD" Style="{StaticResource ErpCaption}" HorizontalTextAlignment="End" />
+                        <Label Grid.Column="6" Text="COSTO U." Style="{StaticResource ErpCaption}" HorizontalTextAlignment="End" />
+                        <Label Grid.Column="7" Text="STOCK FINAL" Style="{StaticResource ErpCaption}" HorizontalTextAlignment="End" />
+                    </Grid>
+                    <BoxView Grid.Row="0" HeightRequest="1" Color="{StaticResource ErpBorder}" VerticalOptions="End" />
+
+                    <!-- Contenido de Filas -->
+                    <CollectionView Grid.Row="1" ItemsSource="{Binding Movimientos}">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="m:KardexMovimientoModel">
+                                <VerticalStackLayout>
+                                    <Grid ColumnDefinitions="100,120,*,110,90,90,90,130" ColumnSpacing="8" Padding="16,10" VerticalOptions="Center">
+                                        <Label Text="{Binding FechaTexto}" FontSize="11" TextColor="{StaticResource ErpMuted}" VerticalOptions="Center" />
+
+                                        <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
+                                            <Label Text="{Binding Sku}" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource ErpText}" />
+                                            <Label Text="{Binding NumeroLote, StringFormat='Lote: {0}'}" FontSize="10" TextColor="{StaticResource ErpMuted}" />
+                                        </VerticalStackLayout>
+
+                                        <Label Grid.Column="2" Text="{Binding NombreProducto}" Style="{StaticResource ErpBody}" VerticalOptions="Center" />
+
+                                        <Border Grid.Column="3" BackgroundColor="{Binding FondoTipo}" StrokeThickness="0" StrokeShape="RoundRectangle 8" Padding="6,2" HorizontalOptions="Center" VerticalOptions="Center">
+                                            <Label Text="{Binding TipoMovimiento}" FontSize="10" FontAttributes="Bold" TextColor="{Binding ColorTipo}" />
+                                        </Border>
+
+                                        <Label Grid.Column="4" Text="{Binding OrigenDocumento}" FontSize="11" TextColor="{StaticResource ErpMuted}" HorizontalTextAlignment="Center" VerticalOptions="Center" />
+                                        <Label Grid.Column="5" Text="{Binding CantidadFormateada}" Style="{StaticResource ErpBody}" FontAttributes="Bold" HorizontalTextAlignment="End" VerticalOptions="Center" />
+                                        <Label Grid.Column="6" Text="{Binding CostoUnitarioTexto}" Style="{StaticResource ErpBody}" HorizontalTextAlignment="End" VerticalOptions="Center" />
+                                        <Label Grid.Column="7" Text="{Binding SaldoStockProducto, StringFormat='{0} un.'}" Style="{StaticResource ErpBody}" FontAttributes="Bold" HorizontalTextAlignment="End" VerticalOptions="Center" />
+                                    </Grid>
+                                    <BoxView HeightRequest="1" Color="#F1F5F9" />
+                                </VerticalStackLayout>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </Grid>
+            </Border>
+
+        </Grid>
+    </Grid>
+</ContentPage>
