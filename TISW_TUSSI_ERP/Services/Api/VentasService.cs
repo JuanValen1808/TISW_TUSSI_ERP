@@ -8,10 +8,12 @@ namespace TISW_TUSSI_ERP.Services.Api;
 public class VentasService
 {
     private readonly DatabaseService _db;
+    private readonly ContabilidadService _contabilidad;
 
-    public VentasService(DatabaseService db)
+    public VentasService(DatabaseService db, ContabilidadService contabilidad)
     {
         _db = db;
+        _contabilidad = contabilidad;
     }
 
     // PRODUCTOS
@@ -562,6 +564,12 @@ public class VentasService
             }
 
             await tx.CommitAsync();
+
+            try
+            {
+                await _contabilidad.CentralizarMovimientosPendientesAsync(idCajero);
+            }
+            catch { }
 
             return folio;
         }
