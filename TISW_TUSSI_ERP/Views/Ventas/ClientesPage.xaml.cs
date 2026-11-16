@@ -19,38 +19,27 @@ public partial class ClientesPage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-
         await _viewModel.CargarClientesAsync();
     }
 
+    // NUEVO CLIENTE
     private void OnNuevoClienteClicked(
         object sender, EventArgs e)
     {
-        PanelTipos.IsVisible = false;
         _viewModel.NuevoCliente();
     }
 
-    // Mostrar u ocultar las opciones de tipo de cliente
-    private void OnMostrarTiposClicked(
-        object sender, TappedEventArgs e)
-    {
-        if (_viewModel.ClienteFormulario == null)
-        {
-            _viewModel.Mensaje =
-                "Primero selecciona un cliente o pulsa Nuevo cliente.";
-            return;
-        }
-
-        PanelTipos.IsVisible = !PanelTipos.IsVisible;
-    }
-
-    // Seleccionar el tipo sin perder los datos del formulario
+    // SELECCIÓN DE TIPO
     private void SeleccionarTipo(string tipo)
     {
         var actual = _viewModel.ClienteFormulario;
 
         if (actual == null)
+        {
+            _viewModel.Mensaje =
+                "Primero selecciona un cliente o pulsa Nuevo cliente.";
             return;
+        }
 
         _viewModel.ClienteFormulario = new Cliente
         {
@@ -62,7 +51,7 @@ public partial class ClientesPage : ContentPage
             TipoCliente = tipo
         };
 
-        PanelTipos.IsVisible = false;
+        _viewModel.Mensaje = $"Tipo de cliente seleccionado: {tipo}";
     }
 
     private void OnPersonaClicked(
@@ -83,12 +72,13 @@ public partial class ClientesPage : ContentPage
         SeleccionarTipo("INSTITUCION");
     }
 
-    // Eliminar cliente con confirmación
+    // ELIMINAR CLIENTE
     private async void OnEliminarClienteClicked(
         object sender, EventArgs e)
     {
-        if (_viewModel.ClienteSeleccionado == null ||
-            _viewModel.ClienteSeleccionado.IdCliente <= 0)
+        var cliente = _viewModel.ClienteSeleccionado;
+
+        if (cliente == null || cliente.IdCliente <= 0)
         {
             await DisplayAlertAsync(
                 "Atención",
@@ -105,12 +95,11 @@ public partial class ClientesPage : ContentPage
 
         if (confirmar)
         {
-            PanelTipos.IsVisible = false;
             await _viewModel.EliminarClienteAsync();
         }
     }
 
-    // Abrir los convenios del cliente seleccionado
+    // VER CONVENIOS
     private async void OnVerConveniosClicked(
         object sender, EventArgs e)
     {
@@ -120,18 +109,25 @@ public partial class ClientesPage : ContentPage
         {
             await DisplayAlertAsync(
                 "Seleccionar cliente",
-                "Primero selecciona un cliente registrado para ver sus convenios.",
+                "Primero selecciona un cliente registrado.",
                 "Aceptar");
             return;
         }
 
-        await Shell.Current.GoToAsync("//ConveniosPage");
-
-        if (Shell.Current.CurrentPage is ConveniosPage pagina)
+        try
         {
-            await pagina.CargarClienteAsync(
-                cliente.IdCliente,
-                cliente.RazonSocialNombre);
+            var nombre = Uri.EscapeDataString(
+                cliente.RazonSocialNombre ?? "");
+
+            await Shell.Current.GoToAsync(
+                $"//ConveniosPage?idCliente={cliente.IdCliente}&nombreCliente={nombre}");
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlertAsync(
+                "Error de navegación",
+                $"No se pudo abrir Convenios: {ex.Message}",
+                "Aceptar");
         }
     }
 }

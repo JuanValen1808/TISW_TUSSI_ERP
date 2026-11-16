@@ -1,3 +1,4 @@
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Maui.Controls.Shapes;
 using TISW_TUSSI_ERP.Helpers;
@@ -8,21 +9,32 @@ namespace TISW_TUSSI_ERP;
 
 public partial class AppShell : Shell
 {
-    private record ItemMenu(string Icono, string Titulo, string Ruta);
-    private record SeccionMenu(string Nombre, ItemMenu[] Items);
+    private record ItemMenu(
+        string Icono,
+        string Titulo,
+        string Ruta);
 
-    // Rutas que ya tienen pantalla. Al crear una nueva pantalla:
-    //  1) agrégala como <ShellContent Route="..."> en AppShell.xaml
-    //  2) añade su ruta aquí
-    //  3) regístrala en MauiProgram.cs
+    private record SeccionMenu(
+        string Nombre,
+        ItemMenu[] Items);
+
+    // Rutas implementadas
     private static readonly HashSet<string> Implementadas = new()
     {
         "DashboardPage",
         "OrdenesCompraPage",
         "PosPage",
+
+        // Historial y Monitor de Ventas
+        "HistorialVentasPage",
+
         "ClientesPage",
         "ConveniosPage",
         "RankingVentasPage",
+        "ReporteProductosPage",
+        "CuentasPorCobrarVentasPage",
+        "DevolucionesPage",
+        "CajaPage",
         "ProveedoresPage",
         "ReporteComprasPage",
         "PlanCuentasPage",
@@ -40,27 +52,74 @@ public partial class AppShell : Shell
 
     private static readonly SeccionMenu[] Secciones =
     {
-        new("PRINCIPAL", new[] { new ItemMenu("", "Dashboard", "DashboardPage") }),
+        new("PRINCIPAL", new[]
+        {
+            new ItemMenu("", "Dashboard", "DashboardPage")
+        }),
+
         new("OPERACIÓN", new[]
         {
-            new ItemMenu("", "Punto de Venta", "PosPage"),
-            new ItemMenu("", "Control de Caja", "CajaPage"),
-            new ItemMenu("", "Clientes", "ClientesPage"),
-            new ItemMenu("", "Ranking de Ventas", "RankingVentasPage"),
+            new ItemMenu(
+                "",
+                "Punto de Venta",
+                "PosPage"),
+
+            new ItemMenu(
+                "",
+                "Historial de Ventas",
+                "HistorialVentasPage"),
+
+            new ItemMenu(
+                "",
+                "Control de Caja",
+                "CajaPage"),
+
+            new ItemMenu(
+                "",
+                "Clientes",
+                "ClientesPage"),
+
+            new ItemMenu(
+                "",
+                "Convenios",
+                "ConveniosPage"),
+
+            new ItemMenu(
+                "",
+                "Ranking de Ventas",
+                "RankingVentasPage"),
+
+            new ItemMenu(
+                "",
+                "Ventas por Producto y Categoría",
+                "ReporteProductosPage"),
+
+            new ItemMenu(
+                "",
+                "Cuentas por Cobrar",
+                "CuentasPorCobrarVentasPage"),
+
+            new ItemMenu(
+                "",
+                "Devoluciones de Ventas",
+                "DevolucionesPage")
         }),
+
         new("INVENTARIOS", new[]
         {
             new ItemMenu("", "Catálogo SKUs", "CatalogoPage"),
             new ItemMenu("", "Kardex y Lotes", "KardexPage"),
-            new ItemMenu("", "Mermas", "MermasPage"),
+            new ItemMenu("", "Mermas", "MermasPage")
         }),
+
         new("COMPRAS", new[]
         {
             new ItemMenu("", "Proveedores", "ProveedoresPage"),
             new ItemMenu("", "Órdenes de Compra", "OrdenesCompraPage"),
             new ItemMenu("", "Recepción Facturas", "RecepcionPage"),
-            new ItemMenu("", "Reporte de Compras", "ReporteComprasPage"),
+            new ItemMenu("", "Reporte de Compras", "ReporteComprasPage")
         }),
+
         new("CONTABILIDAD", new[]
         {
             new ItemMenu("", "Libro Diario", "LibroDiarioPage"),
@@ -70,18 +129,20 @@ public partial class AppShell : Shell
             new ItemMenu("", "Balance 8 Columnas", "BalanceOchoColumnasPage"),
             new ItemMenu("", "Estado de Resultados", "EstadoResultadosPage"),
             new ItemMenu("", "Cuentas por Cobrar", "CuentasPorCobrarPage"),
-            new ItemMenu("", "Cuentas por Pagar", "CuentasPorPagarPage"),
+            new ItemMenu("", "Cuentas por Pagar", "CuentasPorPagarPage")
         }),
+
         new("ADMINISTRACIÓN", new[]
         {
             new ItemMenu("", "Usuarios", "UsuariosPage"),
             new ItemMenu("", "Perfiles", "PerfilesPage"),
             new ItemMenu("", "Accesos", "AccesosPage"),
-            new ItemMenu("", "Configuración", "ConfigPage"),
-        }),
+            new ItemMenu("", "Configuración", "ConfigPage")
+        })
     };
 
-    private readonly List<(Border Borde, Label Texto, string Ruta)> _items = new();
+    private readonly List<(Border Borde, Label Texto, string Ruta)>
+        _items = new();
 
     public AppShell()
     {
@@ -89,15 +150,25 @@ public partial class AppShell : Shell
         ConstruirMenu();
 
         var u = Sesion.UsuarioActual;
-        NombreUsuario.Text = u?.NombreCompleto ?? "Invitado";
-        RolUsuario.Text = u?.NombreRol ?? "";
-        InicialesUsuario.Text = Formato.Iniciales(u?.NombreCompleto ?? "");
+
+        NombreUsuario.Text =
+            u?.NombreCompleto ?? "Invitado";
+
+        RolUsuario.Text =
+            u?.NombreRol ?? "";
+
+        InicialesUsuario.Text =
+            Formato.Iniciales(u?.NombreCompleto ?? "");
 
         var tapSalir = new TapGestureRecognizer();
+
         tapSalir.Tapped += (_, _) => CerrarSesion();
+
         CerrarSesionLabel.GestureRecognizers.Add(tapSalir);
 
-        Navigated += (_, e) => Resaltar(e.Current?.Location?.ToString() ?? "");
+        Navigated += (_, e) =>
+            Resaltar(e.Current?.Location?.ToString() ?? "");
+
         Resaltar("DashboardPage");
     }
 
@@ -107,17 +178,27 @@ public partial class AppShell : Shell
 
         foreach (var seccion in Secciones)
         {
-            // Control de Accesos (RBAC)
-            if (rol == "Contador" && seccion.Nombre != "PRINCIPAL" && seccion.Nombre != "CONTABILIDAD")
+            // Control de accesos por rol
+            if (rol == "Contador"
+                && seccion.Nombre != "PRINCIPAL"
+                && seccion.Nombre != "CONTABILIDAD")
                 continue;
 
-            if (rol == "Vendedor" && seccion.Nombre != "PRINCIPAL" && seccion.Nombre != "OPERACIÓN" && seccion.Nombre != "INVENTARIOS")
+            if (rol == "Vendedor"
+                && seccion.Nombre != "PRINCIPAL"
+                && seccion.Nombre != "OPERACIÓN"
+                && seccion.Nombre != "INVENTARIOS")
                 continue;
 
-            if (rol == "Bodega" && seccion.Nombre != "PRINCIPAL" && seccion.Nombre != "INVENTARIOS" && seccion.Nombre != "COMPRAS")
+            if (rol == "Bodega"
+                && seccion.Nombre != "PRINCIPAL"
+                && seccion.Nombre != "INVENTARIOS"
+                && seccion.Nombre != "COMPRAS")
                 continue;
 
-            if (rol == "Comprador" && seccion.Nombre != "PRINCIPAL" && seccion.Nombre != "COMPRAS")
+            if (rol == "Comprador"
+                && seccion.Nombre != "PRINCIPAL"
+                && seccion.Nombre != "COMPRAS")
                 continue;
 
             Menu.Add(new Label
@@ -133,24 +214,41 @@ public partial class AppShell : Shell
             {
                 var texto = new Label
                 {
-                    Text = string.IsNullOrEmpty(item.Icono) ? item.Titulo : $"{item.Icono}   {item.Titulo}",
+                    Text = string.IsNullOrEmpty(item.Icono)
+                        ? item.Titulo
+                        : $"{item.Icono}   {item.Titulo}",
+
                     FontSize = 13,
                     TextColor = Color.FromArgb("#374151")
                 };
+
                 var borde = new Border
                 {
                     StrokeThickness = 0,
-                    StrokeShape = new RoundRectangle { CornerRadius = 8 },
+
+                    StrokeShape = new RoundRectangle
+                    {
+                        CornerRadius = 8
+                    },
+
                     Padding = new Thickness(12, 9),
                     BackgroundColor = Colors.Transparent,
                     Content = texto
                 };
+
                 var tap = new TapGestureRecognizer();
-                tap.Tapped += async (_, _) => await Navegar(item);
+
+                tap.Tapped += async (_, _) =>
+                    await Navegar(item);
+
                 borde.GestureRecognizers.Add(tap);
 
                 Menu.Add(borde);
-                _items.Add((borde, texto, item.Ruta));
+
+                _items.Add((
+                    borde,
+                    texto,
+                    item.Ruta));
             }
         }
     }
@@ -158,9 +256,16 @@ public partial class AppShell : Shell
     private async Task Navegar(ItemMenu item)
     {
         if (Implementadas.Contains(item.Ruta))
+        {
             await GoToAsync($"//{item.Ruta}");
+        }
         else
-            await DisplayAlertAsync("Módulo en desarrollo", $"\"{item.Titulo}\" aún no está implementado.", "OK");
+        {
+            await DisplayAlertAsync(
+                "Módulo en desarrollo",
+                $"\"{item.Titulo}\" aún no está implementado.",
+                "OK");
+        }
     }
 
     private void Resaltar(string ubicacion)
@@ -168,9 +273,18 @@ public partial class AppShell : Shell
         foreach (var (borde, texto, ruta) in _items)
         {
             var activo = ubicacion.Contains(ruta);
-            borde.BackgroundColor = activo ? Color.FromArgb("#E8F1FD") : Colors.Transparent;
-            texto.TextColor = activo ? Color.FromArgb("#1D6FD8") : Color.FromArgb("#374151");
-            texto.FontAttributes = activo ? FontAttributes.Bold : FontAttributes.None;
+
+            borde.BackgroundColor = activo
+                ? Color.FromArgb("#E8F1FD")
+                : Colors.Transparent;
+
+            texto.TextColor = activo
+                ? Color.FromArgb("#1D6FD8")
+                : Color.FromArgb("#374151");
+
+            texto.FontAttributes = activo
+                ? FontAttributes.Bold
+                : FontAttributes.None;
         }
     }
 
@@ -181,7 +295,8 @@ public partial class AppShell : Shell
         var login = IPlatformApplication.Current!
             .Services.GetRequiredService<LoginPage>();
 
-        var ventana = Application.Current?.Windows.FirstOrDefault();
+        var ventana = Application.Current?
+            .Windows.FirstOrDefault();
 
         if (ventana != null)
         {
@@ -189,5 +304,3 @@ public partial class AppShell : Shell
         }
     }
 }
-
-    

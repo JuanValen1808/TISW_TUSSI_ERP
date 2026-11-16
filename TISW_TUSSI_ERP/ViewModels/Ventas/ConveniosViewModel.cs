@@ -9,24 +9,108 @@ namespace TISW_TUSSI_ERP.ViewModels.Ventas;
 public class ConveniosViewModel : BaseViewModel
 {
     private readonly ConveniosService _service;
+    private readonly ClientesService _clientesService;
 
+    private List<Cliente> _todosLosClientes = new();
+    private int _versionCarga;
+
+    public ObservableCollection<Cliente> Clientes { get; } = new();
     public ObservableCollection<ConvenioSalud> Convenios { get; } = new();
 
+    private string _busquedaCliente = string.Empty;
+
+    public string BusquedaCliente
+    {
+        get => _busquedaCliente;
+        set
+        {
+            if (SetProperty(ref _busquedaCliente, value))
+                FiltrarClientes();
+        }
+    }
+
+    private Cliente? _clienteSeleccionado;
+
+    public Cliente? ClienteSeleccionado
+    {
+        get => _clienteSeleccionado;
+        set
+        {
+            if (SetProperty(ref _clienteSeleccionado, value))
+            {
+                ++_versionCarga;
+
+                IdCliente = value?.IdCliente ?? 0;
+
+                NombreCliente = value?.RazonSocialNombre
+                    ?? "Sin cliente seleccionado";
+
+                RutCliente = value?.RutCliente ?? "";
+                TipoCliente = value?.TipoCliente ?? "";
+                EmailCliente = value?.Email ?? "";
+                TelefonoCliente = value?.Telefono ?? "";
+
+                ConvenioSeleccionado = null;
+                ConvenioFormulario = null;
+                Convenios.Clear();
+
+                Mensaje = value == null
+                    ? "Selecciona un cliente para ver sus convenios."
+                    : "Cargando convenios del cliente...";
+            }
+        }
+    }
+
     private int _idCliente;
+
     public int IdCliente
     {
         get => _idCliente;
         private set => SetProperty(ref _idCliente, value);
     }
 
-    private string _nombreCliente = string.Empty;
+    private string _nombreCliente = "Sin cliente seleccionado";
+
     public string NombreCliente
     {
         get => _nombreCliente;
         private set => SetProperty(ref _nombreCliente, value);
     }
 
+    private string _rutCliente = "";
+
+    public string RutCliente
+    {
+        get => _rutCliente;
+        private set => SetProperty(ref _rutCliente, value);
+    }
+
+    private string _tipoCliente = "";
+
+    public string TipoCliente
+    {
+        get => _tipoCliente;
+        private set => SetProperty(ref _tipoCliente, value);
+    }
+
+    private string _emailCliente = "";
+
+    public string EmailCliente
+    {
+        get => _emailCliente;
+        private set => SetProperty(ref _emailCliente, value);
+    }
+
+    private string _telefonoCliente = "";
+
+    public string TelefonoCliente
+    {
+        get => _telefonoCliente;
+        private set => SetProperty(ref _telefonoCliente, value);
+    }
+
     private ConvenioSalud? _convenioSeleccionado;
+
     public ConvenioSalud? ConvenioSeleccionado
     {
         get => _convenioSeleccionado;
@@ -35,12 +119,16 @@ public class ConveniosViewModel : BaseViewModel
             if (SetProperty(ref _convenioSeleccionado, value))
             {
                 if (value != null)
+                {
                     ConvenioFormulario = CopiarConvenio(value);
+                    Mensaje = "Editando convenio: " + value.NombreConvenio;
+                }
             }
         }
     }
 
     private ConvenioSalud? _convenioFormulario;
+
     public ConvenioSalud? ConvenioFormulario
     {
         get => _convenioFormulario;
@@ -48,208 +136,321 @@ public class ConveniosViewModel : BaseViewModel
     }
 
     private bool _cargando;
+
     public bool Cargando
     {
         get => _cargando;
         set => SetProperty(ref _cargando, value);
     }
 
-    private string _mensaje = string.Empty;
+    private string _mensaje = "";
+
     public string Mensaje
     {
         get => _mensaje;
         set => SetProperty(ref _mensaje, value);
     }
 
-    public ICommand CargarCommand { get; }
     public ICommand NuevoCommand { get; }
     public ICommand GuardarCommand { get; }
-    public ICommand EliminarCommand { get; }
+    public ICommand CargarCommand { get; }
 
-    public ConveniosViewModel(ConveniosService service)
+    public ConveniosViewModel(
+        ConveniosService service,
+        ClientesService clientesService)
     {
         _service = service;
-
-        CargarCommand = new Command(async () =>
-            await CargarConveniosAsync());
+        _clientesService = clientesService;
 
         NuevoCommand = new Command(NuevoConvenio);
 
-        GuardarCommand = new Command(async () =>
-            await GuardarConvenioAsync());
+        GuardarCommand = new Command(
+            async () => await GuardarConvenioAsync());
 
-        EliminarCommand = new Command(async () =>
-            await EliminarConvenioAsync());
+        CargarCommand = new Command(
+            async () => await CargarConveniosAsync());
     }
 
-    // Establecer el cliente al entrar a la pantalla
+    // BUSCAR CLIENTES
+    private void FiltrarClientes()
+    {
+        string texto = (BusquedaCliente ?? "")
+            .Trim()
+            .ToLowerInvariant();
+
+        var filtrados = _todosLosClientes.Where(c =>
+            string.IsNullOrEmpty(texto) ||
+            (c.RazonSocialNombre ?? "")
+                .ToLowerInvariant().Contains(texto) ||
+            (c.RutCliente ?? "")
+                .ToLowerInvariant().Contains(texto));
+
+        Clientes.Clear();
+
+        foreach (var cliente in filtrados)
+            Clientes.Add(cliente);
+    }
+
+    // CARGAR CLIENTES Y SELECCIONAR EL ID RECIBIDO
+    public async Task CargarClientesAsync(
+        int? idClientePreferido = null)
+    {
+        try
+        {
+            Cargando = true;
+
+            int? idBuscado = idClientePreferido
+                ?? ClienteSeleccionado?.IdCliente;
+
+            var datos = await _clientesService.ObtenerClientesAsync();
+
+            _todosLosClientes = datos;
+
+            BusquedaCliente = "";
+            FiltrarClientes();
+
+            Cliente? encontrado = idBuscado.HasValue
+                ? _todosLosClientes.FirstOrDefault(
+                    c => c.IdCliente == idBuscado.Value)
+                : null;
+
+            ClienteSeleccionado = encontrado;
+
+            if (encontrado == null)
+            {
+                Mensaje = idBuscado.HasValue
+                    ? $"No se encontró el cliente con ID {idBuscado.Value}."
+                    : datos.Count == 0
+                        ? "No hay clientes registrados."
+                        : "Selecciona un cliente para consultar sus convenios.";
+            }
+        }
+        catch (Exception ex)
+        {
+            Mensaje = "Error al cargar clientes: " + ex.Message;
+        }
+        finally
+        {
+            Cargando = false;
+        }
+
+        if (ClienteSeleccionado != null)
+            await CargarConveniosAsync();
+    }
+
+    // ENTRADA DESDE CLIENTES > VER CONVENIOS
     public async Task InicializarAsync(
         int idCliente,
         string nombreCliente)
     {
         if (idCliente <= 0)
         {
-            Mensaje = "Debes seleccionar un cliente registrado.";
+            await CargarClientesAsync();
             return;
         }
 
-        IdCliente = idCliente;
-        NombreCliente = nombreCliente;
-
-        ConvenioSeleccionado = null;
-        ConvenioFormulario = null;
-
-        await CargarConveniosAsync();
+        await CargarClientesAsync(idCliente);
     }
 
-    // Consultar convenios desde MySQL
+    // CONSULTAR CONVENIOS EN MYSQL
     public async Task CargarConveniosAsync()
     {
-        if (Cargando || IdCliente <= 0)
+        int idConsultado = IdCliente;
+
+        if (idConsultado <= 0)
+        {
+            Convenios.Clear();
             return;
+        }
+
+        int version = ++_versionCarga;
 
         try
         {
             Cargando = true;
 
-            var datos = await _service.ObtenerPorClienteAsync(IdCliente);
+            var datos = await _service.ObtenerPorClienteAsync(
+                idConsultado);
 
+            if (version != _versionCarga ||
+                IdCliente != idConsultado)
+                return;
+
+            ConvenioSeleccionado = null;
+            ConvenioFormulario = null;
             Convenios.Clear();
 
             foreach (var convenio in datos)
                 Convenios.Add(convenio);
+
+            Mensaje = Convenios.Count == 0
+                ? "Este cliente no tiene convenios registrados."
+                : $"Convenios registrados: {Convenios.Count}";
         }
         catch (Exception ex)
         {
-            Mensaje = $"Error al cargar convenios: {ex.Message}";
+            if (version == _versionCarga)
+                Mensaje = "Error al cargar convenios: " + ex.Message;
         }
         finally
         {
-            Cargando = false;
+            if (version == _versionCarga)
+                Cargando = false;
         }
     }
 
-    // Preparar formulario vacío
+    // NUEVO CONVENIO
     public void NuevoConvenio()
     {
         if (IdCliente <= 0)
         {
-            Mensaje = "Primero debes seleccionar un cliente.";
+            Mensaje = "Primero selecciona un cliente.";
             return;
         }
+
+        if (Cargando)
+            return;
 
         ConvenioSeleccionado = null;
 
         ConvenioFormulario = new ConvenioSalud
         {
             IdCliente = IdCliente,
-            NombreConvenio = string.Empty,
+            NombreConvenio = "",
             PorcentajeDescuento = 0,
             LimiteCredito = 0,
             DiasCreditoMorosidad = 0,
             Activo = true
         };
 
-        Mensaje = "Ingresa los datos del nuevo convenio.";
+        Mensaje = "Completa los datos del nuevo convenio.";
     }
 
-    // Crear o actualizar convenio
+    // GUARDAR CONVENIO
     public async Task GuardarConvenioAsync()
     {
-        if (Cargando || ConvenioFormulario == null)
+        if (Cargando)
+            return;
+
+        if (IdCliente <= 0 || ConvenioFormulario == null)
         {
-            Mensaje = "Selecciona un convenio o crea uno nuevo.";
+            Mensaje = "Selecciona un cliente y crea o edita un convenio.";
             return;
         }
 
-        bool guardado = false;
+        var convenio = ConvenioFormulario;
+
+        if (string.IsNullOrWhiteSpace(convenio.NombreConvenio))
+        {
+            Mensaje = "El nombre del convenio es obligatorio.";
+            return;
+        }
+
+        if (convenio.PorcentajeDescuento < 0 ||
+            convenio.PorcentajeDescuento > 100)
+        {
+            Mensaje = "El descuento debe estar entre 0 y 100%.";
+            return;
+        }
+
+        if (convenio.LimiteCredito < 0 ||
+            convenio.DiasCreditoMorosidad < 0)
+        {
+            Mensaje = "El crédito y los días no pueden ser negativos.";
+            return;
+        }
+
+        int idOriginal = IdCliente;
+        bool esNuevo = convenio.IdConvenio == 0;
 
         try
         {
             Cargando = true;
 
-            ConvenioFormulario.IdCliente = IdCliente;
+            convenio.IdCliente = idOriginal;
+            convenio.NombreConvenio =
+                convenio.NombreConvenio.Trim();
 
-            if (ConvenioFormulario.IdConvenio == 0)
-            {
-                await _service.CrearConvenioAsync(ConvenioFormulario);
-                Mensaje = "Convenio registrado correctamente.";
-            }
+            if (esNuevo)
+                await _service.CrearConvenioAsync(convenio);
             else
-            {
-                await _service.ActualizarConvenioAsync(ConvenioFormulario);
-                Mensaje = "Convenio actualizado correctamente.";
-            }
-
-            guardado = true;
+                await _service.ActualizarConvenioAsync(convenio);
         }
         catch (Exception ex)
         {
-            Mensaje = $"Error al guardar convenio: {ex.Message}";
+            Mensaje = "Error al guardar convenio: " + ex.Message;
+            return;
         }
         finally
         {
             Cargando = false;
         }
 
-        if (guardado)
-        {
-            ConvenioSeleccionado = null;
-            ConvenioFormulario = null;
+        if (IdCliente != idOriginal)
+            return;
 
-            await CargarConveniosAsync();
+        ConvenioSeleccionado = null;
+        ConvenioFormulario = null;
+
+        await CargarConveniosAsync();
+
+        if (!Mensaje.StartsWith("Error al cargar"))
+        {
+            Mensaje = esNuevo
+                ? "Convenio registrado correctamente."
+                : "Convenio actualizado correctamente.";
         }
     }
 
-    // Eliminar convenio seleccionado
+    // ELIMINAR CONVENIO
     public async Task EliminarConvenioAsync()
     {
         if (Cargando ||
-            ConvenioSeleccionado == null ||
-            ConvenioSeleccionado.IdConvenio <= 0)
+            IdCliente <= 0 ||
+            ConvenioSeleccionado == null)
         {
-            Mensaje = "Selecciona un convenio registrado para eliminar.";
+            Mensaje = "Selecciona un convenio registrado.";
             return;
         }
 
-        bool eliminado = false;
+        int idConvenio = ConvenioSeleccionado.IdConvenio;
+        int idCliente = IdCliente;
 
         try
         {
             Cargando = true;
 
             await _service.EliminarConvenioAsync(
-                ConvenioSeleccionado.IdConvenio,
-                IdCliente);
-
-            eliminado = true;
-            Mensaje = "Convenio eliminado correctamente.";
+                idConvenio, idCliente);
         }
         catch (MySqlConnector.MySqlException ex)
             when (ex.Number == 1451)
         {
-            Mensaje = "No se puede eliminar el convenio porque " +
-                      "tiene registros asociados.";
+            Mensaje = "No se puede eliminar: tiene registros asociados.";
+            return;
         }
         catch (Exception ex)
         {
-            Mensaje = $"Error al eliminar convenio: {ex.Message}";
+            Mensaje = "Error al eliminar convenio: " + ex.Message;
+            return;
         }
         finally
         {
             Cargando = false;
         }
 
-        if (eliminado)
-        {
-            ConvenioSeleccionado = null;
-            ConvenioFormulario = null;
+        if (IdCliente != idCliente)
+            return;
 
-            await CargarConveniosAsync();
-        }
+        ConvenioSeleccionado = null;
+        ConvenioFormulario = null;
+
+        await CargarConveniosAsync();
+
+        if (!Mensaje.StartsWith("Error al cargar"))
+            Mensaje = "Convenio eliminado correctamente.";
     }
 
-    // Copiar datos para no editar directamente la lista
     private static ConvenioSalud CopiarConvenio(
         ConvenioSalud origen)
     {

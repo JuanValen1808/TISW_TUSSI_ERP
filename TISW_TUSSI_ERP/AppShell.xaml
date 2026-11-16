@@ -1,86 +1,259 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<Shell xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-       xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-       xmlns:dashboard="clr-namespace:TISW_TUSSI_ERP.Views.Dashboard"
-       xmlns:compras="clr-namespace:TISW_TUSSI_ERP.Views.Compras"
-       xmlns:ventas="clr-namespace:TISW_TUSSI_ERP.Views.Ventas"
-       xmlns:contabilidad="clr-namespace:TISW_TUSSI_ERP.Views.Contabilidad"
-       xmlns:admin="clr-namespace:TISW_TUSSI_ERP.Views.Admin"
-       x:Class="TISW_TUSSI_ERP.AppShell"
-       Shell.NavBarIsVisible="False"
-       FlyoutBehavior="Locked"
-       FlyoutWidth="250"
-       Shell.FlyoutBackgroundColor="White"
-       Title="FarmSalud ERP">
 
-    <!-- Menú lateral: se construye en AppShell.xaml.cs -->
+<Shell
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:dashboard="clr-namespace:TISW_TUSSI_ERP.Views.Dashboard"
+    xmlns:compras="clr-namespace:TISW_TUSSI_ERP.Views.Compras"
+    xmlns:ventas="clr-namespace:TISW_TUSSI_ERP.Views.Ventas"
+    xmlns:contabilidad="clr-namespace:TISW_TUSSI_ERP.Views.Contabilidad"
+    xmlns:admin="clr-namespace:TISW_TUSSI_ERP.Views.Admin"
+    x:Class="TISW_TUSSI_ERP.AppShell"
+    Shell.NavBarIsVisible="False"
+    FlyoutBehavior="Locked"
+    FlyoutWidth="250"
+    Shell.FlyoutBackgroundColor="White"
+    Title="FarmSalud ERP">
+
+    <!-- MENÚ LATERAL -->
     <Shell.FlyoutContent>
-        <Grid RowDefinitions="Auto,*,Auto" BackgroundColor="White" Padding="12,16">
-            <HorizontalStackLayout Grid.Row="0" Spacing="10" Padding="8,0,0,12">
-                <Border WidthRequest="36" HeightRequest="36" StrokeThickness="0" StrokeShape="RoundRectangle 9"
-                        BackgroundColor="{StaticResource ErpPrimary}">
-                    <Label Text="FS" TextColor="White" FontSize="16" FontAttributes="Bold" HorizontalOptions="Center" VerticalOptions="Center" />
+
+        <Grid
+            RowDefinitions="Auto,*,Auto"
+            BackgroundColor="White"
+            Padding="12,16">
+
+            <!-- LOGO -->
+            <HorizontalStackLayout
+                Grid.Row="0"
+                Spacing="10"
+                Padding="8,0,0,12">
+
+                <Border
+                    WidthRequest="36"
+                    HeightRequest="36"
+                    StrokeThickness="0"
+                    StrokeShape="RoundRectangle 9"
+                    BackgroundColor="{StaticResource ErpPrimary}">
+
+                    <Label
+                        Text="FS"
+                        TextColor="White"
+                        FontSize="16"
+                        FontAttributes="Bold"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center" />
+
                 </Border>
+
                 <VerticalStackLayout VerticalOptions="Center">
-                    <Label Text="FarmSalud ERP" FontSize="14" FontAttributes="Bold" TextColor="{StaticResource ErpText}" />
-                    <Label Text="Ventas · Supply · Contable" FontSize="9" TextColor="{StaticResource ErpMuted}" />
+
+                    <Label
+                        Text="FarmSalud ERP"
+                        FontSize="14"
+                        FontAttributes="Bold"
+                        TextColor="{StaticResource ErpText}" />
+
+                    <Label
+                        Text="Ventas · Supply · Contable"
+                        FontSize="9"
+                        TextColor="{StaticResource ErpMuted}" />
+
                 </VerticalStackLayout>
+
             </HorizontalStackLayout>
 
+            <!-- OPCIONES DEL MENÚ -->
             <ScrollView Grid.Row="1">
-                <VerticalStackLayout x:Name="Menu" Spacing="2" />
+
+                <VerticalStackLayout
+                    x:Name="Menu"
+                    Spacing="2" />
+
             </ScrollView>
 
-            <Border Grid.Row="2" BackgroundColor="#F8FAFC" Stroke="{StaticResource ErpBorder}" StrokeShape="RoundRectangle 10" Padding="10">
-                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                    <Border WidthRequest="34" HeightRequest="34" StrokeThickness="0" StrokeShape="RoundRectangle 17"
-                            BackgroundColor="{StaticResource ErpPrimary}">
-                        <Label x:Name="InicialesUsuario" TextColor="White" FontSize="12" FontAttributes="Bold"
-                               HorizontalOptions="Center" VerticalOptions="Center" />
+            <!-- USUARIO -->
+            <Border
+                Grid.Row="2"
+                BackgroundColor="#F8FAFC"
+                Stroke="{StaticResource ErpBorder}"
+                StrokeShape="RoundRectangle 10"
+                Padding="10">
+
+                <Grid
+                    ColumnDefinitions="Auto,*"
+                    ColumnSpacing="10">
+
+                    <Border
+                        WidthRequest="34"
+                        HeightRequest="34"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 17"
+                        BackgroundColor="{StaticResource ErpPrimary}">
+
+                        <Label
+                            x:Name="InicialesUsuario"
+                            TextColor="White"
+                            FontSize="12"
+                            FontAttributes="Bold"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center" />
+
                     </Border>
-                    <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="0">
-                        <Label x:Name="NombreUsuario" FontSize="12" FontAttributes="Bold" TextColor="{StaticResource ErpText}" />
-                        <Label x:Name="RolUsuario" FontSize="10" TextColor="{StaticResource ErpMuted}" />
-                        <Label x:Name="CerrarSesionLabel" Text="Cerrar sesión" FontSize="10" FontAttributes="Bold"
-                               TextColor="{StaticResource ErpDanger}" Margin="0,4,0,0" />
+
+                    <VerticalStackLayout
+                        Grid.Column="1"
+                        VerticalOptions="Center"
+                        Spacing="0">
+
+                        <Label
+                            x:Name="NombreUsuario"
+                            FontSize="12"
+                            FontAttributes="Bold"
+                            TextColor="{StaticResource ErpText}" />
+
+                        <Label
+                            x:Name="RolUsuario"
+                            FontSize="10"
+                            TextColor="{StaticResource ErpMuted}" />
+
+                        <Label
+                            x:Name="CerrarSesionLabel"
+                            Text="Cerrar sesión"
+                            FontSize="10"
+                            FontAttributes="Bold"
+                            TextColor="{StaticResource ErpDanger}"
+                            Margin="0,4,0,0" />
+
                     </VerticalStackLayout>
+
                 </Grid>
+
             </Border>
+
         </Grid>
+
     </Shell.FlyoutContent>
 
-    <ShellContent Route="DashboardPage" Shell.FlyoutItemIsVisible="False"
-                  ContentTemplate="{DataTemplate dashboard:DashboardPage}" />
-    <ShellContent Route="OrdenesCompraPage" Shell.FlyoutItemIsVisible="False"
-                  ContentTemplate="{DataTemplate compras:OrdenesCompraPage}" />
-    <ShellContent Route="PosPage" Shell.FlyoutItemIsVisible="False"
-                  ContentTemplate="{DataTemplate ventas:PosPage}" />
-    <ShellContent Route="ClientesPage" Shell.FlyoutItemIsVisible="False"
-                  ContentTemplate="{DataTemplate ventas:ClientesPage}" />
-    <ShellContent Route="ConveniosPage" Shell.FlyoutItemIsVisible="False"
-                  ContentTemplate="{DataTemplate ventas:ConveniosPage}" />
-    <ShellContent Route="RankingVentasPage" Shell.FlyoutItemIsVisible="False"
-                  ContentTemplate="{DataTemplate ventas:RankingVentasPage}" />
-    <ShellContent Route="PlanCuentasPage" Shell.FlyoutItemIsVisible="False"
-                  ContentTemplate="{DataTemplate contabilidad:PlanCuentasPage}" />
-    <ShellContent Route="LibroDiarioPage" Shell.FlyoutItemIsVisible="False"
-                  ContentTemplate="{DataTemplate contabilidad:LibroDiarioPage}" />
-    <ShellContent Route="LibroMayorPage" Shell.FlyoutItemIsVisible="False"
-                  ContentTemplate="{DataTemplate contabilidad:LibroMayorPage}" />
-    <ShellContent Route="BalanceOchoColumnasPage" Shell.FlyoutItemIsVisible="False"
-                  ContentTemplate="{DataTemplate contabilidad:BalanceOchoColumnasPage}" />
-    <ShellContent Route="EstadoResultadosPage" Shell.FlyoutItemIsVisible="False"
-                  ContentTemplate="{DataTemplate contabilidad:EstadoResultadosPage}" />
-    <ShellContent Route="MayorCentralizadoPage" Shell.FlyoutItemIsVisible="False"
-                  ContentTemplate="{DataTemplate contabilidad:MayorCentralizadoPage}" />
-    <ShellContent Route="CuentasPorCobrarPage" Shell.FlyoutItemIsVisible="False"
-                  ContentTemplate="{DataTemplate contabilidad:CuentasPorCobrarPage}" />
-    <ShellContent Route="CuentasPorPagarPage" Shell.FlyoutItemIsVisible="False"
-                  ContentTemplate="{DataTemplate contabilidad:CuentasPorPagarPage}" />
-    <ShellContent Route="UsuariosPage" Shell.FlyoutItemIsVisible="False"
-                  ContentTemplate="{DataTemplate admin:UsuariosPage}" />
-    <ShellContent Route="PerfilesPage" Shell.FlyoutItemIsVisible="False"
-                  ContentTemplate="{DataTemplate admin:PerfilesPage}" />
-    <ShellContent Route="AccesosPage" Shell.FlyoutItemIsVisible="False"
-                  ContentTemplate="{DataTemplate admin:AccesosPage}" />
+    <!-- PRINCIPAL -->
+
+    <ShellContent
+        Route="DashboardPage"
+        Shell.FlyoutItemIsVisible="False"
+        ContentTemplate="{DataTemplate dashboard:DashboardPage}" />
+
+    <!-- COMPRAS -->
+
+    <ShellContent
+        Route="OrdenesCompraPage"
+        Shell.FlyoutItemIsVisible="False"
+        ContentTemplate="{DataTemplate compras:OrdenesCompraPage}" />
+
+    <!-- VENTAS -->
+
+    <ShellContent
+        Route="PosPage"
+        Shell.FlyoutItemIsVisible="False"
+        ContentTemplate="{DataTemplate ventas:PosPage}" />
+
+    <!-- HISTORIAL Y MONITOR DE VENTAS -->
+    <ShellContent
+        Route="HistorialVentasPage"
+        Shell.FlyoutItemIsVisible="False"
+        ContentTemplate="{DataTemplate ventas:HistorialVentasPage}" />
+
+    <ShellContent
+        Route="ClientesPage"
+        Shell.FlyoutItemIsVisible="False"
+        ContentTemplate="{DataTemplate ventas:ClientesPage}" />
+
+    <ShellContent
+        Route="ConveniosPage"
+        Shell.FlyoutItemIsVisible="False"
+        ContentTemplate="{DataTemplate ventas:ConveniosPage}" />
+
+    <ShellContent
+        Route="RankingVentasPage"
+        Shell.FlyoutItemIsVisible="False"
+        ContentTemplate="{DataTemplate ventas:RankingVentasPage}" />
+
+    <ShellContent
+        Route="ReporteProductosPage"
+        Shell.FlyoutItemIsVisible="False"
+        ContentTemplate="{DataTemplate ventas:ReporteProductosPage}" />
+
+    <ShellContent
+        Route="CuentasPorCobrarVentasPage"
+        Shell.FlyoutItemIsVisible="False"
+        ContentTemplate="{DataTemplate ventas:CuentasPorCobrarVentasPage}" />
+
+    <ShellContent
+        Route="DevolucionesPage"
+        Shell.FlyoutItemIsVisible="False"
+        ContentTemplate="{DataTemplate ventas:DevolucionesPage}" />
+
+    <ShellContent
+        Route="CajaPage"
+        Shell.FlyoutItemIsVisible="False"
+        ContentTemplate="{DataTemplate ventas:CajaPage}" />
+
+    <!-- CONTABILIDAD -->
+
+    <ShellContent
+        Route="PlanCuentasPage"
+        Shell.FlyoutItemIsVisible="False"
+        ContentTemplate="{DataTemplate contabilidad:PlanCuentasPage}" />
+
+    <ShellContent
+        Route="LibroDiarioPage"
+        Shell.FlyoutItemIsVisible="False"
+        ContentTemplate="{DataTemplate contabilidad:LibroDiarioPage}" />
+
+    <ShellContent
+        Route="LibroMayorPage"
+        Shell.FlyoutItemIsVisible="False"
+        ContentTemplate="{DataTemplate contabilidad:LibroMayorPage}" />
+
+    <ShellContent
+        Route="BalanceOchoColumnasPage"
+        Shell.FlyoutItemIsVisible="False"
+        ContentTemplate="{DataTemplate contabilidad:BalanceOchoColumnasPage}" />
+
+    <ShellContent
+        Route="EstadoResultadosPage"
+        Shell.FlyoutItemIsVisible="False"
+        ContentTemplate="{DataTemplate contabilidad:EstadoResultadosPage}" />
+
+    <ShellContent
+        Route="MayorCentralizadoPage"
+        Shell.FlyoutItemIsVisible="False"
+        ContentTemplate="{DataTemplate contabilidad:MayorCentralizadoPage}" />
+
+    <ShellContent
+        Route="CuentasPorCobrarPage"
+        Shell.FlyoutItemIsVisible="False"
+        ContentTemplate="{DataTemplate contabilidad:CuentasPorCobrarPage}" />
+
+    <ShellContent
+        Route="CuentasPorPagarPage"
+        Shell.FlyoutItemIsVisible="False"
+        ContentTemplate="{DataTemplate contabilidad:CuentasPorPagarPage}" />
+
+    <!-- ADMINISTRACIÓN -->
+
+    <ShellContent
+        Route="UsuariosPage"
+        Shell.FlyoutItemIsVisible="False"
+        ContentTemplate="{DataTemplate admin:UsuariosPage}" />
+
+    <ShellContent
+        Route="PerfilesPage"
+        Shell.FlyoutItemIsVisible="False"
+        ContentTemplate="{DataTemplate admin:PerfilesPage}" />
+
+    <ShellContent
+        Route="AccesosPage"
+        Shell.FlyoutItemIsVisible="False"
+        ContentTemplate="{DataTemplate admin:AccesosPage}" />
+
 </Shell>
