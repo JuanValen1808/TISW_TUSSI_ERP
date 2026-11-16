@@ -50,7 +50,7 @@
                             <VerticalStackLayout MinimumWidthRequest="940">
 
                                 <!-- Encabezado de tabla -->
-                                <Grid ColumnDefinitions="60,340,140,140,260"
+                                <Grid ColumnDefinitions="50,290,130,130,340"
                                       BackgroundColor="#F8FAFC"
                                       Padding="16,12"
                                       ColumnSpacing="10">
@@ -73,7 +73,7 @@
                                     <BindableLayout.ItemTemplate>
                                         <DataTemplate x:DataType="m:RolModel">
                                             <VerticalStackLayout>
-                                                <Grid ColumnDefinitions="60,340,140,140,260"
+                                                <Grid ColumnDefinitions="50,290,130,130,340"
                                                       Padding="16,14"
                                                       ColumnSpacing="10">
 
@@ -133,6 +133,20 @@
                                                                            Spacing="6"
                                                                            HorizontalOptions="End"
                                                                            VerticalOptions="Center">
+
+                                                        <!-- Botón Agregar Usuario al Perfil -->
+                                                        <Button Text="+ Usuario"
+                                                                TextColor="#166534"
+                                                                BorderColor="#BBF7D0"
+                                                                BackgroundColor="#DCFCE7"
+                                                                HeightRequest="32"
+                                                                FontSize="11"
+                                                                FontAttributes="Bold"
+                                                                CornerRadius="8"
+                                                                Padding="8,0"
+                                                                ToolTipProperties.Text="Agregar un nuevo usuario a este perfil"
+                                                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:PerfilesViewModel}}, Path=ComandoAbrirAgregarUsuario}"
+                                                                CommandParameter="{Binding .}" />
 
                                                         <!-- Botón Gestionar Accesos -->
                                                         <Button Text="Gestionar Accesos"

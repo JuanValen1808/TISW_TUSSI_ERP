@@ -79,6 +79,98 @@ public class PerfilesViewModel : BaseViewModel
         }
     }
 
+    // Modal para agregar usuario directo al perfil
+    private bool _mostrarModalAgregarUsuario;
+    public bool MostrarModalAgregarUsuario
+    {
+        get => _mostrarModalAgregarUsuario;
+        set => SetProperty(ref _mostrarModalAgregarUsuario, value);
+    }
+
+    private RolModel? _rolSeleccionadoParaUsuario;
+    public RolModel? RolSeleccionadoParaUsuario
+    {
+        get => _rolSeleccionadoParaUsuario;
+        set => SetProperty(ref _rolSeleccionadoParaUsuario, value);
+    }
+
+    private string _nuevoUsuarioRut = string.Empty;
+    public string NuevoUsuarioRut
+    {
+        get => _nuevoUsuarioRut;
+        set
+        {
+            if (SetProperty(ref _nuevoUsuarioRut, value))
+            {
+                ErrorNuevoUsuarioRut = string.Empty;
+            }
+        }
+    }
+
+    private string _nuevoUsuarioNombre = string.Empty;
+    public string NuevoUsuarioNombre
+    {
+        get => _nuevoUsuarioNombre;
+        set
+        {
+            if (SetProperty(ref _nuevoUsuarioNombre, value))
+            {
+                ErrorNuevoUsuarioNombre = string.Empty;
+            }
+        }
+    }
+
+    private string _nuevoUsuarioEmail = string.Empty;
+    public string NuevoUsuarioEmail
+    {
+        get => _nuevoUsuarioEmail;
+        set
+        {
+            if (SetProperty(ref _nuevoUsuarioEmail, value))
+            {
+                ErrorNuevoUsuarioEmail = string.Empty;
+            }
+        }
+    }
+
+    private string _nuevoUsuarioPassword = "1234";
+    public string NuevoUsuarioPassword
+    {
+        get => _nuevoUsuarioPassword;
+        set => SetProperty(ref _nuevoUsuarioPassword, value);
+    }
+
+    private bool _nuevoUsuarioActivo = true;
+    public bool NuevoUsuarioActivo
+    {
+        get => _nuevoUsuarioActivo;
+        set => SetProperty(ref _nuevoUsuarioActivo, value);
+    }
+
+    private string _errorNuevoUsuarioRut = string.Empty;
+    public string ErrorNuevoUsuarioRut
+    {
+        get => _errorNuevoUsuarioRut;
+        set { if (SetProperty(ref _errorNuevoUsuarioRut, value)) OnPropertyChanged(nameof(HayErrorNuevoUsuarioRut)); }
+    }
+    public bool HayErrorNuevoUsuarioRut => !string.IsNullOrEmpty(ErrorNuevoUsuarioRut);
+
+    private string _errorNuevoUsuarioNombre = string.Empty;
+    public string ErrorNuevoUsuarioNombre
+    {
+        get => _errorNuevoUsuarioNombre;
+        set { if (SetProperty(ref _errorNuevoUsuarioNombre, value)) OnPropertyChanged(nameof(HayErrorNuevoUsuarioNombre)); }
+    }
+    public bool HayErrorNuevoUsuarioNombre => !string.IsNullOrEmpty(ErrorNuevoUsuarioNombre);
+
+    private string _errorNuevoUsuarioEmail = string.Empty;
+    public string ErrorNuevoUsuarioEmail
+    {
+        get => _errorNuevoUsuarioEmail;
+        set { if (SetProperty(ref _errorNuevoUsuarioEmail, value)) OnPropertyChanged(nameof(HayErrorNuevoUsuarioEmail)); }
+    }
+    public bool HayErrorNuevoUsuarioEmail => !string.IsNullOrEmpty(ErrorNuevoUsuarioEmail);
+
     // Validaciones
     private string _errorNombre = string.Empty;
     public string ErrorNombre
@@ -124,6 +216,10 @@ public class PerfilesViewModel : BaseViewModel
     public ICommand ComandoCancelar { get; }
     public ICommand ComandoEliminar { get; }
     public ICommand ComandoGestionarAccesos { get; }
+    public ICommand ComandoAbrirAgregarUsuario { get; }
+    public ICommand ComandoCerrarModalAgregarUsuario { get; }
+    public ICommand ComandoGuardarNuevoUsuarioPerfil { get; }
+    public ICommand ComandoVerUsuarios { get; }
 
     public PerfilesViewModel(SeguridadService seguridadService)
     {
@@ -137,6 +233,15 @@ public class PerfilesViewModel : BaseViewModel
         ComandoCancelar = new Command(CerrarFormulario);
         ComandoEliminar = new Command<RolModel>(async r => await EliminarPerfilAsync(r));
         ComandoGestionarAccesos = new Command<RolModel>(async r => await IrAAccesosAsync(r));
+        ComandoAbrirAgregarUsuario = new Command<RolModel>(AbrirModalAgregarUsuario);
+        ComandoCerrarModalAgregarUsuario = new Command(() => MostrarModalAgregarUsuario = false);
+        ComandoGuardarNuevoUsuarioPerfil = new Command(async () => await GuardarNuevoUsuarioPerfilAsync());
+        ComandoVerUsuarios = new Command<RolModel>(async r =>
+        {
+            if (r is null) return;
+            Preferences.Set("filtro_rol_usuarios", r.IdRol);
+            await Shell.Current.GoToAsync("//UsuariosPage");
+        });
     }
 
     public async Task CargarPerfilesAsync()
@@ -290,6 +395,102 @@ public class PerfilesViewModel : BaseViewModel
         catch (Exception ex)
         {
             MensajeGeneral = $"Error al eliminar el perfil: {ex.Message}";
+            EsMensajeExito = false;
+        }
+        finally
+        {
+            EstaOcupado = false;
+        }
+    }
+
+    private void AbrirModalAgregarUsuario(RolModel? rol)
+    {
+        if (rol is null) return;
+        RolSeleccionadoParaUsuario = rol;
+        NuevoUsuarioRut = string.Empty;
+        NuevoUsuarioNombre = string.Empty;
+        NuevoUsuarioEmail = string.Empty;
+        NuevoUsuarioPassword = "1234";
+        NuevoUsuarioActivo = true;
+        LimpiarErroresNuevoUsuario();
+        MostrarModalAgregarUsuario = true;
+    }
+
+    private void LimpiarErroresNuevoUsuario()
+    {
+        ErrorNuevoUsuarioRut = string.Empty;
+        ErrorNuevoUsuarioNombre = string.Empty;
+        ErrorNuevoUsuarioEmail = string.Empty;
+    }
+
+    private async Task GuardarNuevoUsuarioPerfilAsync()
+    {
+        if (RolSeleccionadoParaUsuario is null) return;
+
+        LimpiarErroresNuevoUsuario();
+        bool esValido = true;
+
+        string rutFinal = NuevoUsuarioRut;
+        if (!Validaciones.ValidarRut(NuevoUsuarioRut, out var rutFormateado, out var errRut))
+        {
+            ErrorNuevoUsuarioRut = errRut;
+            esValido = false;
+        }
+        else if (await _seguridadService.ExisteRutAsync(rutFormateado))
+        {
+            ErrorNuevoUsuarioRut = "Este RUT ya se encuentra registrado.";
+            esValido = false;
+        }
+        else
+        {
+            rutFinal = rutFormateado;
+        }
+
+        if (!Validaciones.ValidarTextoRequerido(NuevoUsuarioNombre, "El nombre del usuario", 3, out var errNom))
+        {
+            ErrorNuevoUsuarioNombre = errNom;
+            esValido = false;
+        }
+
+        if (!Validaciones.ValidarEmail(NuevoUsuarioEmail, out var errMail))
+        {
+            ErrorNuevoUsuarioEmail = errMail;
+            esValido = false;
+        }
+        else if (await _seguridadService.ExisteEmailAsync(NuevoUsuarioEmail))
+        {
+            ErrorNuevoUsuarioEmail = "Este correo electrónico ya está registrado.";
+            esValido = false;
+        }
+
+        if (!esValido) return;
+
+        EstaOcupado = true;
+        try
+        {
+            var clave = string.IsNullOrWhiteSpace(NuevoUsuarioPassword) ? "1234" : NuevoUsuarioPassword.Trim();
+            var nuevo = new UsuarioModel
+            {
+                IdUsuario = 0,
+                RutUsuario = rutFinal,
+                Nombre = NuevoUsuarioNombre.Trim(),
+                Email = NuevoUsuarioEmail.Trim(),
+                IdRol = RolSeleccionadoParaUsuario.IdRol,
+                NombreRol = RolSeleccionadoParaUsuario.NombreRol,
+                Activo = NuevoUsuarioActivo
+            };
+
+            await _seguridadService.GuardarUsuarioAsync(nuevo, clave);
+
+            MostrarModalAgregarUsuario = false;
+            MensajeGeneral = $"Usuario '{nuevo.Nombre}' creado y asignado exitosamente al perfil '{RolSeleccionadoParaUsuario.NombreRol}'.";
+            EsMensajeExito = true;
+
+            await CargarPerfilesAsync();
+        }
+        catch (Exception ex)
+        {
+            MensajeGeneral = $"Error al registrar usuario: {ex.Message}";
             EsMensajeExito = false;
         }
         finally

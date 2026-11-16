@@ -92,13 +92,15 @@ public class DatabaseService
 
             @"ALTER TABLE ventas_encabezado MODIFY COLUMN id_cliente INT NULL;",
 
+            @"ALTER TABLE lotes ADD COLUMN estado_cuarentena VARCHAR(30) NOT NULL DEFAULT 'LIBERADO';",
+
             @"UPDATE ventas_encabezado
               SET estado_documento = 'PAGADO'
               WHERE estado_documento = 'EMITIDO' AND forma_pago IN ('EFECTIVO', 'TARJETA', 'TRANSFERENCIA');",
 
             @"INSERT IGNORE INTO roles (id_rol, nombre_rol, descripcion) VALUES
                 (4, 'Contador', 'Responsable de contabilidad general, impuestos SII y estados financieros'),
-                (5, 'Comprador', 'Acceso al módulo de Compras y Proveedores');",
+                (5, 'Comprador', 'Responsable de gestión de proveedores, órdenes de compra, cotizaciones y abastecimiento');",
 
             @"INSERT IGNORE INTO permisos (codigo_permiso, modulo, descripcion) VALUES
                 ('CONTAB_PLAN_CUENTAS', 'Contabilidad', 'RF-CON-01: Gestionar estructura jerárquica del Plan de Cuentas'),
@@ -109,7 +111,17 @@ public class DatabaseService
                 ('CONTAB_CXC_CXP', 'Contabilidad', 'RF-CON-07/08: Gestionar Cuentas por Cobrar, Pagar y Antigüedad de Saldos'),
                 ('CONTAB_IMPUESTOS_SII', 'Contabilidad', 'RF-CON-09: Consultar Centralizador de Impuestos RCV y Formulario 29 SII'),
                 ('ADMIN_USUARIOS', 'Seguridad', 'RF-POR-02: Administración de usuarios y contraseñas encriptadas'),
-                ('ADMIN_RBAC', 'Seguridad', 'RF-POR-03: Administración de perfiles y matriz de control de accesos RBAC');",
+                ('ADMIN_RBAC', 'Seguridad', 'RF-POR-03: Administración de perfiles y matriz de control de accesos RBAC'),
+                ('COMPRAS_PROVEEDORES', 'Compras', 'Mantenedor CRUD de proveedores y laboratorios'),
+                ('COMPRAS_ORDENES', 'Compras', 'Creación, seguimiento y emisión de órdenes de compra'),
+                ('COMPRAS_RECEPCION', 'Compras', 'Recepción y liquidación de facturas con ingreso de stock'),
+                ('COMPRAS_REPORTES', 'Compras', 'Reportes de compras por laboratorio, cumplimiento y precios'),
+                ('COMPRAS_DEVOLUCIONES', 'Compras', 'Gestión de devoluciones y notas de crédito a proveedores'),
+                ('COMPRAS_REABASTECIMIENTO', 'Compras', 'Sugerencia automatizada de reabastecimiento'),
+                ('COMPRAS_EQUIVALENCIAS', 'Compras', 'Gestión de equivalencias de presentación y conversión'),
+                ('COMPRAS_NIVEL_SERVICIO', 'Compras', 'Evaluación del nivel de servicio del proveedor'),
+                ('COMPRAS_AUTORIZACION_GERENCIAL', 'Compras', 'Aprobación de órdenes sobre límite presupuestario (Solo Admin/Gerencia)'),
+                ('COMPRAS_CUARENTENA_LIBERAR', 'Compras', 'Aprobación técnica y visual de lotes por Químico Farmacéutico (Solo QF/Admin)');",
 
             @"INSERT IGNORE INTO rol_permisos (id_rol, id_permiso)
               SELECT 1, id_permiso FROM permisos;",
@@ -121,14 +133,29 @@ public class DatabaseService
               WHERE r.nombre_rol = 'Contador'
                 AND (p.modulo = 'Contabilidad' OR p.codigo_permiso LIKE 'CONTAB_%');",
 
+            @"INSERT IGNORE INTO rol_permisos (id_rol, id_permiso)
+              SELECT r.id_rol, p.id_permiso
+              FROM roles r
+              CROSS JOIN permisos p
+              WHERE r.nombre_rol = 'Comprador'
+                AND p.modulo = 'Compras'
+                AND p.codigo_permiso NOT IN ('COMPRAS_AUTORIZACION_GERENCIAL', 'COMPRAS_CUARENTENA_LIBERAR');",
+
             @"INSERT IGNORE INTO usuarios (rut_usuario, nombre, email, password_hash, id_rol, activo)
               SELECT '14.555.666-7', 'Carolina Soto (Contadora General)', 'contador@erp.cl', SHA2('contador123', 256), r.id_rol, 1
               FROM roles r
               WHERE r.nombre_rol = 'Contador'
               LIMIT 1;",
 
+            @"INSERT IGNORE INTO usuarios (rut_usuario, nombre, email, password_hash, id_rol, activo)
+              SELECT '15.111.222-3', 'Felipe Comprador (Encargado de Compras)', 'compras@erp.cl', SHA2('compras123', 256), r.id_rol, 1
+              FROM roles r
+              WHERE r.nombre_rol = 'Comprador'
+              LIMIT 1;",
+
             @"UPDATE usuarios SET password_hash = SHA2('ventas123', 256) WHERE email = 'ventas@erp.cl';",
-            @"UPDATE usuarios SET password_hash = SHA2('bodega123', 256) WHERE email = 'bodega@erp.cl';"
+            @"UPDATE usuarios SET password_hash = SHA2('bodega123', 256) WHERE email = 'bodega@erp.cl';",
+            @"UPDATE usuarios SET password_hash = SHA2('compras123', 256) WHERE email = 'compras@erp.cl';"
         };
 
         foreach (var sql in sentencias)

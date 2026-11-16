@@ -118,6 +118,8 @@ public class LineaRecepcionFacturaItem : BaseViewModel
             {
                 OnPropertyChanged(nameof(SubtotalLinea));
                 OnPropertyChanged(nameof(SubtotalLineaTexto));
+                OnPropertyChanged(nameof(UnidadesStockAIngresar));
+                OnPropertyChanged(nameof(TextoConversion));
             }
         }
     }
@@ -157,6 +159,50 @@ public class LineaRecepcionFacturaItem : BaseViewModel
         set => SetProperty(ref _enCuarentena, value);
     }
 
+    // RF-COM-11: Gestión de equivalencias de presentación
+    private decimal _factorConversion = 1m;
+    public decimal FactorConversion
+    {
+        get => _factorConversion;
+        set
+        {
+            if (SetProperty(ref _factorConversion, value))
+            {
+                OnPropertyChanged(nameof(TieneConversion));
+                OnPropertyChanged(nameof(UnidadesStockAIngresar));
+                OnPropertyChanged(nameof(TextoConversion));
+            }
+        }
+    }
+
+    private string _unidadCompra = string.Empty;
+    public string UnidadCompra
+    {
+        get => _unidadCompra;
+        set
+        {
+            if (SetProperty(ref _unidadCompra, value))
+                OnPropertyChanged(nameof(TextoConversion));
+        }
+    }
+
+    private string _unidadVenta = string.Empty;
+    public string UnidadVenta
+    {
+        get => _unidadVenta;
+        set
+        {
+            if (SetProperty(ref _unidadVenta, value))
+                OnPropertyChanged(nameof(TextoConversion));
+        }
+    }
+
+    public bool TieneConversion => FactorConversion > 1m;
+    public int UnidadesStockAIngresar => (int)Math.Round(CantidadARecibir * (FactorConversion > 0 ? FactorConversion : 1m));
+    public string TextoConversion => TieneConversion
+        ? $"1 {UnidadCompra} = {FactorConversion:0.##} {UnidadVenta} (Ingresan {UnidadesStockAIngresar} un.)"
+        : "Directo (1:1)";
+
     public decimal SubtotalLinea => CantidadARecibir * CostoFacturado;
     public string SubtotalLineaTexto => Formato.Moneda(SubtotalLinea);
     public string CostoPactadoTexto => Formato.Moneda(CostoPactado);
@@ -168,12 +214,14 @@ public class RecepcionFacturaInput
     public int IdProveedor { get; set; }
     public string NumeroFactura { get; set; } = string.Empty;
     public DateTime FechaFactura { get; set; } = DateTime.Today;
+    public decimal MontoNeto { get; set; }
+    public decimal MontoIva { get; set; }
     public decimal MontoTotalFacturado { get; set; }
     public List<LineaRecepcionFacturaItem> Lineas { get; set; } = new();
 }
 
 // ==========================================================
-// SUGERENCIA AUTOMATIZADA DE REABASTECIMIENTO
+// SUGERENCIA AUTOMATIZADA DE REABASTECIMIENTO (RF-COM-08)
 // ==========================================================
 
 public class SugerenciaReabastecimientoItem
@@ -184,15 +232,21 @@ public class SugerenciaReabastecimientoItem
     public int PuntoReorden { get; set; }
     public int StockMinimo { get; set; }
     public int StockActual { get; set; }
+    public int ConsumoMensualReal { get; set; }
+    public int PlazoEntregaDias { get; set; } = 7;
+    public string ProveedorHabitual { get; set; } = string.Empty;
     public int CantidadSugerida { get; set; }
     public decimal CostoEstimado { get; set; }
     public decimal SubtotalEstimado => CantidadSugerida * CostoEstimado;
 
     public string StockActualTexto => $"{StockActual} un.";
     public string PuntoReordenTexto => $"{PuntoReorden} un.";
+    public string ConsumoMensualTexto => $"{ConsumoMensualReal} un./mes";
+    public string PlazoEntregaTexto => $"{PlazoEntregaDias} días";
     public string CantidadSugeridaTexto => $"{CantidadSugerida} un.";
     public string CostoEstimadoTexto => Formato.Moneda(CostoEstimado);
     public string SubtotalEstimadoTexto => Formato.Moneda(SubtotalEstimado);
+    public string ExplicacionCalculo => $"Consumo mensual real: {ConsumoMensualReal} un. | Plazo reposición: {PlazoEntregaDias} días | Punto reorden: {PuntoReorden} un. | Stock actual: {StockActual} un.";
 }
 
 // ==========================================================

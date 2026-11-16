@@ -8,10 +8,10 @@
              x:DataType="vm:RecepcionFacturasViewModel"
              Shell.NavBarIsVisible="False"
              BackgroundColor="{StaticResource ErpBg}"
-             Title="Recepción y Liquidación de Factura">
+             Title="Recepción, Calidad y Devoluciones">
 
     <Grid RowDefinitions="Auto,*">
-        <ctrl:PageHeader Grid.Row="0" Ruta="ERP › Compras" Titulo="Recepción y Liquidación de Facturas" />
+        <ctrl:PageHeader Grid.Row="0" Ruta="ERP › Compras" Titulo="Recepción, Calidad y Devoluciones" />
 
         <ScrollView Grid.Row="1">
             <VerticalStackLayout Padding="24" Spacing="16">
@@ -21,217 +21,665 @@
                     <Label Text="{Binding MensajeError}" TextColor="#B91C1C" FontSize="12" />
                 </Border>
 
-                <!-- Título y descripción -->
+                <!-- Barra de Pestañas Superiores -->
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                    <VerticalStackLayout Spacing="2">
-                        <Label Text="Recepción y Liquidación de Facturas" Style="{StaticResource ErpTitle}" />
-                        <Label Text="Ingreso físico de medicamentos con asignación de lote, fecha de vencimiento y control de calidad. La liquidación actualiza inventario, Kardex y contabilidad."
-                               Style="{StaticResource ErpSubtitle}" />
-                    </VerticalStackLayout>
+                    <HorizontalStackLayout Spacing="8">
+                        <Border BackgroundColor="{Binding ColorFondoPestanaRecepcion}"
+                                Stroke="{Binding ColorBordePestanaRecepcion}"
+                                StrokeThickness="1"
+                                StrokeShape="RoundRectangle 8"
+                                Padding="16,8">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding ComandoCambiarPestana}" CommandParameter="RECEPCION" />
+                            </Border.GestureRecognizers>
+                            <Label Text="1. Recepción y Liquidación"
+                                   TextColor="{Binding ColorTextoPestanaRecepcion}"
+                                   FontAttributes="Bold"
+                                   FontSize="13"
+                                   VerticalOptions="Center" />
+                        </Border>
+
+                        <Border BackgroundColor="{Binding ColorFondoPestanaCuarentena}"
+                                Stroke="{Binding ColorBordePestanaCuarentena}"
+                                StrokeThickness="1"
+                                StrokeShape="RoundRectangle 8"
+                                Padding="16,8">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding ComandoCambiarPestana}" CommandParameter="CUARENTENA" />
+                            </Border.GestureRecognizers>
+                            <Label Text="2. Cuarentena de Lotes (QF)"
+                                   TextColor="{Binding ColorTextoPestanaCuarentena}"
+                                   FontAttributes="Bold"
+                                   FontSize="13"
+                                   VerticalOptions="Center" />
+                        </Border>
+
+                        <Border BackgroundColor="{Binding ColorFondoPestanaDevoluciones}"
+                                Stroke="{Binding ColorBordePestanaDevoluciones}"
+                                StrokeThickness="1"
+                                StrokeShape="RoundRectangle 8"
+                                Padding="16,8">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding ComandoCambiarPestana}" CommandParameter="DEVOLUCIONES" />
+                            </Border.GestureRecognizers>
+                            <Label Text="3. Devoluciones a Proveedor"
+                                   TextColor="{Binding ColorTextoPestanaDevoluciones}"
+                                   FontAttributes="Bold"
+                                   FontSize="13"
+                                   VerticalOptions="Center" />
+                        </Border>
+
+                        <Border BackgroundColor="{Binding ColorFondoPestanaEquivalencias}"
+                                Stroke="{Binding ColorBordePestanaEquivalencias}"
+                                StrokeThickness="1"
+                                StrokeShape="RoundRectangle 8"
+                                Padding="16,8">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding ComandoCambiarPestana}" CommandParameter="EQUIVALENCIAS" />
+                            </Border.GestureRecognizers>
+                            <Label Text="4. Equivalencias Presentación"
+                                   TextColor="{Binding ColorTextoPestanaEquivalencias}"
+                                   FontAttributes="Bold"
+                                   FontSize="13"
+                                   VerticalOptions="Center" />
+                        </Border>
+                    </HorizontalStackLayout>
+
                     <ActivityIndicator Grid.Column="1" IsRunning="{Binding EstaOcupado}" IsVisible="{Binding EstaOcupado}"
                                        Color="{StaticResource ErpPrimary}" VerticalOptions="Center" />
                 </Grid>
 
-                <!-- 1. Selección de Orden de Compra -->
-                <Border Style="{StaticResource ErpCard}" Padding="18">
-                    <VerticalStackLayout Spacing="12">
-                        <Label Text="1. Orden de Compra a Recepcionar" Style="{StaticResource ErpCardTitle}" />
-                        
-                        <Grid ColumnDefinitions="1.6*,*" ColumnSpacing="16">
-                            <VerticalStackLayout Spacing="4">
-                                <Label Text="Seleccione la orden pendiente:" Style="{StaticResource ErpCaption}" />
-                                <Border Style="{StaticResource ErpInputBox}">
-                                    <Picker ItemsSource="{Binding OrdenesDisponibles}"
-                                            ItemDisplayBinding="{Binding Numero}"
-                                            SelectedItem="{Binding OrdenSeleccionada}"
-                                            IsEnabled="{Binding NoEstaOcupado}"
-                                            TextColor="{StaticResource ErpText}"
-                                            BackgroundColor="Transparent"
-                                            VerticalOptions="Center" />
-                                </Border>
-                            </VerticalStackLayout>
+                <!-- ================================================================= -->
+                <!-- PESTAÑA 1: RECEPCIÓN Y LIQUIDACIÓN DE FACTURAS (RF-COM-03 / 11)   -->
+                <!-- ================================================================= -->
+                <VerticalStackLayout IsVisible="{Binding EsPestanaRecepcion}" Spacing="16">
 
-                            <!-- Resumen del proveedor si está seleccionada -->
-                            <Border Grid.Column="1" BackgroundColor="#F8FAFC" Stroke="{StaticResource ErpBorder}"
-                                    StrokeShape="RoundRectangle 8" Padding="14,10" IsVisible="{Binding HayOrdenSeleccionada}">
-                                <VerticalStackLayout Spacing="3" VerticalOptions="Center">
-                                    <Label Text="{Binding OrdenSeleccionada.Proveedor}" FontSize="13" FontAttributes="Bold" TextColor="{StaticResource ErpText}" />
-                                    <Label Text="{Binding OrdenSeleccionada.RutTexto}" FontSize="11" TextColor="{StaticResource ErpMuted}" />
-                                    <Label Text="{Binding OrdenSeleccionada.TotalTexto, StringFormat='Monto OC: {0}'}" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource ErpPrimary}" />
-                                </VerticalStackLayout>
-                            </Border>
-
-                            <!-- Mensaje guía si no hay orden seleccionada -->
-                            <Border Grid.Column="1" BackgroundColor="#F8FAFC" Stroke="{StaticResource ErpBorder}"
-                                    StrokeShape="RoundRectangle 8" Padding="14,10" IsVisible="{Binding NoHayOrdenSeleccionada}">
-                                <VerticalStackLayout Spacing="2" VerticalOptions="Center">
-                                    <Label Text="Estado del selector" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource ErpMuted}" />
-                                    <Label Text="Elija una orden de la lista para cargar sus medicamentos y datos de facturación."
-                                           FontSize="11" TextColor="{StaticResource ErpMuted}" />
-                                </VerticalStackLayout>
-                            </Border>
-                        </Grid>
+                    <!-- Título y descripción -->
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="Recepción y Liquidación de Facturas" Style="{StaticResource ErpTitle}" />
+                        <Label Text="Ingreso físico de mercadería con lotes, vencimiento y control sanitario. La liquidación convierte equivalencias, actualiza existencias, Kardex y contabilidad."
+                               Style="{StaticResource ErpSubtitle}" />
                     </VerticalStackLayout>
-                </Border>
 
-                <!-- Tarjeta guía visible cuando aún no se selecciona orden -->
-                <Border Style="{StaticResource ErpCard}" Padding="32" IsVisible="{Binding NoHayOrdenSeleccionada}">
-                    <VerticalStackLayout Spacing="8" HorizontalOptions="Center" VerticalOptions="Center">
-                        <Label Text="Ninguna orden de compra seleccionada" FontAttributes="Bold" FontSize="15" TextColor="{StaticResource ErpText}" HorizontalTextAlignment="Center" />
-                        <Label Text="Para recepcionar mercadería, seleccione una orden de compra pendiente en el menú desplegable superior. Una vez seleccionada, podrá ingresar el número de factura tributaria, registrar lotes y fechas de vencimiento sanitario, y liquidar la factura para actualizar Kardex y contabilidad."
-                               FontSize="13" TextColor="{StaticResource ErpMuted}" HorizontalTextAlignment="Center" MaximumWidthRequest="620" />
-                    </VerticalStackLayout>
-                </Border>
-
-                <!-- 2. Datos de Factura del Proveedor -->
-                <Border Style="{StaticResource ErpCard}" Padding="18" IsVisible="{Binding HayOrdenSeleccionada}">
-                    <VerticalStackLayout Spacing="12">
-                        <Label Text="2. Datos del Documento Tributario (Factura)" Style="{StaticResource ErpCardTitle}" />
-
-                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="16">
-                            <VerticalStackLayout Spacing="4">
-                                <Label Text="Número de Factura Proveedor *" Style="{StaticResource ErpCaption}" />
-                                <Border Style="{StaticResource ErpInputBox}">
-                                    <Entry Text="{Binding NumeroFactura}" Placeholder="Ej: FACT-10293" Style="{StaticResource ErpEntry}"
-                                           IsEnabled="{Binding NoEstaOcupado}" />
-                                </Border>
-                            </VerticalStackLayout>
-
-                            <VerticalStackLayout Grid.Column="1" Spacing="4">
-                                <Label Text="Fecha de Emisión Factura *" Style="{StaticResource ErpCaption}" />
-                                <Border Style="{StaticResource ErpInputBox}">
-                                    <DatePicker Date="{Binding FechaFactura}" Format="dd/MM/yyyy" TextColor="{StaticResource ErpText}" VerticalOptions="Center"
-                                                IsEnabled="{Binding NoEstaOcupado}" />
-                                </Border>
-                            </VerticalStackLayout>
-
-                            <VerticalStackLayout Grid.Column="2" Spacing="4">
-                                <Label Text="Fecha de Recepción Bodega" Style="{StaticResource ErpCaption}" />
-                                <Border Style="{StaticResource ErpInputBox}" BackgroundColor="#F1F5F9">
-                                    <Label Text="Fecha actual (inmediata)" Style="{StaticResource ErpBody}" VerticalOptions="Center" TextColor="{StaticResource ErpMuted}" />
-                                </Border>
-                            </VerticalStackLayout>
-                        </Grid>
-                    </VerticalStackLayout>
-                </Border>
-
-                <!-- 3. Recepción física de fármacos y lotes -->
-                <Border Style="{StaticResource ErpCard}" Padding="18" IsVisible="{Binding HayOrdenSeleccionada}">
-                    <VerticalStackLayout Spacing="12">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <VerticalStackLayout Spacing="2">
-                                <Label Text="3. Ingreso de Lotes y Verificación Sanitaria" Style="{StaticResource ErpCardTitle}" />
-                                <Label Text="Ingrese el número de lote y fecha de expiración para cada producto recepcionado (Trazabilidad ISP)" Style="{StaticResource ErpSubtitle}" />
-                            </VerticalStackLayout>
-                            <Label Grid.Column="1" Text="Control Sanitario ISP" TextColor="{StaticResource ErpSuccess}" FontAttributes="Bold" FontSize="11" VerticalOptions="Center" />
-                        </Grid>
-
-                        <!-- Cabecera de la tabla de recepción -->
-                        <Grid ColumnDefinitions="2.2*,80,90,130,120,100,100,90" Padding="12,8" BackgroundColor="{StaticResource ErpPrimarySoft}">
-                            <Label Grid.Column="0" Text="MEDICAMENTO / SKU" FontAttributes="Bold" FontSize="11" TextColor="{StaticResource ErpPrimary}"/>
-                            <Label Grid.Column="1" Text="PENDIENTE" FontAttributes="Bold" FontSize="11" HorizontalTextAlignment="Center" TextColor="{StaticResource ErpPrimary}"/>
-                            <Label Grid.Column="2" Text="A INGRESAR" FontAttributes="Bold" FontSize="11" HorizontalTextAlignment="Center" TextColor="{StaticResource ErpPrimary}"/>
-                            <Label Grid.Column="3" Text="N° LOTE *" FontAttributes="Bold" FontSize="11" TextColor="{StaticResource ErpPrimary}"/>
-                            <Label Grid.Column="4" Text="VENCIMIENTO *" FontAttributes="Bold" FontSize="11" TextColor="{StaticResource ErpPrimary}"/>
-                            <Label Grid.Column="5" Text="COSTO UNIT." FontAttributes="Bold" FontSize="11" HorizontalTextAlignment="End" TextColor="{StaticResource ErpPrimary}"/>
-                            <Label Grid.Column="6" Text="SUBTOTAL" FontAttributes="Bold" FontSize="11" HorizontalTextAlignment="End" TextColor="{StaticResource ErpPrimary}"/>
-                            <Label Grid.Column="7" Text="CUARENTENA" FontAttributes="Bold" FontSize="11" HorizontalTextAlignment="Center" TextColor="{StaticResource ErpPrimary}"/>
-                        </Grid>
-
-                        <!-- Filas de medicamentos -->
-                        <VerticalStackLayout BindableLayout.ItemsSource="{Binding Lineas}" Spacing="8">
-                            <BindableLayout.ItemTemplate>
-                                <DataTemplate x:DataType="m:LineaRecepcionFacturaItem">
-                                    <Border BackgroundColor="#F8FAFC" Stroke="{StaticResource ErpBorder}" StrokeShape="RoundRectangle 8" Padding="12,8">
-                                        <Grid ColumnDefinitions="2.2*,80,90,130,120,100,100,90" ColumnSpacing="8" VerticalOptions="Center">
-                                            
-                                            <!-- Nombre y SKU -->
-                                            <VerticalStackLayout Grid.Column="0" VerticalOptions="Center">
-                                                <Label Text="{Binding NombreProducto}" FontSize="13" FontAttributes="Bold" TextColor="{StaticResource ErpText}" />
-                                                <Label Text="{Binding Sku}" FontSize="11" TextColor="{StaticResource ErpMuted}" />
-                                            </VerticalStackLayout>
-
-                                            <!-- Saldo Pendiente -->
-                                            <Label Grid.Column="1" Text="{Binding CantidadPendiente, StringFormat='{0} un.'}"
-                                                   Style="{StaticResource ErpBody}" HorizontalTextAlignment="Center" VerticalOptions="Center" />
-
-                                            <!-- Cantidad a ingresar -->
-                                            <Border Grid.Column="2" Style="{StaticResource ErpInputBox}" HeightRequest="38" Padding="4,0">
-                                                <Entry Text="{Binding CantidadARecibir}" Keyboard="Numeric" Style="{StaticResource ErpEntry}" HorizontalTextAlignment="Center" />
-                                            </Border>
-
-                                            <!-- N° Lote -->
-                                            <Border Grid.Column="3" Style="{StaticResource ErpInputBox}" HeightRequest="38" Padding="6,0">
-                                                <Entry Text="{Binding NumeroLote}" Placeholder="LOTE-XXX" Style="{StaticResource ErpEntry}" FontSize="12" />
-                                            </Border>
-
-                                            <!-- Fecha Vencimiento -->
-                                            <Border Grid.Column="4" Style="{StaticResource ErpInputBox}" HeightRequest="38" Padding="4,0">
-                                                <DatePicker Date="{Binding FechaVencimiento}" Format="dd/MM/yyyy" TextColor="{StaticResource ErpText}" FontSize="11" VerticalOptions="Center" />
-                                            </Border>
-
-                                            <!-- Costo Facturado -->
-                                            <Border Grid.Column="5" Style="{StaticResource ErpInputBox}" HeightRequest="38" Padding="6,0">
-                                                <Entry Text="{Binding CostoFacturado}" Keyboard="Numeric" Style="{StaticResource ErpEntry}" HorizontalTextAlignment="End" FontSize="12" />
-                                            </Border>
-
-                                            <!-- Subtotal -->
-                                            <Label Grid.Column="6" Text="{Binding SubtotalLineaTexto}" Style="{StaticResource ErpBody}"
-                                                   FontAttributes="Bold" HorizontalTextAlignment="End" VerticalOptions="Center" />
-
-                                            <!-- Control Cuarentena -->
-                                            <VerticalStackLayout Grid.Column="7" HorizontalOptions="Center" VerticalOptions="Center" Spacing="2">
-                                                <CheckBox IsChecked="{Binding EnCuarentena}" Color="{StaticResource ErpWarning}" HorizontalOptions="Center" />
-                                                <Label Text="Retener" FontSize="9" TextColor="{StaticResource ErpMuted}" HorizontalOptions="Center" />
-                                            </VerticalStackLayout>
-
-                                        </Grid>
+                    <!-- 1. Selección de Orden de Compra -->
+                    <Border Style="{StaticResource ErpCard}" Padding="18">
+                        <VerticalStackLayout Spacing="12">
+                            <Label Text="1. Orden de Compra a Recepcionar" Style="{StaticResource ErpCardTitle}" />
+                            
+                            <Grid ColumnDefinitions="1.6*,*" ColumnSpacing="16">
+                                <VerticalStackLayout Spacing="4">
+                                    <Label Text="Seleccione la orden pendiente:" Style="{StaticResource ErpCaption}" />
+                                    <Border Style="{StaticResource ErpInputBox}">
+                                        <Picker ItemsSource="{Binding OrdenesDisponibles}"
+                                                ItemDisplayBinding="{Binding Numero}"
+                                                SelectedItem="{Binding OrdenSeleccionada}"
+                                                IsEnabled="{Binding NoEstaOcupado}"
+                                                TextColor="{StaticResource ErpText}"
+                                                BackgroundColor="Transparent"
+                                                VerticalOptions="Center" />
                                     </Border>
-                                </DataTemplate>
-                            </BindableLayout.ItemTemplate>
-                        </VerticalStackLayout>
-                    </VerticalStackLayout>
-                </Border>
+                                </VerticalStackLayout>
 
-                <!-- 4. Resumen financiero y Botón de Liquidación -->
-                <Border Style="{StaticResource ErpCard}" Padding="20" IsVisible="{Binding HayOrdenSeleccionada}">
-                    <Grid ColumnDefinitions="*, 360" ColumnSpacing="24">
+                                <Border Grid.Column="1" BackgroundColor="#F8FAFC" Stroke="{StaticResource ErpBorder}"
+                                        StrokeShape="RoundRectangle 8" Padding="14,10" IsVisible="{Binding HayOrdenSeleccionada}">
+                                    <VerticalStackLayout Spacing="3" VerticalOptions="Center">
+                                        <Label Text="{Binding OrdenSeleccionada.Proveedor}" FontSize="13" FontAttributes="Bold" TextColor="{StaticResource ErpText}" />
+                                        <Label Text="{Binding OrdenSeleccionada.RutTexto}" FontSize="11" TextColor="{StaticResource ErpMuted}" />
+                                        <Label Text="{Binding OrdenSeleccionada.TotalTexto, StringFormat='Monto OC: {0}'}" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource ErpPrimary}" />
+                                    </VerticalStackLayout>
+                                </Border>
 
-                        <!-- Información de trazabilidad y normativa -->
-                        <VerticalStackLayout Grid.Column="0" Spacing="6" VerticalOptions="Center">
-                            <Label Text="Impacto automático de la Liquidación:" FontAttributes="Bold" FontSize="13" TextColor="{StaticResource ErpText}" />
-                            <Label Text="• Aumento automático de existencias físicas en la tabla lotes con su fecha de expiración." FontSize="11" TextColor="{StaticResource ErpMuted}" />
-                            <Label Text="• Inyección de registro de trazabilidad cronológico en kardex_movimientos (Tipo: ENTRADA)." FontSize="11" TextColor="{StaticResource ErpMuted}" />
-                            <Label Text="• Creación de la obligación en cuentas_por_pagar para el módulo de Contabilidad." FontSize="11" TextColor="{StaticResource ErpMuted}" />
-                            <Label Text="• Generación automática del asiento contable en Libro Diario." FontSize="11" TextColor="{StaticResource ErpMuted}" />
-                        </VerticalStackLayout>
-
-                        <!-- Totales y Acción -->
-                        <VerticalStackLayout Grid.Column="1" Spacing="8">
-                            <Grid ColumnDefinitions="*, *">
-                                <Label Grid.Column="0" Text="Monto Neto:" HorizontalOptions="End" TextColor="{StaticResource ErpMuted}"/>
-                                <Label Grid.Column="1" Text="{Binding MontoNetoTexto}" HorizontalOptions="End" FontAttributes="Bold" TextColor="{StaticResource ErpText}"/>
+                                <Border Grid.Column="1" BackgroundColor="#F8FAFC" Stroke="{StaticResource ErpBorder}"
+                                        StrokeShape="RoundRectangle 8" Padding="14,10" IsVisible="{Binding NoHayOrdenSeleccionada}">
+                                    <VerticalStackLayout Spacing="2" VerticalOptions="Center">
+                                        <Label Text="Estado del selector" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource ErpMuted}" />
+                                        <Label Text="Elija una orden de la lista para cargar sus medicamentos y datos de facturación."
+                                               FontSize="11" TextColor="{StaticResource ErpMuted}" />
+                                    </VerticalStackLayout>
+                                </Border>
                             </Grid>
-                            <Grid ColumnDefinitions="*, *">
-                                <Label Grid.Column="0" Text="IVA Crédito Fiscal (19%):" HorizontalOptions="End" TextColor="{StaticResource ErpMuted}"/>
-                                <Label Grid.Column="1" Text="{Binding MontoIvaTexto}" HorizontalOptions="End" FontAttributes="Bold" TextColor="{StaticResource ErpText}"/>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- Guía cuando no hay orden -->
+                    <Border Style="{StaticResource ErpCard}" Padding="32" IsVisible="{Binding NoHayOrdenSeleccionada}">
+                        <VerticalStackLayout Spacing="8" HorizontalOptions="Center" VerticalOptions="Center">
+                            <Label Text="Ninguna orden de compra seleccionada" FontAttributes="Bold" FontSize="15" TextColor="{StaticResource ErpText}" HorizontalTextAlignment="Center" />
+                            <Label Text="Para recepcionar mercadería, seleccione una orden de compra pendiente en el menú superior. Podrá ingresar el documento tributario, lotes con trazabilidad, fechas de expiración y aplicar conversión automática de equivalencias."
+                                   FontSize="13" TextColor="{StaticResource ErpMuted}" HorizontalTextAlignment="Center" MaximumWidthRequest="620" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- 2. Datos de Factura del Proveedor -->
+                    <Border Style="{StaticResource ErpCard}" Padding="18" IsVisible="{Binding HayOrdenSeleccionada}">
+                        <VerticalStackLayout Spacing="12">
+                            <Label Text="2. Datos del Documento Tributario (Factura)" Style="{StaticResource ErpCardTitle}" />
+
+                            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="16">
+                                <VerticalStackLayout Spacing="4">
+                                    <Label Text="Número de Factura Proveedor *" Style="{StaticResource ErpCaption}" />
+                                    <Border Style="{StaticResource ErpInputBox}">
+                                        <Entry Text="{Binding NumeroFactura}" Placeholder="Ej: FACT-10293" Style="{StaticResource ErpEntry}"
+                                               IsEnabled="{Binding NoEstaOcupado}" />
+                                    </Border>
+                                </VerticalStackLayout>
+
+                                <VerticalStackLayout Grid.Column="1" Spacing="4">
+                                    <Label Text="Fecha de Emisión Factura *" Style="{StaticResource ErpCaption}" />
+                                    <Border Style="{StaticResource ErpInputBox}">
+                                        <DatePicker Date="{Binding FechaFactura}" Format="dd/MM/yyyy" TextColor="{StaticResource ErpText}" VerticalOptions="Center"
+                                                    IsEnabled="{Binding NoEstaOcupado}" />
+                                    </Border>
+                                </VerticalStackLayout>
+
+                                <VerticalStackLayout Grid.Column="2" Spacing="4">
+                                    <Label Text="Fecha de Recepción Bodega" Style="{StaticResource ErpCaption}" />
+                                    <Border Style="{StaticResource ErpInputBox}" BackgroundColor="#F1F5F9">
+                                        <Label Text="Fecha actual (inmediata)" Style="{StaticResource ErpBody}" VerticalOptions="Center" TextColor="{StaticResource ErpMuted}" />
+                                    </Border>
+                                </VerticalStackLayout>
                             </Grid>
-                            <BoxView HeightRequest="1" Color="{StaticResource ErpBorder}" Margin="0,5"/>
-                            <Grid ColumnDefinitions="*, *">
-                                <Label Grid.Column="0" Text="TOTAL FACTURADO:" HorizontalOptions="End" FontSize="15" FontAttributes="Bold" TextColor="{StaticResource ErpText}"/>
-                                <Label Grid.Column="1" Text="{Binding MontoTotalFacturadoTexto}" HorizontalOptions="End" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource ErpPrimary}"/>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- 3. Recepción física de fármacos, lotes y equivalencias -->
+                    <Border Style="{StaticResource ErpCard}" Padding="18" IsVisible="{Binding HayOrdenSeleccionada}">
+                        <VerticalStackLayout Spacing="12">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <VerticalStackLayout Spacing="2">
+                                    <Label Text="3. Ingreso de Lotes, Fechas y Conversión de Equivalencias" Style="{StaticResource ErpCardTitle}" />
+                                    <Label Text="Ingrese el lote y expiración por fármaco. Si el producto tiene equivalencia configurada, la conversión a dispensación se aplica automáticamente." Style="{StaticResource ErpSubtitle}" />
+                                </VerticalStackLayout>
+                                <Label Grid.Column="1" Text="Trazabilidad ISP" TextColor="{StaticResource ErpSuccess}" FontAttributes="Bold" FontSize="11" VerticalOptions="Center" />
                             </Grid>
 
-                            <Button Text="Liquidar Factura e Ingresar al Inventario" Style="{StaticResource ErpPrimaryButton}"
-                                    BackgroundColor="{StaticResource ErpSuccess}"
-                                    Command="{Binding ComandoLiquidarRecepcion}" IsEnabled="{Binding NoEstaOcupado}"
-                                    Margin="0,15,0,0" HeightRequest="50"/>
+                            <!-- Cabecera de la tabla de recepción -->
+                            <Grid ColumnDefinitions="2*,70,75,110,110,95,95,1.2*,70" Padding="10,8" BackgroundColor="{StaticResource ErpPrimarySoft}">
+                                <Label Grid.Column="0" Text="MEDICAMENTO / SKU" FontAttributes="Bold" FontSize="11" TextColor="{StaticResource ErpPrimary}"/>
+                                <Label Grid.Column="1" Text="PEND." FontAttributes="Bold" FontSize="11" HorizontalTextAlignment="Center" TextColor="{StaticResource ErpPrimary}"/>
+                                <Label Grid.Column="2" Text="A INGRESAR" FontAttributes="Bold" FontSize="11" HorizontalTextAlignment="Center" TextColor="{StaticResource ErpPrimary}"/>
+                                <Label Grid.Column="3" Text="N° LOTE *" FontAttributes="Bold" FontSize="11" TextColor="{StaticResource ErpPrimary}"/>
+                                <Label Grid.Column="4" Text="VENCE *" FontAttributes="Bold" FontSize="11" TextColor="{StaticResource ErpPrimary}"/>
+                                <Label Grid.Column="5" Text="COSTO U." FontAttributes="Bold" FontSize="11" HorizontalTextAlignment="End" TextColor="{StaticResource ErpPrimary}"/>
+                                <Label Grid.Column="6" Text="SUBTOTAL" FontAttributes="Bold" FontSize="11" HorizontalTextAlignment="End" TextColor="{StaticResource ErpPrimary}"/>
+                                <Label Grid.Column="7" Text="EQUIVALENCIA" FontAttributes="Bold" FontSize="11" TextColor="{StaticResource ErpPrimary}"/>
+                                <Label Grid.Column="8" Text="CUARENTENA" FontAttributes="Bold" FontSize="11" HorizontalTextAlignment="Center" TextColor="{StaticResource ErpPrimary}"/>
+                            </Grid>
+
+                            <!-- Filas de medicamentos -->
+                            <VerticalStackLayout BindableLayout.ItemsSource="{Binding Lineas}" Spacing="8">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="m:LineaRecepcionFacturaItem">
+                                        <Border BackgroundColor="#F8FAFC" Stroke="{StaticResource ErpBorder}" StrokeShape="RoundRectangle 8" Padding="10,8">
+                                            <Grid ColumnDefinitions="2*,70,75,110,110,95,95,1.2*,70" ColumnSpacing="8" VerticalOptions="Center">
+                                                
+                                                <VerticalStackLayout Grid.Column="0" VerticalOptions="Center">
+                                                    <Label Text="{Binding NombreProducto}" FontSize="13" FontAttributes="Bold" TextColor="{StaticResource ErpText}" />
+                                                    <Label Text="{Binding Sku}" FontSize="11" TextColor="{StaticResource ErpMuted}" />
+                                                </VerticalStackLayout>
+
+                                                <Label Grid.Column="1" Text="{Binding CantidadPendiente, StringFormat='{0} un.'}"
+                                                       Style="{StaticResource ErpBody}" HorizontalTextAlignment="Center" VerticalOptions="Center" />
+
+                                                <Border Grid.Column="2" Style="{StaticResource ErpInputBox}" HeightRequest="38" Padding="4,0">
+                                                    <Entry Text="{Binding CantidadARecibir}" Keyboard="Numeric" Style="{StaticResource ErpEntry}" HorizontalTextAlignment="Center" />
+                                                </Border>
+
+                                                <Border Grid.Column="3" Style="{StaticResource ErpInputBox}" HeightRequest="38" Padding="6,0">
+                                                    <Entry Text="{Binding NumeroLote}" Placeholder="LOTE-XXX" Style="{StaticResource ErpEntry}" FontSize="12" />
+                                                </Border>
+
+                                                <Border Grid.Column="4" Style="{StaticResource ErpInputBox}" HeightRequest="38" Padding="4,0">
+                                                    <DatePicker Date="{Binding FechaVencimiento}" Format="dd/MM/yyyy" TextColor="{StaticResource ErpText}" FontSize="11" VerticalOptions="Center" />
+                                                </Border>
+
+                                                <Border Grid.Column="5" Style="{StaticResource ErpInputBox}" HeightRequest="38" Padding="6,0">
+                                                    <Entry Text="{Binding CostoFacturado}" Keyboard="Numeric" Style="{StaticResource ErpEntry}" HorizontalTextAlignment="End" FontSize="12" />
+                                                </Border>
+
+                                                <Label Grid.Column="6" Text="{Binding SubtotalLineaTexto}" Style="{StaticResource ErpBody}"
+                                                       FontAttributes="Bold" HorizontalTextAlignment="End" VerticalOptions="Center" />
+
+                                                <!-- RF-COM-11: Indicador de equivalencia y conversión -->
+                                                <VerticalStackLayout Grid.Column="7" VerticalOptions="Center" Spacing="1">
+                                                    <Label Text="{Binding TextoConversion}" FontSize="10" FontAttributes="Bold"
+                                                           TextColor="{Binding TieneConversion, Converter={x:Null}}" />
+                                                </VerticalStackLayout>
+
+                                                <!-- RF-COM-09: Cuarentena -->
+                                                <VerticalStackLayout Grid.Column="8" HorizontalOptions="Center" VerticalOptions="Center" Spacing="2">
+                                                    <CheckBox IsChecked="{Binding EnCuarentena}" Color="{StaticResource ErpWarning}" HorizontalOptions="Center" />
+                                                    <Label Text="Retener" FontSize="9" TextColor="{StaticResource ErpMuted}" HorizontalOptions="Center" />
+                                                </VerticalStackLayout>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
                         </VerticalStackLayout>
+                    </Border>
+
+                    <!-- 4. Resumen financiero y Botón de Liquidación -->
+                    <Border Style="{StaticResource ErpCard}" Padding="20" IsVisible="{Binding HayOrdenSeleccionada}">
+                        <Grid ColumnDefinitions="*, 360" ColumnSpacing="24">
+                            <VerticalStackLayout Grid.Column="0" Spacing="6" VerticalOptions="Center">
+                                <Label Text="Impacto normativo y automático de la Liquidación:" FontAttributes="Bold" FontSize="13" TextColor="{StaticResource ErpText}" />
+                                <Label Text="• Aumento automático de existencias físicas en lotes con aplicación de factor de conversión." FontSize="11" TextColor="{StaticResource ErpMuted}" />
+                                <Label Text="• Si se marca en Cuarentena, el lote queda retenido para inspección técnica del Químico Farmacéutico." FontSize="11" TextColor="{StaticResource ErpMuted}" />
+                                <Label Text="• Inyección de registro de trazabilidad en Kardex y creación de obligación en cuentas_por_pagar para Contabilidad." FontSize="11" TextColor="{StaticResource ErpMuted}" />
+                            </VerticalStackLayout>
+
+                            <VerticalStackLayout Grid.Column="1" Spacing="8">
+                                <Grid ColumnDefinitions="*, *">
+                                    <Label Grid.Column="0" Text="Monto Neto:" HorizontalOptions="End" TextColor="{StaticResource ErpMuted}"/>
+                                    <Label Grid.Column="1" Text="{Binding MontoNetoTexto}" HorizontalOptions="End" FontAttributes="Bold" TextColor="{StaticResource ErpText}"/>
+                                </Grid>
+                                <Grid ColumnDefinitions="*, *">
+                                    <Label Grid.Column="0" Text="IVA Crédito Fiscal (19%):" HorizontalOptions="End" TextColor="{StaticResource ErpMuted}"/>
+                                    <Label Grid.Column="1" Text="{Binding MontoIvaTexto}" HorizontalOptions="End" FontAttributes="Bold" TextColor="{StaticResource ErpText}"/>
+                                </Grid>
+                                <BoxView HeightRequest="1" Color="{StaticResource ErpBorder}" Margin="0,5"/>
+                                <Grid ColumnDefinitions="*, *">
+                                    <Label Grid.Column="0" Text="TOTAL FACTURADO:" HorizontalOptions="End" FontSize="15" FontAttributes="Bold" TextColor="{StaticResource ErpText}"/>
+                                    <Label Grid.Column="1" Text="{Binding MontoTotalFacturadoTexto}" HorizontalOptions="End" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource ErpPrimary}"/>
+                                </Grid>
+
+                                <Button Text="Liquidar Factura e Ingresar al Inventario" Style="{StaticResource ErpPrimaryButton}"
+                                        BackgroundColor="{StaticResource ErpSuccess}"
+                                        Command="{Binding ComandoLiquidarRecepcion}" IsEnabled="{Binding NoEstaOcupado}"
+                                        Margin="0,15,0,0" HeightRequest="50"/>
+                            </VerticalStackLayout>
+                        </Grid>
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- ================================================================= -->
+                <!-- PESTAÑA 2: CUARENTENA DE LOTES Y APROBACIÓN QF (RF-COM-09)        -->
+                <!-- ================================================================= -->
+                <VerticalStackLayout IsVisible="{Binding EsPestanaCuarentena}" Spacing="16">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="Control de Cuarentena y Aprobación Sanitaria" Style="{StaticResource ErpTitle}" />
+                            <Label Text="Trazabilidad y validación técnica del Químico Farmacéutico (QF). Los lotes en cuarentena permanecen bloqueados para comercialización hasta su aprobación explícita." Style="{StaticResource ErpSubtitle}" />
+                        </VerticalStackLayout>
+                        <Button Grid.Column="1" Text="Actualizar Lotes" Style="{StaticResource ErpGhostButton}" Command="{Binding ComandoCargarCuarentena}" IsEnabled="{Binding NoEstaOcupado}" />
                     </Grid>
-                </Border>
+
+                    <!-- KPIs de Cuarentena -->
+                    <Grid ColumnDefinitions="*,*,*" ColumnSpacing="14">
+                        <Border Grid.Column="0" Style="{StaticResource ErpCard}">
+                            <VerticalStackLayout Spacing="2">
+                                <Label Text="LOTES EN CUARENTENA (RETENIDOS)" Style="{StaticResource ErpCaption}" />
+                                <Label Text="{Binding TotalEnCuarentena}" Style="{StaticResource ErpKpi}" TextColor="#B45309" />
+                            </VerticalStackLayout>
+                        </Border>
+                        <Border Grid.Column="1" Style="{StaticResource ErpCard}">
+                            <VerticalStackLayout Spacing="2">
+                                <Label Text="LOTES LIBERADOS (COMERCIALIZABLES)" Style="{StaticResource ErpCaption}" />
+                                <Label Text="{Binding TotalLiberados}" Style="{StaticResource ErpKpi}" TextColor="{StaticResource ErpSuccess}" />
+                            </VerticalStackLayout>
+                        </Border>
+                        <Border Grid.Column="2" Style="{StaticResource ErpCard}">
+                            <VerticalStackLayout Spacing="2">
+                                <Label Text="PERFIL RESPONSABLE SANITARIO" Style="{StaticResource ErpCaption}" />
+                                <Label Text="Químico Farmacéutico (QF)" FontSize="15" FontAttributes="Bold" TextColor="{StaticResource ErpPrimary}" Margin="0,6,0,0" />
+                            </VerticalStackLayout>
+                        </Border>
+                    </Grid>
+
+                    <!-- Filtros rápidos -->
+                    <HorizontalStackLayout Spacing="8">
+                        <Border BackgroundColor="{Binding ColorFondoFiltroTodos}"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 16"
+                                Padding="14,6">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding ComandoFiltrarCuarentena}" CommandParameter="TODOS" />
+                            </Border.GestureRecognizers>
+                            <Label Text="Todos los Lotes"
+                                   TextColor="{Binding ColorTextoFiltroTodos}"
+                                   FontSize="12"
+                                   FontAttributes="Bold"
+                                   VerticalOptions="Center" />
+                        </Border>
+
+                        <Border BackgroundColor="{Binding ColorFondoFiltroCuarentena}"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 16"
+                                Padding="14,6">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding ComandoFiltrarCuarentena}" CommandParameter="CUARENTENA" />
+                            </Border.GestureRecognizers>
+                            <Label Text="Solo en Cuarentena"
+                                   TextColor="{Binding ColorTextoFiltroCuarentena}"
+                                   FontSize="12"
+                                   FontAttributes="Bold"
+                                   VerticalOptions="Center" />
+                        </Border>
+
+                        <Border BackgroundColor="{Binding ColorFondoFiltroLiberado}"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 16"
+                                Padding="14,6">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding ComandoFiltrarCuarentena}" CommandParameter="LIBERADO" />
+                            </Border.GestureRecognizers>
+                            <Label Text="Solo Liberados"
+                                   TextColor="{Binding ColorTextoFiltroLiberado}"
+                                   FontSize="12"
+                                   FontAttributes="Bold"
+                                   VerticalOptions="Center" />
+                        </Border>
+                    </HorizontalStackLayout>
+
+                    <!-- Tabla de lotes -->
+                    <Border Style="{StaticResource ErpCard}" Padding="18">
+                        <VerticalStackLayout Spacing="10">
+                            <Grid ColumnDefinitions="2.5*,120,120,100,120,Auto" Padding="12,8" BackgroundColor="{StaticResource ErpPrimarySoft}">
+                                <Label Grid.Column="0" Text="MEDICAMENTO / SKU" FontAttributes="Bold" FontSize="11" TextColor="{StaticResource ErpPrimary}"/>
+                                <Label Grid.Column="1" Text="N° LOTE" FontAttributes="Bold" FontSize="11" TextColor="{StaticResource ErpPrimary}"/>
+                                <Label Grid.Column="2" Text="EXPIRACIÓN" FontAttributes="Bold" FontSize="11" TextColor="{StaticResource ErpPrimary}"/>
+                                <Label Grid.Column="3" Text="STOCK" FontAttributes="Bold" FontSize="11" HorizontalTextAlignment="Center" TextColor="{StaticResource ErpPrimary}"/>
+                                <Label Grid.Column="4" Text="ESTADO" FontAttributes="Bold" FontSize="11" HorizontalTextAlignment="Center" TextColor="{StaticResource ErpPrimary}"/>
+                                <Label Grid.Column="5" Text="ACCIÓN DEL QF" FontAttributes="Bold" FontSize="11" HorizontalTextAlignment="Center" TextColor="{StaticResource ErpPrimary}"/>
+                            </Grid>
+
+                            <VerticalStackLayout BindableLayout.ItemsSource="{Binding LotesCuarentena}" Spacing="8">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="m:LoteCuarentena">
+                                        <Border BackgroundColor="#F8FAFC" Stroke="{StaticResource ErpBorder}" StrokeShape="RoundRectangle 8" Padding="12,10">
+                                            <Grid ColumnDefinitions="2.5*,120,120,100,120,Auto" ColumnSpacing="10" VerticalOptions="Center">
+                                                <VerticalStackLayout Grid.Column="0" VerticalOptions="Center">
+                                                    <Label Text="{Binding NombreProducto}" FontSize="13" FontAttributes="Bold" TextColor="{StaticResource ErpText}" />
+                                                    <Label Text="{Binding Sku}" FontSize="11" TextColor="{StaticResource ErpMuted}" />
+                                                </VerticalStackLayout>
+
+                                                <Label Grid.Column="1" Text="{Binding NumeroLote}" FontSize="12" FontAttributes="Bold" TextColor="{StaticResource ErpText}" VerticalOptions="Center" />
+                                                <Label Grid.Column="2" Text="{Binding FechaVencimientoTexto}" FontSize="12" TextColor="{StaticResource ErpText}" VerticalOptions="Center" />
+                                                <Label Grid.Column="3" Text="{Binding StockActualTexto}" FontSize="12" HorizontalTextAlignment="Center" VerticalOptions="Center" TextColor="{StaticResource ErpText}" />
+
+                                                <!-- Estado Badge -->
+                                                <Border Grid.Column="4" BackgroundColor="{Binding EstadoFondo}" Stroke="{Binding EstadoColor}" StrokeShape="RoundRectangle 6" Padding="8,4" HorizontalOptions="Center" VerticalOptions="Center">
+                                                    <Label Text="{Binding EstadoTexto}" FontSize="11" FontAttributes="Bold" TextColor="{Binding EstadoColor}" />
+                                                </Border>
+
+                                                <!-- Botones de Acción QF -->
+                                                <HorizontalStackLayout Grid.Column="5" Spacing="6" VerticalOptions="Center">
+                                                    <Button Text="Aprobar y Liberar" Style="{StaticResource ErpPrimaryButton}"
+                                                            BackgroundColor="{StaticResource ErpSuccess}" HeightRequest="34" FontSize="11"
+                                                            IsVisible="{Binding EstaEnCuarentena}"
+                                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:RecepcionFacturasViewModel}}, Path=ComandoLiberarLote}"
+                                                            CommandParameter="{Binding .}" />
+
+                                                    <Button Text="Retener Cuarentena" Style="{StaticResource ErpGhostButton}"
+                                                            TextColor="#B45309" HeightRequest="34" FontSize="11"
+                                                            IsVisible="{Binding EstaEnCuarentena, Converter={x:Null}}"
+                                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:RecepcionFacturasViewModel}}, Path=ComandoPonerEnCuarentena}"
+                                                            CommandParameter="{Binding .}" />
+                                                </HorizontalStackLayout>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
+                        </VerticalStackLayout>
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- ================================================================= -->
+                <!-- PESTAÑA 3: DEVOLUCIONES A PROVEEDOR Y NOTAS DE CRÉDITO (RF-COM-07)-->
+                <!-- ================================================================= -->
+                <VerticalStackLayout IsVisible="{Binding EsPestanaDevoluciones}" Spacing="16">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="Gestión de Devoluciones y Notas de Crédito" Style="{StaticResource ErpTitle}" />
+                            <Label Text="Registrar devoluciones de mercadería a laboratorios por mermas, vencimientos próximos o daños, generando la nota de crédito y rebajando el stock físico y en Kardex." Style="{StaticResource ErpSubtitle}" />
+                        </VerticalStackLayout>
+                        <Button Grid.Column="1" Text="Actualizar Datos" Style="{StaticResource ErpGhostButton}" Command="{Binding ComandoCargarDevoluciones}" IsEnabled="{Binding NoEstaOcupado}" />
+                    </Grid>
+
+                    <!-- Formulario de Devolución -->
+                    <Border Style="{StaticResource ErpCard}" Padding="18">
+                        <VerticalStackLayout Spacing="14">
+                            <Label Text="1. Datos del Proveedor y Documento Tributario (Nota de Crédito)" Style="{StaticResource ErpCardTitle}" />
+
+                            <Grid ColumnDefinitions="1.5*,*,*,*" ColumnSpacing="14">
+                                <VerticalStackLayout Spacing="4">
+                                    <Label Text="Proveedor / Laboratorio *" Style="{StaticResource ErpCaption}" />
+                                    <Border Style="{StaticResource ErpInputBox}">
+                                        <Picker ItemsSource="{Binding ProveedoresDevolucion}"
+                                                ItemDisplayBinding="{Binding RazonSocial}"
+                                                SelectedItem="{Binding ProveedorDevolucionSeleccionado}"
+                                                TextColor="{StaticResource ErpText}" BackgroundColor="Transparent" />
+                                    </Border>
+                                </VerticalStackLayout>
+
+                                <VerticalStackLayout Grid.Column="1" Spacing="4">
+                                    <Label Text="N° Nota de Crédito *" Style="{StaticResource ErpCaption}" />
+                                    <Border Style="{StaticResource ErpInputBox}">
+                                        <Entry Text="{Binding NumeroNotaCreditoDev}" Placeholder="NC-2026-001" Style="{StaticResource ErpEntry}" />
+                                    </Border>
+                                </VerticalStackLayout>
+
+                                <VerticalStackLayout Grid.Column="2" Spacing="4">
+                                    <Label Text="Motivo de Devolución *" Style="{StaticResource ErpCaption}" />
+                                    <Border Style="{StaticResource ErpInputBox}">
+                                        <Picker ItemsSource="{Binding MotivosDevolucion}"
+                                                SelectedItem="{Binding MotivoDevolucion}"
+                                                TextColor="{StaticResource ErpText}" BackgroundColor="Transparent" />
+                                    </Border>
+                                </VerticalStackLayout>
+
+                                <VerticalStackLayout Grid.Column="3" Spacing="4">
+                                    <Label Text="Fecha Devolución *" Style="{StaticResource ErpCaption}" />
+                                    <Border Style="{StaticResource ErpInputBox}">
+                                        <DatePicker Date="{Binding FechaDevolucion}" Format="dd/MM/yyyy" TextColor="{StaticResource ErpText}" />
+                                    </Border>
+                                </VerticalStackLayout>
+                            </Grid>
+
+                            <VerticalStackLayout Spacing="4">
+                                <Label Text="Observaciones / Justificación Sanitaria" Style="{StaticResource ErpCaption}" />
+                                <Border Style="{StaticResource ErpInputBox}" HeightRequest="50" Padding="8,4">
+                                    <Entry Text="{Binding ObservacionesDev}" Placeholder="Ej: Retiro por lote defectuoso / canje por vencimiento próximo según convenio" Style="{StaticResource ErpEntry}" />
+                                </Border>
+                            </VerticalStackLayout>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- Lotes para Devolver -->
+                    <Border Style="{StaticResource ErpCard}" Padding="18" IsVisible="{Binding HayProveedorDevSeleccionado}">
+                        <VerticalStackLayout Spacing="12">
+                            <Label Text="2. Lotes Disponibles para Devolución" Style="{StaticResource ErpCardTitle}" />
+                            <Label Text="Indique la cantidad a devolver en cada lote. El inventario se rebajará automáticamente en lotes y Kardex." Style="{StaticResource ErpSubtitle}" />
+
+                            <Grid ColumnDefinitions="2.5*,120,120,90,110,100,110" Padding="10,8" BackgroundColor="{StaticResource ErpPrimarySoft}">
+                                <Label Grid.Column="0" Text="MEDICAMENTO / SKU" FontAttributes="Bold" FontSize="11" TextColor="{StaticResource ErpPrimary}"/>
+                                <Label Grid.Column="1" Text="N° LOTE" FontAttributes="Bold" FontSize="11" TextColor="{StaticResource ErpPrimary}"/>
+                                <Label Grid.Column="2" Text="EXPIRACIÓN" FontAttributes="Bold" FontSize="11" TextColor="{StaticResource ErpPrimary}"/>
+                                <Label Grid.Column="3" Text="STOCK" FontAttributes="Bold" FontSize="11" HorizontalTextAlignment="Center" TextColor="{StaticResource ErpPrimary}"/>
+                                <Label Grid.Column="4" Text="COSTO UNIT." FontAttributes="Bold" FontSize="11" HorizontalTextAlignment="End" TextColor="{StaticResource ErpPrimary}"/>
+                                <Label Grid.Column="5" Text="A DEVOLVER" FontAttributes="Bold" FontSize="11" HorizontalTextAlignment="Center" TextColor="{StaticResource ErpPrimary}"/>
+                                <Label Grid.Column="6" Text="SUBTOTAL" FontAttributes="Bold" FontSize="11" HorizontalTextAlignment="End" TextColor="{StaticResource ErpPrimary}"/>
+                            </Grid>
+
+                            <VerticalStackLayout BindableLayout.ItemsSource="{Binding LotesDevolucion}" Spacing="6">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="m:LoteDevolucionItem">
+                                        <Border BackgroundColor="#F8FAFC" Stroke="{StaticResource ErpBorder}" StrokeShape="RoundRectangle 8" Padding="10,8">
+                                            <Grid ColumnDefinitions="2.5*,120,120,90,110,100,110" ColumnSpacing="8" VerticalOptions="Center">
+                                                <VerticalStackLayout Grid.Column="0" VerticalOptions="Center">
+                                                    <Label Text="{Binding NombreProducto}" FontSize="13" FontAttributes="Bold" TextColor="{StaticResource ErpText}" />
+                                                    <Label Text="{Binding Sku}" FontSize="11" TextColor="{StaticResource ErpMuted}" />
+                                                </VerticalStackLayout>
+
+                                                <Label Grid.Column="1" Text="{Binding NumeroLote}" FontSize="12" TextColor="{StaticResource ErpText}" VerticalOptions="Center" />
+                                                <Label Grid.Column="2" Text="{Binding FechaVencimientoTexto}" FontSize="12" TextColor="{StaticResource ErpText}" VerticalOptions="Center" />
+                                                <Label Grid.Column="3" Text="{Binding StockActualTexto}" FontSize="12" HorizontalTextAlignment="Center" VerticalOptions="Center" TextColor="{StaticResource ErpText}" />
+                                                <Label Grid.Column="4" Text="{Binding CostoUnitarioTexto}" FontSize="12" HorizontalTextAlignment="End" VerticalOptions="Center" TextColor="{StaticResource ErpText}" />
+
+                                                <Border Grid.Column="5" Style="{StaticResource ErpInputBox}" HeightRequest="36" Padding="4,0">
+                                                    <Entry Text="{Binding CantidadADevolver}" Keyboard="Numeric" Style="{StaticResource ErpEntry}" HorizontalTextAlignment="Center" />
+                                                </Border>
+
+                                                <Label Grid.Column="6" Text="{Binding SubtotalTexto}" FontAttributes="Bold" HorizontalTextAlignment="End" VerticalOptions="Center" TextColor="{StaticResource ErpDanger}" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
+
+                            <!-- Total y Confirmación -->
+                            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="16" Margin="0,10,0,0">
+                                <VerticalStackLayout Grid.Column="0" VerticalOptions="Center">
+                                    <Label Text="Al procesar la devolución se generará un movimiento 'SALIDA' en Kardex por motivo de merma/devolución." FontSize="11" TextColor="{StaticResource ErpMuted}" />
+                                </VerticalStackLayout>
+                                <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                                    <Label Text="TOTAL NOTA DE CRÉDITO:" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource ErpMuted}" HorizontalTextAlignment="End" />
+                                    <Label Text="{Binding MontoTotalDevolucionTexto}" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource ErpDanger}" HorizontalTextAlignment="End" />
+                                </VerticalStackLayout>
+                                <Button Grid.Column="2" Text="Registrar Devolución y Nota de Crédito" Style="{StaticResource ErpPrimaryButton}"
+                                        BackgroundColor="{StaticResource ErpDanger}" HeightRequest="45"
+                                        Command="{Binding ComandoRegistrarDevolucion}" IsEnabled="{Binding NoEstaOcupado}" />
+                            </Grid>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- Historial de Devoluciones -->
+                    <Border Style="{StaticResource ErpCard}" Padding="18">
+                        <VerticalStackLayout Spacing="10">
+                            <Label Text="Historial de Devoluciones Registradas" Style="{StaticResource ErpCardTitle}" />
+
+                            <Grid ColumnDefinitions="100,120,2*,150,120,100" Padding="10,6" BackgroundColor="{StaticResource ErpPrimarySoft}">
+                                <Label Grid.Column="0" Text="N° DEV" FontAttributes="Bold" FontSize="11" TextColor="{StaticResource ErpPrimary}"/>
+                                <Label Grid.Column="1" Text="FECHA" FontAttributes="Bold" FontSize="11" TextColor="{StaticResource ErpPrimary}"/>
+                                <Label Grid.Column="2" Text="PROVEEDOR" FontAttributes="Bold" FontSize="11" TextColor="{StaticResource ErpPrimary}"/>
+                                <Label Grid.Column="3" Text="NOTA CRÉDITO" FontAttributes="Bold" FontSize="11" TextColor="{StaticResource ErpPrimary}"/>
+                                <Label Grid.Column="4" Text="MONTO TOTAL" FontAttributes="Bold" FontSize="11" HorizontalTextAlignment="End" TextColor="{StaticResource ErpPrimary}"/>
+                                <Label Grid.Column="5" Text="ESTADO" FontAttributes="Bold" FontSize="11" HorizontalTextAlignment="Center" TextColor="{StaticResource ErpPrimary}"/>
+                            </Grid>
+
+                            <VerticalStackLayout BindableLayout.ItemsSource="{Binding HistorialDevoluciones}" Spacing="4">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="m:HistorialDevolucionProveedor">
+                                        <Border BackgroundColor="#F8FAFC" Stroke="{StaticResource ErpBorder}" StrokeShape="RoundRectangle 6" Padding="10,8">
+                                            <Grid ColumnDefinitions="100,120,2*,150,120,100" ColumnSpacing="6" VerticalOptions="Center">
+                                                <Label Grid.Column="0" Text="{Binding Id, StringFormat='#DEV-{0}'}" FontSize="12" FontAttributes="Bold" TextColor="{StaticResource ErpText}" />
+                                                <Label Grid.Column="1" Text="{Binding FechaTexto}" FontSize="12" TextColor="{StaticResource ErpText}" />
+                                                <Label Grid.Column="2" Text="{Binding Proveedor}" FontSize="12" FontAttributes="Bold" TextColor="{StaticResource ErpText}" />
+                                                <Label Grid.Column="3" Text="{Binding NumeroNotaCredito}" FontSize="12" TextColor="{StaticResource ErpPrimary}" />
+                                                <Label Grid.Column="4" Text="{Binding MontoTotalTexto}" FontSize="12" FontAttributes="Bold" HorizontalTextAlignment="End" TextColor="{StaticResource ErpDanger}" />
+                                                <Label Grid.Column="5" Text="{Binding EstadoTexto}" FontSize="11" HorizontalTextAlignment="Center" TextColor="{Binding EstadoColor}" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
+                        </VerticalStackLayout>
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- ================================================================= -->
+                <!-- PESTAÑA 4: GESTIÓN DE EQUIVALENCIAS DE PRESENTACIÓN (RF-COM-11)   -->
+                <!-- ================================================================= -->
+                <VerticalStackLayout IsVisible="{Binding EsPestanaEquivalencias}" Spacing="16">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="Gestión de Equivalencias de Presentación" Style="{StaticResource ErpTitle}" />
+                            <Label Text="Administre las equivalencias entre las unidades de compra (ej. cajas de 1000 comprimidos) y las unidades de venta/dispensación (ej. blíster de 10 comprimidos) para la correcta conversión automática durante la liquidación de la factura." Style="{StaticResource ErpSubtitle}" />
+                        </VerticalStackLayout>
+                        <Button Grid.Column="1" Text="Nueva Equivalencia" Style="{StaticResource ErpPrimaryButton}" Command="{Binding ComandoNuevaEquivalencia}" IsEnabled="{Binding NoEstaOcupado}" />
+                    </Grid>
+
+                    <!-- Lista de Equivalencias Configuradas -->
+                    <Border Style="{StaticResource ErpCard}" Padding="18">
+                        <VerticalStackLayout Spacing="10">
+                            <Grid ColumnDefinitions="2.5*,150,150,120,Auto" Padding="10,8" BackgroundColor="{StaticResource ErpPrimarySoft}">
+                                <Label Grid.Column="0" Text="MEDICAMENTO / SKU" FontAttributes="Bold" FontSize="11" TextColor="{StaticResource ErpPrimary}"/>
+                                <Label Grid.Column="1" Text="UNIDAD COMPRA" FontAttributes="Bold" FontSize="11" TextColor="{StaticResource ErpPrimary}"/>
+                                <Label Grid.Column="2" Text="UNIDAD VENTA" FontAttributes="Bold" FontSize="11" TextColor="{StaticResource ErpPrimary}"/>
+                                <Label Grid.Column="3" Text="FACTOR" FontAttributes="Bold" FontSize="11" HorizontalTextAlignment="Center" TextColor="{StaticResource ErpPrimary}"/>
+                                <Label Grid.Column="4" Text="ACCIÓN" FontAttributes="Bold" FontSize="11" HorizontalTextAlignment="Center" TextColor="{StaticResource ErpPrimary}"/>
+                            </Grid>
+
+                            <VerticalStackLayout BindableLayout.ItemsSource="{Binding Equivalencias}" Spacing="6">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="m:EquivalenciaProducto">
+                                        <Border BackgroundColor="#F8FAFC" Stroke="{StaticResource ErpBorder}" StrokeShape="RoundRectangle 8" Padding="12,10">
+                                            <Grid ColumnDefinitions="2.5*,150,150,120,Auto" ColumnSpacing="10" VerticalOptions="Center">
+                                                <VerticalStackLayout Grid.Column="0" VerticalOptions="Center">
+                                                    <Label Text="{Binding NombreProducto}" FontSize="13" FontAttributes="Bold" TextColor="{StaticResource ErpText}" />
+                                                    <Label Text="{Binding Sku}" FontSize="11" TextColor="{StaticResource ErpMuted}" />
+                                                </VerticalStackLayout>
+
+                                                <Label Grid.Column="1" Text="{Binding UnidadCompra}" FontSize="12" TextColor="{StaticResource ErpText}" VerticalOptions="Center" />
+                                                <Label Grid.Column="2" Text="{Binding UnidadVenta}" FontSize="12" TextColor="{StaticResource ErpText}" VerticalOptions="Center" />
+
+                                                <Border Grid.Column="3" BackgroundColor="{StaticResource ErpPrimarySoft}" StrokeThickness="0" StrokeShape="RoundRectangle 6" Padding="8,4" HorizontalOptions="Center" VerticalOptions="Center">
+                                                    <Label Text="{Binding FactorTexto}" FontSize="12" FontAttributes="Bold" TextColor="{StaticResource ErpPrimary}" />
+                                                </Border>
+
+                                                <Button Grid.Column="4" Text="Eliminar" Style="{StaticResource ErpGhostButton}" TextColor="{StaticResource ErpDanger}" HeightRequest="34"
+                                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:RecepcionFacturasViewModel}}, Path=ComandoEliminarEquivalencia}"
+                                                        CommandParameter="{Binding .}" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- Modal Nueva Equivalencia -->
+                    <Grid IsVisible="{Binding FormularioEquivalenciaVisible}" BackgroundColor="#80000000">
+                        <Border Style="{StaticResource ErpCard}" WidthRequest="500" Padding="30" HorizontalOptions="Center" VerticalOptions="Center" BackgroundColor="White">
+                            <VerticalStackLayout Spacing="14">
+                                <Label Text="Nueva Equivalencia de Presentación" Style="{StaticResource ErpTitle}" FontSize="18" TextColor="Black" />
+
+                                <VerticalStackLayout Spacing="4">
+                                    <Label Text="Medicamento *" FontSize="12" TextColor="#555555" FontAttributes="Bold" />
+                                    <Border Style="{StaticResource ErpInputBox}" BackgroundColor="White" Stroke="#CCCCCC">
+                                        <Picker ItemsSource="{Binding ProductosParaEquivalencia}"
+                                                ItemDisplayBinding="{Binding DescripcionCompleta}"
+                                                SelectedItem="{Binding ProductoEqSeleccionado}"
+                                                TextColor="Black" BackgroundColor="Transparent" />
+                                    </Border>
+                                </VerticalStackLayout>
+
+                                <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                                    <VerticalStackLayout Spacing="4">
+                                        <Label Text="Unidad de Compra *" FontSize="12" TextColor="#555555" FontAttributes="Bold" />
+                                        <Border Style="{StaticResource ErpInputBox}" BackgroundColor="White" Stroke="#CCCCCC">
+                                            <Entry Text="{Binding UnidadCompraEq}" Placeholder="Ej: Caja x 1000 comp" Style="{StaticResource ErpEntry}" TextColor="Black" />
+                                        </Border>
+                                    </VerticalStackLayout>
+
+                                    <VerticalStackLayout Grid.Column="1" Spacing="4">
+                                        <Label Text="Unidad de Venta *" FontSize="12" TextColor="#555555" FontAttributes="Bold" />
+                                        <Border Style="{StaticResource ErpInputBox}" BackgroundColor="White" Stroke="#CCCCCC">
+                                            <Entry Text="{Binding UnidadVentaEq}" Placeholder="Ej: Blíster x 10 comp" Style="{StaticResource ErpEntry}" TextColor="Black" />
+                                        </Border>
+                                    </VerticalStackLayout>
+                                </Grid>
+
+                                <VerticalStackLayout Spacing="4">
+                                    <Label Text="Factor de Conversión (Unidades de venta por unidad de compra) *" FontSize="12" TextColor="#555555" FontAttributes="Bold" />
+                                    <Border Style="{StaticResource ErpInputBox}" BackgroundColor="White" Stroke="#CCCCCC">
+                                        <Entry Text="{Binding FactorConversionEqTexto}" Keyboard="Numeric" Placeholder="100" Style="{StaticResource ErpEntry}" TextColor="Black" />
+                                    </Border>
+                                    <Label Text="Ejemplo: Si 1 Caja contiene 100 blísters, ingrese 100." FontSize="11" TextColor="#666666" />
+                                </VerticalStackLayout>
+
+                                <Grid ColumnDefinitions="*,*" ColumnSpacing="14" Margin="0,10,0,0">
+                                    <Button Text="Cancelar" Style="{StaticResource ErpGhostButton}" Command="{Binding ComandoCancelarEquivalencia}" TextColor="#555555" BorderColor="#CCCCCC" BorderWidth="1" HeightRequest="45" />
+                                    <Button Grid.Column="1" Text="Guardar Equivalencia" Style="{StaticResource ErpPrimaryButton}" Command="{Binding ComandoGuardarEquivalencia}" HeightRequest="45" />
+                                </Grid>
+                            </VerticalStackLayout>
+                        </Border>
+                    </Grid>
+                </VerticalStackLayout>
 
             </VerticalStackLayout>
         </ScrollView>
     </Grid>
 </ContentPage>
-

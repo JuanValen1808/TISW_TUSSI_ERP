@@ -34,6 +34,7 @@ public class LoginViewModel : BaseViewModel
     public List<PerfilDemo> Perfiles { get; } = new()
     {
         new() { Iniciales = "AD", Rol = "Administrador",     Email = "admin@erp.cl",    Clave = "admin123" },
+        new() { Iniciales = "CP", Rol = "Comprador",         Email = "compras@erp.cl",  Clave = "compras123" },
         new() { Iniciales = "CA", Rol = "Cajero / Vendedor", Email = "ventas@erp.cl",   Clave = "ventas123" },
         new() { Iniciales = "BO", Rol = "Bodega",            Email = "bodega@erp.cl",   Clave = "bodega123" },
         new() { Iniciales = "CO", Rol = "Contador",          Email = "contador@erp.cl", Clave = "contador123" },

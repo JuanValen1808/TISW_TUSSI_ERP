@@ -48,6 +48,14 @@ public class ProveedoresViewModel : BaseViewModel
     private string _condicionesComerciales = string.Empty;
     public string CondicionesComerciales { get => _condicionesComerciales; set => SetProperty(ref _condicionesComerciales, value); }
 
+    // RF-COM-08: Plazo de entrega pactado con laboratorio (días)
+    private int _plazoEntregaDias = 7;
+    public int PlazoEntregaDias
+    {
+        get => _plazoEntregaDias;
+        set => SetProperty(ref _plazoEntregaDias, value);
+    }
+
     public bool NoEstaOcupado => !EstaOcupado;
 
     private string _errorFormulario = string.Empty;
@@ -62,7 +70,7 @@ public class ProveedoresViewModel : BaseViewModel
     public string MensajeError
     {
         get => _mensajeError;
-        private set { if (SetProperty(ref _mensajeError, value)) OnPropertyChanged(nameof(HayError)); }
+        set { if (SetProperty(ref _mensajeError, value)) OnPropertyChanged(nameof(HayError)); }
     }
     public bool HayError => !string.IsNullOrEmpty(MensajeError);
 
@@ -140,6 +148,7 @@ public class ProveedoresViewModel : BaseViewModel
         if (EstaOcupado) return;
         _idEnEdicion = 0;
         Rut = RazonSocial = Contacto = Telefono = Email = CondicionesComerciales = string.Empty;
+        PlazoEntregaDias = 7;
         OnPropertyChanged(nameof(TituloFormulario));
         EsEdicion = false;
         OnPropertyChanged(nameof(TituloFormulario));
@@ -157,6 +166,7 @@ public class ProveedoresViewModel : BaseViewModel
         Telefono = p.Telefono;
         Email = p.Email;
         CondicionesComerciales = p.CondicionesComerciales;
+        PlazoEntregaDias = p.PlazoEntregaDias > 0 ? p.PlazoEntregaDias : 7;
         EsEdicion = true;
         OnPropertyChanged(nameof(TituloFormulario));
         ErrorFormulario = string.Empty;
@@ -187,6 +197,12 @@ public class ProveedoresViewModel : BaseViewModel
             return;
         }
 
+        if (PlazoEntregaDias <= 0)
+        {
+            ErrorFormulario = "El plazo de entrega pactado debe ser mayor a 0 días.";
+            return;
+        }
+
         EstaOcupado = true;
         ErrorFormulario = string.Empty;
         try
@@ -205,7 +221,8 @@ public class ProveedoresViewModel : BaseViewModel
                 Contacto = (Contacto ?? string.Empty).Trim(),
                 Telefono = (Telefono ?? string.Empty).Trim(),
                 Email = (Email ?? string.Empty).Trim(),
-                CondicionesComerciales = (CondicionesComerciales ?? string.Empty).Trim()
+                CondicionesComerciales = (CondicionesComerciales ?? string.Empty).Trim(),
+                PlazoEntregaDias = PlazoEntregaDias > 0 ? PlazoEntregaDias : 7
             };
 
             bool esNuevo = _idEnEdicion == 0;

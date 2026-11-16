@@ -252,7 +252,16 @@ public class UsuariosViewModel : BaseViewModel
                 RolesFiltro.Add(r);
             }
 
-            RolFiltroSeleccionado = RolesFiltro[0];
+            int idPre = Preferences.Get("filtro_rol_usuarios", 0);
+            if (idPre > 0)
+            {
+                Preferences.Remove("filtro_rol_usuarios");
+                RolFiltroSeleccionado = RolesFiltro.FirstOrDefault(r => r.IdRol == idPre) ?? RolesFiltro[0];
+            }
+            else
+            {
+                RolFiltroSeleccionado = RolesFiltro[0];
+            }
             await CargarUsuariosAsync();
         }
         catch (Exception ex)

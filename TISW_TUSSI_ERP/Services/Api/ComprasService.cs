@@ -37,11 +37,135 @@ public class ComprasService
     private readonly DatabaseService _db;
     public ComprasService(DatabaseService db) => _db = db;
 
-    // Límite de compra que activa la aprobación jerárquica obligatoria
+    // Límite de compra que activa la aprobación jerárquica obligatoria (RF-COM-10 / RF-COM-13)
     public const decimal LimiteGastoAutorizacion = 1_000_000m;
 
     // Estado transitorio compartido entre vistas del módulo Compras para resaltar/refrescar órdenes creadas
     public int? UltimaOrdenCreadaId { get; set; }
+
+    private static bool _infraestructuraInicializada = false;
+    private static readonly SemaphoreSlim _semInfra = new(1, 1);
+
+    public async Task AsegurarInfraestructuraAsync(MySqlConnection? cnParam = null)
+    {
+        if (_infraestructuraInicializada) return;
+        await _semInfra.WaitAsync();
+        try
+        {
+            if (_infraestructuraInicializada) return;
+
+            bool cerrarAlFinal = false;
+            var cn = cnParam;
+            if (cn == null)
+            {
+                cn = _db.CrearConexion();
+                await cn.OpenAsync();
+                cerrarAlFinal = true;
+            }
+
+            try
+            {
+                // 1. Asegurar columna plazo_entrega_dias en proveedores (RF-COM-08)
+                const string sqlCheckPlazo = @"
+                    SELECT COUNT(*) 
+                    FROM INFORMATION_SCHEMA.COLUMNS 
+                    WHERE TABLE_SCHEMA = DATABASE() 
+                      AND TABLE_NAME = 'proveedores' 
+                      AND COLUMN_NAME = 'plazo_entrega_dias';";
+                await using (var cmd = new MySqlCommand(sqlCheckPlazo, cn))
+                {
+                    int tienePlazo = Convert.ToInt32(await cmd.ExecuteScalarAsync());
+                    if (tienePlazo == 0)
+                    {
+                        try
+                        {
+                            await using var cmdAdd = new MySqlCommand("ALTER TABLE proveedores ADD COLUMN plazo_entrega_dias INT NOT NULL DEFAULT 7;", cn);
+                            await cmdAdd.ExecuteNonQueryAsync();
+                        }
+                        catch { }
+                    }
+                }
+
+                // 2. Asegurar tablas de devoluciones a proveedor (RF-COM-07)
+                const string sqlDevoluciones = @"
+                    CREATE TABLE IF NOT EXISTS devoluciones_proveedor (
+                        id_devolucion INT AUTO_INCREMENT PRIMARY KEY,
+                        id_proveedor INT NOT NULL,
+                        numero_nota_credito VARCHAR(50) NOT NULL,
+                        fecha_devolucion DATE NOT NULL,
+                        motivo VARCHAR(50) NOT NULL,
+                        monto_total DECIMAL(15,2) NOT NULL DEFAULT 0,
+                        estado VARCHAR(20) NOT NULL DEFAULT 'REGISTRADA',
+                        id_usuario INT NOT NULL,
+                        observaciones TEXT,
+                        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+                    );
+                    CREATE TABLE IF NOT EXISTS devoluciones_proveedor_detalle (
+                        id_detalle INT AUTO_INCREMENT PRIMARY KEY,
+                        id_devolucion INT NOT NULL,
+                        id_lote INT NOT NULL,
+                        id_producto INT NOT NULL,
+                        cantidad_devuelta INT NOT NULL,
+                        costo_unitario DECIMAL(15,2) NOT NULL,
+                        subtotal DECIMAL(15,2) NOT NULL
+                    );";
+                await using (var cmd = new MySqlCommand(sqlDevoluciones, cn))
+                {
+                    await cmd.ExecuteNonQueryAsync();
+                }
+
+                // 3. Asegurar tabla de equivalencias de presentación (RF-COM-11)
+                const string sqlEquivalencias = @"
+                    CREATE TABLE IF NOT EXISTS equivalencias_presentacion (
+                        id_equivalencia INT AUTO_INCREMENT PRIMARY KEY,
+                        id_producto INT NOT NULL UNIQUE,
+                        unidad_compra VARCHAR(100) NOT NULL,
+                        unidad_venta VARCHAR(100) NOT NULL,
+                        factor_conversion DECIMAL(10,2) NOT NULL DEFAULT 1.00,
+                        activo TINYINT(1) NOT NULL DEFAULT 1,
+                        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                    );";
+                await using (var cmd = new MySqlCommand(sqlEquivalencias, cn))
+                {
+                    await cmd.ExecuteNonQueryAsync();
+                }
+
+                // 4. Asegurar columna estado_cuarentena en lotes (RF-COM-09)
+                const string sqlCheckCuarentena = @"
+                    SELECT COUNT(*) 
+                    FROM INFORMATION_SCHEMA.COLUMNS 
+                    WHERE TABLE_SCHEMA = DATABASE() 
+                      AND TABLE_NAME = 'lotes' 
+                      AND COLUMN_NAME = 'estado_cuarentena';";
+                await using (var cmd = new MySqlCommand(sqlCheckCuarentena, cn))
+                {
+                    int tieneCuarentena = Convert.ToInt32(await cmd.ExecuteScalarAsync());
+                    if (tieneCuarentena == 0)
+                    {
+                        try
+                        {
+                            await using var cmdAdd = new MySqlCommand("ALTER TABLE lotes ADD COLUMN estado_cuarentena VARCHAR(30) NOT NULL DEFAULT 'LIBERADO';", cn);
+                            await cmdAdd.ExecuteNonQueryAsync();
+                        }
+                        catch { }
+                    }
+                }
+
+                _infraestructuraInicializada = true;
+            }
+            finally
+            {
+                if (cerrarAlFinal && cn != null)
+                {
+                    await cn.DisposeAsync();
+                }
+            }
+        }
+        finally
+        {
+            _semInfra.Release();
+        }
+    }
 
     public async Task<ResumenCompras> ObtenerResumenAsync()
     {
@@ -157,19 +281,22 @@ public class ComprasService
 
     public async Task<List<Proveedor>> ObtenerProveedoresAsync()
     {
+        await using var cn = _db.CrearConexion();
+        await cn.OpenAsync();
+        await AsegurarInfraestructuraAsync(cn);
+
         const string sql = @"
             SELECT p.id_proveedor, p.rut_proveedor, p.razon_social, p.nombre_contacto,
                    p.telefono, p.email, p.condiciones_comerciales,
                    COUNT(o.id_orden_compra) AS num_ordenes,
-                   COALESCE(SUM(CASE WHEN o.estado <> 'ANULADA' THEN o.monto_total END), 0) AS monto_total
+                   COALESCE(SUM(CASE WHEN o.estado <> 'ANULADA' THEN o.monto_total END), 0) AS monto_total,
+                   COALESCE(p.plazo_entrega_dias, 7) AS plazo_entrega_dias
             FROM proveedores p
             LEFT JOIN ordenes_compra o ON o.id_proveedor = p.id_proveedor
             GROUP BY p.id_proveedor, p.rut_proveedor, p.razon_social, p.nombre_contacto,
-                     p.telefono, p.email, p.condiciones_comerciales
+                     p.telefono, p.email, p.condiciones_comerciales, p.plazo_entrega_dias
             ORDER BY p.razon_social";
 
-        await using var cn = _db.CrearConexion();
-        await cn.OpenAsync();
         await using var cmd = new MySqlCommand(sql, cn);
         await using var rd = await cmd.ExecuteReaderAsync();
 
@@ -186,7 +313,8 @@ public class ComprasService
                 Email = rd.IsDBNull(5) ? "" : rd.GetString(5),
                 CondicionesComerciales = rd.IsDBNull(6) ? "" : rd.GetString(6),
                 OrdenesEmitidas = Ent(rd, 7),
-                MontoComprado = Dec(rd, 8)
+                MontoComprado = Dec(rd, 8),
+                PlazoEntregaDias = Ent(rd, 9) > 0 ? Ent(rd, 9) : 7
             });
         }
         return lista;
@@ -205,12 +333,14 @@ public class ComprasService
 
     public async Task CrearProveedorAsync(Proveedor p)
     {
-        const string sql = @"
-            INSERT INTO proveedores (rut_proveedor, razon_social, nombre_contacto, telefono, email, condiciones_comerciales)
-            VALUES (@rut, @razon, @contacto, @telefono, @email, @condiciones)";
-
         await using var cn = _db.CrearConexion();
         await cn.OpenAsync();
+        await AsegurarInfraestructuraAsync(cn);
+
+        const string sql = @"
+            INSERT INTO proveedores (rut_proveedor, razon_social, nombre_contacto, telefono, email, condiciones_comerciales, plazo_entrega_dias)
+            VALUES (@rut, @razon, @contacto, @telefono, @email, @condiciones, @plazo)";
+
         await using var cmd = new MySqlCommand(sql, cn);
         AgregarParametrosProveedor(cmd, p);
         await cmd.ExecuteNonQueryAsync();
@@ -218,14 +348,17 @@ public class ComprasService
 
     public async Task ActualizarProveedorAsync(Proveedor p)
     {
+        await using var cn = _db.CrearConexion();
+        await cn.OpenAsync();
+        await AsegurarInfraestructuraAsync(cn);
+
         const string sql = @"
             UPDATE proveedores
             SET rut_proveedor = @rut, razon_social = @razon, nombre_contacto = @contacto,
-                telefono = @telefono, email = @email, condiciones_comerciales = @condiciones
+                telefono = @telefono, email = @email, condiciones_comerciales = @condiciones,
+                plazo_entrega_dias = @plazo
             WHERE id_proveedor = @id";
 
-        await using var cn = _db.CrearConexion();
-        await cn.OpenAsync();
         await using var cmd = new MySqlCommand(sql, cn);
         AgregarParametrosProveedor(cmd, p);
         cmd.Parameters.AddWithValue("@id", p.Id);
@@ -256,6 +389,7 @@ public class ComprasService
         cmd.Parameters.AddWithValue("@telefono", string.IsNullOrWhiteSpace(p.Telefono) ? DBNull.Value : p.Telefono.Trim());
         cmd.Parameters.AddWithValue("@email", string.IsNullOrWhiteSpace(p.Email) ? DBNull.Value : p.Email.Trim());
         cmd.Parameters.AddWithValue("@condiciones", string.IsNullOrWhiteSpace(p.CondicionesComerciales) ? DBNull.Value : p.CondicionesComerciales.Trim());
+        cmd.Parameters.AddWithValue("@plazo", p.PlazoEntregaDias > 0 ? p.PlazoEntregaDias : 7);
     }
 
     // =========================================================
@@ -300,13 +434,12 @@ public class ComprasService
 
         try
         {
-            // Flujo de autorización jerárquica
-            // Si supera el límite de gasto y el usuario no tiene rol superior, queda retenida
+            // Flujo de autorización jerárquica (RF-COM-10 / RF-COM-13)
             string estadoInicial = (total > LimiteGastoAutorizacion && !esAdminOGerente)
                 ? "PENDIENTE_AUTORIZACION"
                 : "EMITIDA";
 
-            // Generar número de orden único y libre de colisiones dentro de la transacción
+            // Generar número de orden único dentro de la transacción
             const string sqlNextSeq = "SELECT COALESCE(MAX(id_orden_compra), 0) + 1 FROM ordenes_compra";
             int seq = Convert.ToInt32(await new MySqlCommand(sqlNextSeq, cn, transaccion).ExecuteScalarAsync());
             string numeroOc;
@@ -400,11 +533,19 @@ public class ComprasService
     }
 
     // =========================================================
-    // SUGERENCIA AUTOMATIZADA DE REABASTECIMIENTO
+    // RF-COM-08: SUGERENCIA AUTOMATIZADA DE REABASTECIMIENTO
     // =========================================================
 
-    public async Task<List<SugerenciaReabastecimientoItem>> ObtenerSugerenciasReabastecimientoAsync()
+    public async Task<List<SugerenciaReabastecimientoItem>> ObtenerSugerenciasReabastecimientoAsync(int? idProveedorFiltro = null)
     {
+        await using var cn = _db.CrearConexion();
+        await cn.OpenAsync();
+        await AsegurarInfraestructuraAsync(cn);
+
+        // RF-COM-08: Cálculo basado en:
+        // 1. Punto de reorden (stock crítico)
+        // 2. Consumo histórico mensual real (salidas de Kardex de últimos 90 días dividido por 3)
+        // 3. Tiempos de entrega pactados con cada laboratorio (plazo_entrega_dias)
         const string sql = @"
             SELECT 
                 p.id_producto,
@@ -414,39 +555,71 @@ public class ComprasService
                 p.stock_minimo,
                 COALESCE(SUM(l.stock_actual), 0) AS stock_actual,
                 p.costo_promedio_ponderado,
-                GREATEST((p.punto_reorden * 2) - COALESCE(SUM(l.stock_actual), 0), p.stock_minimo) AS cantidad_sugerida
+                COALESCE(
+                    (SELECT ROUND(SUM(km.cantidad) / 3.0) 
+                     FROM kardex_movimientos km 
+                     WHERE km.id_producto = p.id_producto 
+                       AND km.tipo_movimiento = 'SALIDA' 
+                       AND km.fecha_movimiento >= DATE_SUB(CURRENT_DATE, INTERVAL 90 DAY)),
+                    ROUND(p.punto_reorden * 1.5)
+                ) AS consumo_mensual_real,
+                COALESCE(prov.plazo_entrega_dias, 7) AS lead_time_dias,
+                COALESCE(prov.razon_social, 'Laboratorio Principal') AS lab_nombre
             FROM productos p
             LEFT JOIN lotes l ON l.id_producto = p.id_producto
+            LEFT JOIN (
+                SELECT d.id_producto, o.id_proveedor
+                FROM detalle_orden_compra d
+                JOIN ordenes_compra o ON o.id_orden_compra = d.id_orden_compra
+                ORDER BY o.fecha_emision DESC
+            ) ult_oc ON ult_oc.id_producto = p.id_producto
+            LEFT JOIN proveedores prov ON prov.id_proveedor = COALESCE(@idProv, ult_oc.id_proveedor)
             WHERE p.activo = 1
-            GROUP BY p.id_producto, p.sku, p.nombre_comercial, p.punto_reorden, p.stock_minimo, p.costo_promedio_ponderado
+            GROUP BY p.id_producto, p.sku, p.nombre_comercial, p.punto_reorden, p.stock_minimo, p.costo_promedio_ponderado, prov.plazo_entrega_dias, prov.razon_social
             HAVING stock_actual <= p.punto_reorden
             ORDER BY (stock_actual - p.punto_reorden) ASC";
 
-        await using var cn = _db.CrearConexion();
-        await cn.OpenAsync();
         await using var cmd = new MySqlCommand(sql, cn);
+        cmd.Parameters.AddWithValue("@idProv", idProveedorFiltro.HasValue && idProveedorFiltro.Value > 0 ? (object)idProveedorFiltro.Value : DBNull.Value);
         await using var rd = await cmd.ExecuteReaderAsync();
 
         var lista = new List<SugerenciaReabastecimientoItem>();
         while (await rd.ReadAsync())
         {
+            int pReorden = rd.GetInt32(3);
+            int sMin = rd.GetInt32(4);
+            int sActual = Convert.ToInt32(rd.GetValue(5));
+            int consumoMensual = Convert.ToInt32(rd.GetValue(7));
+            if (consumoMensual <= 0) consumoMensual = Math.Max(10, (int)Math.Round(pReorden * 1.5));
+            int plazoEntrega = Convert.ToInt32(rd.GetValue(8));
+            if (plazoEntrega <= 0) plazoEntrega = 7;
+            string labNombre = rd.GetString(9);
+
+            // Fórmula de reposición continua: Demanda durante Lead Time + Stock de Seguridad - Stock Actual
+            decimal demandaLeadTime = (consumoMensual / 30.0m) * plazoEntrega;
+            int cantidadCalculada = (int)Math.Ceiling(pReorden + demandaLeadTime - sActual);
+            int cantidadSugerida = Math.Max(sMin, Math.Max(1, cantidadCalculada));
+
             lista.Add(new SugerenciaReabastecimientoItem
             {
                 IdProducto = rd.GetInt32(0),
                 Sku = rd.GetString(1),
                 NombreProducto = rd.GetString(2),
-                PuntoReorden = rd.GetInt32(3),
-                StockMinimo = rd.GetInt32(4),
-                StockActual = Convert.ToInt32(rd.GetValue(5)),
+                PuntoReorden = pReorden,
+                StockMinimo = sMin,
+                StockActual = sActual,
                 CostoEstimado = rd.GetDecimal(6),
-                CantidadSugerida = Math.Max(1, Convert.ToInt32(rd.GetValue(7)))
+                ConsumoMensualReal = consumoMensual,
+                PlazoEntregaDias = plazoEntrega,
+                ProveedorHabitual = labNombre,
+                CantidadSugerida = cantidadSugerida
             });
         }
         return lista;
     }
 
     // =========================================================
-    // RECEPCIÓN Y LIQUIDACIÓN DE FACTURAS
+    // RECEPCIÓN Y LIQUIDACIÓN DE FACTURAS (RF-COM-03 & RF-COM-11)
     // =========================================================
 
     public async Task<List<OrdenCompra>> ObtenerOrdenesParaRecepcionAsync()
@@ -492,16 +665,22 @@ public class ComprasService
 
     public async Task<List<LineaRecepcionFacturaItem>> ObtenerLineasParaRecepcionAsync(int idOrden)
     {
+        await using var cn = _db.CrearConexion();
+        await cn.OpenAsync();
+        await AsegurarInfraestructuraAsync(cn);
+
         const string sql = @"
             SELECT d.id_detalle_oc, d.id_producto, p.sku, p.nombre_comercial,
-                   d.cantidad_solicitada, d.cantidad_recibida, d.costo_pactado_unitario
+                   d.cantidad_solicitada, d.cantidad_recibida, d.costo_pactado_unitario,
+                   COALESCE(eq.factor_conversion, 1.0) AS factor_conversion,
+                   COALESCE(eq.unidad_compra, 'Caja') AS unidad_compra,
+                   COALESCE(eq.unidad_venta, 'Unidad') AS unidad_venta
             FROM detalle_orden_compra d
             JOIN productos p ON p.id_producto = d.id_producto
+            LEFT JOIN equivalencias_presentacion eq ON eq.id_producto = p.id_producto AND eq.activo = 1
             WHERE d.id_orden_compra = @id
             ORDER BY d.id_detalle_oc";
 
-        await using var cn = _db.CrearConexion();
-        await cn.OpenAsync();
         await using var cmd = new MySqlCommand(sql, cn);
         cmd.Parameters.AddWithValue("@id", idOrden);
         await using var rd = await cmd.ExecuteReaderAsync();
@@ -513,6 +692,10 @@ public class ComprasService
             int recibida = Ent(rd, 5);
             int pendiente = Math.Max(0, solicitada - recibida);
             decimal costo = Dec(rd, 6);
+            decimal factor = Dec(rd, 7);
+            if (factor <= 0) factor = 1.0m;
+            string uCompra = rd.GetString(8);
+            string uVenta = rd.GetString(9);
 
             lineas.Add(new LineaRecepcionFacturaItem
             {
@@ -524,10 +707,13 @@ public class ComprasService
                 CantidadPreviaRecibida = recibida,
                 CostoPactado = costo,
                 CostoFacturado = costo,
-                CantidadARecibir = pendiente, // Por defecto propone recibir el saldo pendiente
+                CantidadARecibir = pendiente,
                 NumeroLote = $"LOT-{DateTime.Now.Year}-{new Random().Next(100, 999)}",
                 FechaVencimiento = DateTime.Today.AddYears(2),
-                EnCuarentena = false
+                EnCuarentena = false,
+                FactorConversion = factor,
+                UnidadCompra = uCompra,
+                UnidadVenta = uVenta
             });
         }
         return lineas;
@@ -545,11 +731,12 @@ public class ComprasService
 
         await using var cn = _db.CrearConexion();
         await cn.OpenAsync();
+        await AsegurarInfraestructuraAsync(cn);
         await using var transaccion = await cn.BeginTransactionAsync();
 
         try
         {
-            // 0. Bloquear y validar estado actual de la orden de compra (previene liquidaciones duplicadas / fantasmas)
+            // 0. Bloquear y validar estado actual de la orden de compra
             string? estadoOcActual = null;
             int idProveedorOc = 0;
             const string sqlLockOc = @"
@@ -593,7 +780,7 @@ public class ComprasService
                     throw new InvalidOperationException($"La factura '{numeroFactura}' ya fue liquidada anteriormente para esta orden.");
             }
 
-            // Bloquear y validar saldos pendientes línea por línea antes de registrar movimientos
+            // Bloquear y validar saldos pendientes línea por línea
             foreach (var item in lineasARecibir)
             {
                 if (string.IsNullOrWhiteSpace(item.NumeroLote))
@@ -620,7 +807,7 @@ public class ComprasService
                 int saldoDisponible = Math.Max(0, cantSolicitada - cantRecibidaPrevia);
 
                 if (item.CantidadARecibir > saldoDisponible)
-                    throw new InvalidOperationException($"La cantidad a recibir para '{item.NombreProducto}' ({item.CantidadARecibir} un.) excede el saldo pendiente ({saldoDisponible} un.). Es posible que la orden ya haya sido liquidada.");
+                    throw new InvalidOperationException($"La cantidad a recibir para '{item.NombreProducto}' ({item.CantidadARecibir} un.) excede el saldo pendiente ({saldoDisponible} un.).");
             }
 
             // 1. Insertar encabezado de recepción de factura
@@ -639,25 +826,17 @@ public class ComprasService
 
             int idRecepcion = Convert.ToInt32(await cmdRec.ExecuteScalarAsync());
 
-            // Verificar si la tabla lotes en la base de datos activa tiene la columna estado_cuarentena
-            const string sqlHasCuarentena = @"
-                SELECT COUNT(*)
-                FROM INFORMATION_SCHEMA.COLUMNS
-                WHERE TABLE_SCHEMA = DATABASE()
-                  AND TABLE_NAME = 'lotes'
-                  AND COLUMN_NAME = 'estado_cuarentena';";
-            bool soportaEstadoCuarentena;
-            await using (var cmdCol = new MySqlCommand(sqlHasCuarentena, cn, transaccion))
-            {
-                soportaEstadoCuarentena = Convert.ToInt32(await cmdCol.ExecuteScalarAsync()) > 0;
-            }
-
-            // 2. Procesar cada ítem recibido (Detalle, Lote, Cuarentena, Stock, Kardex)
+            // 2. Procesar cada ítem recibido (Detalle, Lote, Conversión de Equivalencias, Kardex)
             foreach (var item in lineasARecibir)
             {
                 string codigoLote = item.NumeroLote.Trim().ToUpperInvariant();
 
-                // 2.1 Insertar en detalle_recepcion_lotes
+                // RF-COM-11: Aplicar conversión de unidades de compra a dispensación
+                decimal factor = item.FactorConversion > 0 ? item.FactorConversion : 1.0m;
+                int unidadesFisicasIngreso = (int)Math.Round(item.CantidadARecibir * factor);
+                decimal costoUnitarioFisico = Math.Round(item.CostoFacturado / factor, 4);
+
+                // 2.1 Insertar en detalle_recepcion_lotes (registra la cantidad facturada pactada)
                 const string sqlDetRec = @"
                     INSERT INTO detalle_recepcion_lotes
                         (id_recepcion, id_producto, numero_lote, fecha_vencimiento, cantidad_ingresada, costo_adquisicion_unitario)
@@ -673,7 +852,7 @@ public class ComprasService
                 cmdDetRec.Parameters.AddWithValue("@costo", item.CostoFacturado);
                 await cmdDetRec.ExecuteNonQueryAsync();
 
-                // 2.2 Buscar o crear lote en la tabla lotes (persistiendo estado_cuarentena si la columna existe)
+                // 2.2 Buscar o crear lote en la tabla lotes con unidades físicas convertidas y estado de cuarentena
                 int idLoteFinal;
                 const string sqlCheckLote = "SELECT id_lote, stock_actual FROM lotes WHERE id_producto = @idProd AND numero_lote = @lote LIMIT 1";
                 await using var cmdLote = new MySqlCommand(sqlCheckLote, cn, transaccion);
@@ -683,58 +862,39 @@ public class ComprasService
                 await using (var rdLote = await cmdLote.ExecuteReaderAsync())
                 {
                     if (await rdLote.ReadAsync())
-                    {
                         idLoteFinal = rdLote.GetInt32(0);
-                    }
                     else
-                    {
                         idLoteFinal = 0;
-                    }
                 }
 
                 if (idLoteFinal > 0)
                 {
-                    string sqlUpdLote = soportaEstadoCuarentena
-                        ? @"
-                            UPDATE lotes
-                            SET stock_actual = stock_actual + @cant,
-                                estado_cuarentena = CASE WHEN @cuarentena = 1 THEN 'CUARENTENA' ELSE estado_cuarentena END
-                            WHERE id_lote = @idLote"
-                        : "UPDATE lotes SET stock_actual = stock_actual + @cant WHERE id_lote = @idLote";
+                    const string sqlUpdLote = @"
+                        UPDATE lotes
+                        SET stock_actual = stock_actual + @cant,
+                            estado_cuarentena = CASE WHEN @cuarentena = 1 THEN 'CUARENTENA' ELSE estado_cuarentena END
+                        WHERE id_lote = @idLote";
 
                     await using var cmdUpdLote = new MySqlCommand(sqlUpdLote, cn, transaccion);
-                    cmdUpdLote.Parameters.AddWithValue("@cant", item.CantidadARecibir);
-                    if (soportaEstadoCuarentena)
-                        cmdUpdLote.Parameters.AddWithValue("@cuarentena", item.EnCuarentena ? 1 : 0);
+                    cmdUpdLote.Parameters.AddWithValue("@cant", unidadesFisicasIngreso);
+                    cmdUpdLote.Parameters.AddWithValue("@cuarentena", item.EnCuarentena ? 1 : 0);
                     cmdUpdLote.Parameters.AddWithValue("@idLote", idLoteFinal);
                     await cmdUpdLote.ExecuteNonQueryAsync();
                 }
-                else if (soportaEstadoCuarentena)
+                else
                 {
                     string estadoCuarentena = item.EnCuarentena ? "CUARENTENA" : "LIBERADO";
                     const string sqlInsLote = @"
                         INSERT INTO lotes (id_producto, numero_lote, fecha_vencimiento, stock_actual, estado_cuarentena)
                         VALUES (@idProd, @lote, @vence, @cant, @estadoCuarentena);
                         SELECT LAST_INSERT_ID();";
+
                     await using var cmdInsLote = new MySqlCommand(sqlInsLote, cn, transaccion);
                     cmdInsLote.Parameters.AddWithValue("@idProd", item.IdProducto);
                     cmdInsLote.Parameters.AddWithValue("@lote", codigoLote);
                     cmdInsLote.Parameters.AddWithValue("@vence", item.FechaVencimiento.Date);
-                    cmdInsLote.Parameters.AddWithValue("@cant", item.CantidadARecibir);
+                    cmdInsLote.Parameters.AddWithValue("@cant", unidadesFisicasIngreso);
                     cmdInsLote.Parameters.AddWithValue("@estadoCuarentena", estadoCuarentena);
-                    idLoteFinal = Convert.ToInt32(await cmdInsLote.ExecuteScalarAsync());
-                }
-                else
-                {
-                    const string sqlInsLote = @"
-                        INSERT INTO lotes (id_producto, numero_lote, fecha_vencimiento, stock_actual)
-                        VALUES (@idProd, @lote, @vence, @cant);
-                        SELECT LAST_INSERT_ID();";
-                    await using var cmdInsLote = new MySqlCommand(sqlInsLote, cn, transaccion);
-                    cmdInsLote.Parameters.AddWithValue("@idProd", item.IdProducto);
-                    cmdInsLote.Parameters.AddWithValue("@lote", codigoLote);
-                    cmdInsLote.Parameters.AddWithValue("@vence", item.FechaVencimiento.Date);
-                    cmdInsLote.Parameters.AddWithValue("@cant", item.CantidadARecibir);
                     idLoteFinal = Convert.ToInt32(await cmdInsLote.ExecuteScalarAsync());
                 }
 
@@ -744,23 +904,24 @@ public class ComprasService
                 cmdSaldo.Parameters.AddWithValue("@idProd", item.IdProducto);
                 int saldoActualizado = Convert.ToInt32(await cmdSaldo.ExecuteScalarAsync());
 
-                // 2.4 Inyectar movimiento en Kardex (ENTRADA por COMPRA)
+                // 2.4 Inyectar movimiento en Kardex (ENTRADA por COMPRA con unidades físicas)
                 const string sqlKardex = @"
                     INSERT INTO kardex_movimientos 
                         (id_producto, id_lote, tipo_movimiento, origen_documento, id_referencia_origen, cantidad, costo_unitario, saldo_stock_producto, id_usuario)
                     VALUES 
                         (@idProd, @idLote, 'ENTRADA', 'COMPRA', @idRec, @cant, @costo, @saldo, @idUser)";
+
                 await using var cmdKardex = new MySqlCommand(sqlKardex, cn, transaccion);
                 cmdKardex.Parameters.AddWithValue("@idProd", item.IdProducto);
                 cmdKardex.Parameters.AddWithValue("@idLote", idLoteFinal);
                 cmdKardex.Parameters.AddWithValue("@idRec", idRecepcion);
-                cmdKardex.Parameters.AddWithValue("@cant", item.CantidadARecibir);
-                cmdKardex.Parameters.AddWithValue("@costo", item.CostoFacturado);
+                cmdKardex.Parameters.AddWithValue("@cant", unidadesFisicasIngreso);
+                cmdKardex.Parameters.AddWithValue("@costo", costoUnitarioFisico);
                 cmdKardex.Parameters.AddWithValue("@saldo", saldoActualizado);
                 cmdKardex.Parameters.AddWithValue("@idUser", idUsuario);
                 await cmdKardex.ExecuteNonQueryAsync();
 
-                // 2.5 Actualizar cantidad_recibida en detalle_orden_compra
+                // 2.5 Actualizar cantidad_recibida en detalle_orden_compra (en unidades de orden)
                 const string sqlUpdDetOc = @"
                     UPDATE detalle_orden_compra 
                     SET cantidad_recibida = cantidad_recibida + @cant
@@ -812,13 +973,11 @@ public class ComprasService
             cmdCxP.Parameters.AddWithValue("@idProv", input.IdProveedor);
             cmdCxP.Parameters.AddWithValue("@numDoc", input.NumeroFactura.Trim());
             cmdCxP.Parameters.AddWithValue("@fEmision", input.FechaFactura.Date);
-            cmdCxP.Parameters.AddWithValue("@fVence", input.FechaFactura.Date.AddDays(30)); // Plazo estándar 30 días
+            cmdCxP.Parameters.AddWithValue("@fVence", input.FechaFactura.Date.AddDays(30));
             cmdCxP.Parameters.AddWithValue("@monto", input.MontoTotalFacturado);
             await cmdCxP.ExecuteNonQueryAsync();
 
             // 5. Asiento Contable Automático en Libro Diario
-            // Debe: Inventario de Mercaderías (1.1.02) + IVA Crédito Fiscal (1.1.04)
-            // Haber: Cuentas por Pagar Proveedores (2.1.01)
             try
             {
                 int nextAsientoNum = 1;
@@ -839,11 +998,9 @@ public class ComprasService
                 cmdAsiento.Parameters.AddWithValue("@user", idUsuario);
                 int idAsiento = Convert.ToInt32(await cmdAsiento.ExecuteScalarAsync());
 
-                decimal montoNeto = Math.Round(input.MontoTotalFacturado / 1.19m, 2);
-                decimal montoIva = input.MontoTotalFacturado - montoNeto;
+                decimal montoNeto = input.MontoNeto > 0 ? input.MontoNeto : Math.Round(input.MontoTotalFacturado / 1.19m, 2);
+                decimal montoIva = input.MontoIva > 0 ? input.MontoIva : (input.MontoTotalFacturado - montoNeto);
 
-                // Cuentas contables:
-                // 7 = 1.1.02 (Inventario), 13 = 1.1.04 (IVA Crédito Fiscal), 11 = 2.1.01 (Cuentas por Pagar)
                 const string sqlDetAsiento = @"
                     INSERT INTO detalle_asiento_contable (id_asiento, id_cuenta, debe, haber) VALUES
                     (@idAsiento, 7, @neto, 0),
@@ -857,7 +1014,6 @@ public class ComprasService
                 cmdDetAsiento.Parameters.AddWithValue("@total", input.MontoTotalFacturado);
                 await cmdDetAsiento.ExecuteNonQueryAsync();
 
-                // Asociar id_asiento_contable a la recepción
                 const string sqlLinkAsiento = "UPDATE recepciones_facturas_compra SET id_asiento_contable = @idAsiento WHERE id_recepcion = @idRec";
                 await using var cmdLink = new MySqlCommand(sqlLinkAsiento, cn, transaccion);
                 cmdLink.Parameters.AddWithValue("@idAsiento", idAsiento);
@@ -880,7 +1036,387 @@ public class ComprasService
     }
 
     // =========================================================
-    // REPORTE: REGISTRO DE COMPRAS POR LABORATORIO
+    // RF-COM-09: GESTIÓN DE CUARENTENA DE LOTES (APROBACIÓN QF)
+    // =========================================================
+
+    public async Task<List<LoteCuarentena>> ObtenerLotesCuarentenaAsync(string? filtroEstado = null)
+    {
+        await using var cn = _db.CrearConexion();
+        await cn.OpenAsync();
+        await AsegurarInfraestructuraAsync(cn);
+
+        const string sql = @"
+            SELECT l.id_lote, l.id_producto, p.sku, p.nombre_comercial,
+                   l.numero_lote, l.fecha_vencimiento, l.stock_actual, l.estado_cuarentena
+            FROM lotes l
+            JOIN productos p ON p.id_producto = l.id_producto
+            WHERE (@filtro IS NULL OR l.estado_cuarentena = @filtro)
+            ORDER BY (CASE WHEN l.estado_cuarentena = 'CUARENTENA' THEN 0 ELSE 1 END), l.fecha_vencimiento ASC";
+
+        await using var cmd = new MySqlCommand(sql, cn);
+        cmd.Parameters.AddWithValue("@filtro", string.IsNullOrWhiteSpace(filtroEstado) ? (object)DBNull.Value : filtroEstado);
+        await using var rd = await cmd.ExecuteReaderAsync();
+
+        var lista = new List<LoteCuarentena>();
+        while (await rd.ReadAsync())
+        {
+            lista.Add(new LoteCuarentena
+            {
+                IdLote = rd.GetInt32(0),
+                IdProducto = rd.GetInt32(1),
+                Sku = rd.GetString(2),
+                NombreProducto = rd.GetString(3),
+                NumeroLote = rd.GetString(4),
+                FechaVencimiento = Convert.ToDateTime(rd.GetValue(5)),
+                StockActual = Convert.ToInt32(rd.GetValue(6)),
+                EstadoCuarentena = rd.GetString(7)
+            });
+        }
+        return lista;
+    }
+
+    public async Task LiberarLoteCuarentenaAsync(int idLote)
+    {
+        await using var cn = _db.CrearConexion();
+        await cn.OpenAsync();
+        const string sql = "UPDATE lotes SET estado_cuarentena = 'LIBERADO' WHERE id_lote = @id";
+        await using var cmd = new MySqlCommand(sql, cn);
+        cmd.Parameters.AddWithValue("@id", idLote);
+        int filas = await cmd.ExecuteNonQueryAsync();
+        if (filas == 0)
+            throw new InvalidOperationException("No se encontró el lote especificado o ya fue procesado.");
+    }
+
+    public async Task PonerEnCuarentenaAsync(int idLote)
+    {
+        await using var cn = _db.CrearConexion();
+        await cn.OpenAsync();
+        const string sql = "UPDATE lotes SET estado_cuarentena = 'CUARENTENA' WHERE id_lote = @id";
+        await using var cmd = new MySqlCommand(sql, cn);
+        cmd.Parameters.AddWithValue("@id", idLote);
+        int filas = await cmd.ExecuteNonQueryAsync();
+        if (filas == 0)
+            throw new InvalidOperationException("No se encontró el lote especificado.");
+    }
+
+    // =========================================================
+    // RF-COM-07: DEVOLUCIONES A PROVEEDOR Y NOTAS DE CRÉDITO
+    // =========================================================
+
+    public async Task InicializarTablasDevoluciones()
+    {
+        await AsegurarInfraestructuraAsync();
+    }
+
+    public async Task<List<LoteDevolucionItem>> ObtenerLotesParaDevolucionAsync(int idProveedor)
+    {
+        await using var cn = _db.CrearConexion();
+        await cn.OpenAsync();
+        await AsegurarInfraestructuraAsync(cn);
+
+        const string sql = @"
+            SELECT DISTINCT l.id_lote, l.id_producto, p.sku, p.nombre_comercial,
+                   l.numero_lote, l.fecha_vencimiento, l.stock_actual,
+                   COALESCE(
+                       (SELECT drl.costo_adquisicion_unitario 
+                        FROM detalle_recepcion_lotes drl 
+                        WHERE drl.id_producto = l.id_producto AND drl.numero_lote = l.numero_lote 
+                        ORDER BY drl.id_detalle_recepcion DESC LIMIT 1),
+                       p.costo_promedio_ponderado
+                   ) AS costo_unitario
+            FROM lotes l
+            JOIN productos p ON p.id_producto = l.id_producto
+            LEFT JOIN detalle_recepcion_lotes dr ON dr.id_producto = l.id_producto AND dr.numero_lote = l.numero_lote
+            LEFT JOIN recepciones_facturas_compra rfc ON rfc.id_recepcion = dr.id_recepcion
+            LEFT JOIN ordenes_compra oc ON oc.id_orden_compra = rfc.id_orden_compra
+            WHERE l.stock_actual > 0 
+              AND (oc.id_proveedor = @idProv OR @idProv = 0)
+            ORDER BY l.fecha_vencimiento ASC";
+
+        await using var cmd = new MySqlCommand(sql, cn);
+        cmd.Parameters.AddWithValue("@idProv", idProveedor);
+        await using var rd = await cmd.ExecuteReaderAsync();
+
+        var lista = new List<LoteDevolucionItem>();
+        while (await rd.ReadAsync())
+        {
+            lista.Add(new LoteDevolucionItem
+            {
+                IdLote = rd.GetInt32(0),
+                IdProducto = rd.GetInt32(1),
+                Sku = rd.GetString(2),
+                NombreProducto = rd.GetString(3),
+                NumeroLote = rd.GetString(4),
+                FechaVencimiento = Convert.ToDateTime(rd.GetValue(5)),
+                StockActual = Convert.ToInt32(rd.GetValue(6)),
+                CostoUnitario = Dec(rd, 7),
+                CantidadADevolver = 0
+            });
+        }
+        return lista;
+    }
+
+    public async Task<(int IdDevolucion, string NumeroNc)> RegistrarDevolucionProveedorAsync(DevolucionProveedorInput input, int idUsuario)
+    {
+        if (input.Lineas == null || input.Lineas.Count == 0 || input.Lineas.All(l => l.CantidadADevolver <= 0))
+            throw new InvalidOperationException("Debe seleccionar al menos un lote con cantidad a devolver mayor a cero.");
+
+        await using var cn = _db.CrearConexion();
+        await cn.OpenAsync();
+        await AsegurarInfraestructuraAsync(cn);
+        await using var tx = await cn.BeginTransactionAsync();
+
+        try
+        {
+            decimal totalMonto = input.Lineas.Where(l => l.CantidadADevolver > 0).Sum(l => l.Subtotal);
+
+            const string sqlDev = @"
+                INSERT INTO devoluciones_proveedor
+                    (id_proveedor, numero_nota_credito, fecha_devolucion, motivo, monto_total, estado, id_usuario, observaciones)
+                VALUES
+                    (@idProv, @numNc, @fecha, @motivo, @total, 'REGISTRADA', @idUser, @obs);
+                SELECT LAST_INSERT_ID();";
+
+            await using var cmdDev = new MySqlCommand(sqlDev, cn, tx);
+            cmdDev.Parameters.AddWithValue("@idProv", input.IdProveedor);
+            cmdDev.Parameters.AddWithValue("@numNc", input.NumeroNotaCredito.Trim());
+            cmdDev.Parameters.AddWithValue("@fecha", input.FechaDevolucion.Date);
+            cmdDev.Parameters.AddWithValue("@motivo", input.Motivo);
+            cmdDev.Parameters.AddWithValue("@total", totalMonto);
+            cmdDev.Parameters.AddWithValue("@idUser", idUsuario);
+            cmdDev.Parameters.AddWithValue("@obs", string.IsNullOrWhiteSpace(input.Observaciones) ? (object)DBNull.Value : input.Observaciones.Trim());
+
+            int idDevolucion = Convert.ToInt32(await cmdDev.ExecuteScalarAsync());
+
+            foreach (var linea in input.Lineas.Where(l => l.CantidadADevolver > 0))
+            {
+                const string sqlLockLote = "SELECT stock_actual FROM lotes WHERE id_lote = @idLote FOR UPDATE;";
+                int stockActualLote = 0;
+                await using (var cmdLock = new MySqlCommand(sqlLockLote, cn, tx))
+                {
+                    cmdLock.Parameters.AddWithValue("@idLote", linea.IdLote);
+                    stockActualLote = Convert.ToInt32(await cmdLock.ExecuteScalarAsync());
+                }
+
+                if (linea.CantidadADevolver > stockActualLote)
+                    throw new InvalidOperationException($"La cantidad a devolver ({linea.CantidadADevolver}) para el lote '{linea.NumeroLote}' supera el stock actual disponible ({stockActualLote}).");
+
+                const string sqlDet = @"
+                    INSERT INTO devoluciones_proveedor_detalle
+                        (id_devolucion, id_lote, id_producto, cantidad_devuelta, costo_unitario, subtotal)
+                    VALUES
+                        (@idDev, @idLote, @idProd, @cant, @costo, @sub);";
+
+                await using var cmdDet = new MySqlCommand(sqlDet, cn, tx);
+                cmdDet.Parameters.AddWithValue("@idDev", idDevolucion);
+                cmdDet.Parameters.AddWithValue("@idLote", linea.IdLote);
+                cmdDet.Parameters.AddWithValue("@idProd", linea.IdProducto);
+                cmdDet.Parameters.AddWithValue("@cant", linea.CantidadADevolver);
+                cmdDet.Parameters.AddWithValue("@costo", linea.CostoUnitario);
+                cmdDet.Parameters.AddWithValue("@sub", linea.Subtotal);
+                await cmdDet.ExecuteNonQueryAsync();
+
+                const string sqlUpd = "UPDATE lotes SET stock_actual = stock_actual - @cant WHERE id_lote = @idLote;";
+                await using var cmdUpd = new MySqlCommand(sqlUpd, cn, tx);
+                cmdUpd.Parameters.AddWithValue("@cant", linea.CantidadADevolver);
+                cmdUpd.Parameters.AddWithValue("@idLote", linea.IdLote);
+                await cmdUpd.ExecuteNonQueryAsync();
+
+                const string sqlSaldo = "SELECT COALESCE(SUM(stock_actual), 0) FROM lotes WHERE id_producto = @idProd;";
+                int saldoTotal = 0;
+                await using (var cmdSaldo = new MySqlCommand(sqlSaldo, cn, tx))
+                {
+                    cmdSaldo.Parameters.AddWithValue("@idProd", linea.IdProducto);
+                    saldoTotal = Convert.ToInt32(await cmdSaldo.ExecuteScalarAsync());
+                }
+
+                const string sqlKardex = @"
+                    INSERT INTO kardex_movimientos
+                        (id_producto, id_lote, tipo_movimiento, origen_documento, id_referencia_origen, cantidad, costo_unitario, saldo_stock_producto, id_usuario)
+                    VALUES
+                        (@idProd, @idLote, 'SALIDA', 'MERMA', @idRef, @cant, @costo, @saldo, @idUser);";
+
+                await using var cmdKardex = new MySqlCommand(sqlKardex, cn, tx);
+                cmdKardex.Parameters.AddWithValue("@idProd", linea.IdProducto);
+                cmdKardex.Parameters.AddWithValue("@idLote", linea.IdLote);
+                cmdKardex.Parameters.AddWithValue("@idRef", idDevolucion);
+                cmdKardex.Parameters.AddWithValue("@cant", linea.CantidadADevolver);
+                cmdKardex.Parameters.AddWithValue("@costo", linea.CostoUnitario);
+                cmdKardex.Parameters.AddWithValue("@saldo", saldoTotal);
+                cmdKardex.Parameters.AddWithValue("@idUser", idUsuario);
+                await cmdKardex.ExecuteNonQueryAsync();
+            }
+
+            await tx.CommitAsync();
+            return (idDevolucion, input.NumeroNotaCredito);
+        }
+        catch
+        {
+            await tx.RollbackAsync();
+            throw;
+        }
+    }
+
+    public async Task<List<HistorialDevolucionProveedor>> ObtenerHistorialDevolucionesAsync(int? idProveedor = null)
+    {
+        await using var cn = _db.CrearConexion();
+        await cn.OpenAsync();
+        await AsegurarInfraestructuraAsync(cn);
+
+        const string sql = @"
+            SELECT d.id_devolucion, d.numero_nota_credito, d.fecha_devolucion,
+                   p.razon_social, d.motivo, d.monto_total, d.estado
+            FROM devoluciones_proveedor d
+            JOIN proveedores p ON p.id_proveedor = d.id_proveedor
+            WHERE (@idProv IS NULL OR d.id_proveedor = @idProv)
+            ORDER BY d.fecha_devolucion DESC, d.id_devolucion DESC";
+
+        await using var cmd = new MySqlCommand(sql, cn);
+        cmd.Parameters.AddWithValue("@idProv", idProveedor.HasValue && idProveedor.Value > 0 ? (object)idProveedor.Value : DBNull.Value);
+        await using var rd = await cmd.ExecuteReaderAsync();
+
+        var lista = new List<HistorialDevolucionProveedor>();
+        while (await rd.ReadAsync())
+        {
+            lista.Add(new HistorialDevolucionProveedor
+            {
+                Id = rd.GetInt32(0),
+                NumeroNotaCredito = rd.GetString(1),
+                Fecha = Convert.ToDateTime(rd.GetValue(2)),
+                Proveedor = rd.GetString(3),
+                Motivo = rd.GetString(4),
+                MontoTotal = Dec(rd, 5),
+                Estado = rd.GetString(6)
+            });
+        }
+        return lista;
+    }
+
+    // =========================================================
+    // RF-COM-11: GESTIÓN DE EQUIVALENCIAS DE PRESENTACIÓN
+    // =========================================================
+
+    public async Task InicializarTablasEquivalencias()
+    {
+        await AsegurarInfraestructuraAsync();
+    }
+
+    public async Task<List<EquivalenciaProducto>> ObtenerEquivalenciasAsync()
+    {
+        await using var cn = _db.CrearConexion();
+        await cn.OpenAsync();
+        await AsegurarInfraestructuraAsync(cn);
+
+        const string sql = @"
+            SELECT eq.id_equivalencia, eq.id_producto, p.sku, p.nombre_comercial,
+                   eq.unidad_compra, eq.unidad_venta, eq.factor_conversion, eq.activo
+            FROM equivalencias_presentacion eq
+            JOIN productos p ON p.id_producto = eq.id_producto
+            ORDER BY p.nombre_comercial ASC";
+
+        await using var cmd = new MySqlCommand(sql, cn);
+        await using var rd = await cmd.ExecuteReaderAsync();
+
+        var lista = new List<EquivalenciaProducto>();
+        while (await rd.ReadAsync())
+        {
+            lista.Add(new EquivalenciaProducto
+            {
+                IdEquivalencia = rd.GetInt32(0),
+                IdProducto = rd.GetInt32(1),
+                Sku = rd.GetString(2),
+                NombreProducto = rd.GetString(3),
+                UnidadCompra = rd.GetString(4),
+                UnidadVenta = rd.GetString(5),
+                FactorConversion = Dec(rd, 6),
+                Activo = rd.GetBoolean(7)
+            });
+        }
+        return lista;
+    }
+
+    public async Task<EquivalenciaProducto?> ObtenerEquivalenciaPorProductoAsync(int idProducto)
+    {
+        await using var cn = _db.CrearConexion();
+        await cn.OpenAsync();
+        await AsegurarInfraestructuraAsync(cn);
+
+        const string sql = @"
+            SELECT eq.id_equivalencia, eq.id_producto, p.sku, p.nombre_comercial,
+                   eq.unidad_compra, eq.unidad_venta, eq.factor_conversion, eq.activo
+            FROM equivalencias_presentacion eq
+            JOIN productos p ON p.id_producto = eq.id_producto
+            WHERE eq.id_producto = @idProd AND eq.activo = 1
+            LIMIT 1";
+
+        await using var cmd = new MySqlCommand(sql, cn);
+        cmd.Parameters.AddWithValue("@idProd", idProducto);
+        await using var rd = await cmd.ExecuteReaderAsync();
+
+        if (await rd.ReadAsync())
+        {
+            return new EquivalenciaProducto
+            {
+                IdEquivalencia = rd.GetInt32(0),
+                IdProducto = rd.GetInt32(1),
+                Sku = rd.GetString(2),
+                NombreProducto = rd.GetString(3),
+                UnidadCompra = rd.GetString(4),
+                UnidadVenta = rd.GetString(5),
+                FactorConversion = Dec(rd, 6),
+                Activo = rd.GetBoolean(7)
+            };
+        }
+        return null;
+    }
+
+    public async Task GuardarEquivalenciaAsync(EquivalenciaProducto eq)
+    {
+        if (eq.IdProducto <= 0)
+            throw new InvalidOperationException("Debe seleccionar un producto válido.");
+        if (string.IsNullOrWhiteSpace(eq.UnidadCompra))
+            throw new InvalidOperationException("Debe ingresar la unidad de compra (ej: Caja x 1000).");
+        if (string.IsNullOrWhiteSpace(eq.UnidadVenta))
+            throw new InvalidOperationException("Debe ingresar la unidad de venta/dispensación (ej: Blíster x 10).");
+        if (eq.FactorConversion <= 0)
+            throw new InvalidOperationException("El factor de conversión debe ser un número positivo mayor a 0.");
+
+        await using var cn = _db.CrearConexion();
+        await cn.OpenAsync();
+        await AsegurarInfraestructuraAsync(cn);
+
+        const string sql = @"
+            INSERT INTO equivalencias_presentacion
+                (id_producto, unidad_compra, unidad_venta, factor_conversion, activo)
+            VALUES
+                (@idProd, @uCompra, @uVenta, @factor, @activo)
+            ON DUPLICATE KEY UPDATE
+                unidad_compra = VALUES(unidad_compra),
+                unidad_venta = VALUES(unidad_venta),
+                factor_conversion = VALUES(factor_conversion),
+                activo = VALUES(activo);";
+
+        await using var cmd = new MySqlCommand(sql, cn);
+        cmd.Parameters.AddWithValue("@idProd", eq.IdProducto);
+        cmd.Parameters.AddWithValue("@uCompra", eq.UnidadCompra.Trim());
+        cmd.Parameters.AddWithValue("@uVenta", eq.UnidadVenta.Trim());
+        cmd.Parameters.AddWithValue("@factor", eq.FactorConversion);
+        cmd.Parameters.AddWithValue("@activo", eq.Activo ? 1 : 0);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    public async Task EliminarEquivalenciaAsync(int idEquivalencia)
+    {
+        await using var cn = _db.CrearConexion();
+        await cn.OpenAsync();
+        const string sql = "DELETE FROM equivalencias_presentacion WHERE id_equivalencia = @id";
+        await using var cmd = new MySqlCommand(sql, cn);
+        cmd.Parameters.AddWithValue("@id", idEquivalencia);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    // =========================================================
+    // REPORTE: REGISTRO DE COMPRAS POR LABORATORIO (RF-COM-04)
     // =========================================================
 
     public async Task<(ResumenReporteCompras Resumen, List<CompraPorProveedor> Filas)> ObtenerReporteComprasAsync(
@@ -958,7 +1494,7 @@ public class ComprasService
     }
 
     // =========================================================
-    // REPORTE: CUMPLIMIENTO DE ÓRDENES Y SLA DE PROVEEDORES
+    // REPORTE: CUMPLIMIENTO DE ÓRDENES Y SLA DE PROVEEDORES (RF-COM-05 / RF-COM-12)
     // =========================================================
 
     public async Task<(ResumenCumplimientoOrdenes Resumen, List<ItemCumplimientoOrden> Items)> ObtenerReporteCumplimientoAsync(
@@ -1026,7 +1562,7 @@ public class ComprasService
     }
 
     // =========================================================
-    // REPORTE: HISTORIAL DE PRECIOS Y COSTOS DE ADQUISICIÓN
+    // REPORTE: HISTORIAL DE PRECIOS Y COSTOS DE ADQUISICIÓN (RF-COM-06)
     // =========================================================
 
     public async Task<(ResumenHistorialPrecios Resumen, List<ItemHistorialPrecio> Items)> ObtenerReporteHistorialPreciosAsync(
@@ -1092,7 +1628,6 @@ public class ComprasService
             });
         }
 
-        // Calcular costo anterior y variación agrupado por producto
         var items = new List<ItemHistorialPrecio>();
         var grupos = temp.GroupBy(x => x.Sku);
 
@@ -1107,7 +1642,6 @@ public class ComprasService
             }
         }
 
-        // Orden descendente por fecha para la presentación en pantalla
         var listaFinal = items.OrderByDescending(x => x.Fecha).ToList();
 
         var resumen = new ResumenHistorialPrecios

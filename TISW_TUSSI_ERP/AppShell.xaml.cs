@@ -124,6 +124,22 @@ public partial class AppShell : Shell
         tapSalir.Tapped += (_, _) => CerrarSesion();
         CerrarSesionLabel.GestureRecognizers.Add(tapSalir);
 
+        Navigating += (sender, args) =>
+        {
+            var loc = args.Target?.Location?.ToString()?.TrimStart('/') ?? "";
+            if (string.IsNullOrWhiteSpace(loc) || loc.Contains("DashboardPage", StringComparison.OrdinalIgnoreCase))
+                return;
+
+            var item = Secciones.SelectMany(s => s.Items).FirstOrDefault(i => loc.Contains(i.Ruta, StringComparison.OrdinalIgnoreCase));
+            if (item != null && !Sesion.PuedeAccederSeccion(item.Seccion))
+            {
+                args.Cancel();
+                _ = DisplayAlertAsync("Acceso Denegado (RBAC)",
+                    $"Tu perfil actual ({Sesion.UsuarioActual?.NombreRol ?? "Invitado"}) no posee permisos para acceder al módulo '{item.Seccion}'.",
+                    "Entendido");
+            }
+        };
+
         Navigated += (_, e) => Resaltar(e.Current?.Location?.ToString() ?? "");
         Resaltar("DashboardPage");
     }

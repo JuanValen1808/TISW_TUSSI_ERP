@@ -174,7 +174,6 @@ public class NuevaOrdenViewModel : BaseViewModel
         {
             existente.Cantidad += cantidad;
             existente.PrecioUnitario = costo;
-            // Refrescar lista
             var index = Carrito.IndexOf(existente);
             Carrito.RemoveAt(index);
             Carrito.Insert(index, existente);
@@ -216,21 +215,27 @@ public class NuevaOrdenViewModel : BaseViewModel
         OnPropertyChanged(nameof(SuperaLimitePresupuestario));
     }
 
-    // Sugerencia automatizada de reabastecimiento
+    // RF-COM-08: Sugerencia automatizada de reabastecimiento (Demanda + Lead Time + Consumo Histórico Real)
     private async Task CargarSugerenciasReabastecimientoAsync()
     {
         if (EstaOcupado) return;
         EstaOcupado = true;
         try
         {
-            var sugerencias = await _servicio.ObtenerSugerenciasReabastecimientoAsync();
+            int? idProv = ProveedorSeleccionado?.Id;
+            var sugerencias = await _servicio.ObtenerSugerenciasReabastecimientoAsync(idProv);
             if (sugerencias.Count == 0)
             {
-                await Shell.Current.DisplayAlert("Sugerencias de Reabastecimiento", "Todos los productos del inventario se encuentran actualmente por encima de su punto de reorden.", "OK");
+                await Shell.Current.DisplayAlert("Sugerencias de Reabastecimiento", "Todos los productos evaluados se encuentran actualmente por encima de su punto de reorden.", "OK");
                 return;
             }
 
             int agregados = 0;
+            var resumenCalculo = new System.Text.StringBuilder();
+            resumenCalculo.AppendLine("Algoritmo de Reabastecimiento Automatizado:");
+            resumenCalculo.AppendLine("Variables: Consumo Histórico Mensual (Kardex) + Tiempo Entrega Pactado + Punto Reorden (Stock Crítico) - Stock Actual");
+            resumenCalculo.AppendLine();
+
             foreach (var s in sugerencias)
             {
                 var enCarrito = Carrito.FirstOrDefault(c => c.IdProducto == s.IdProducto);
@@ -245,11 +250,20 @@ public class NuevaOrdenViewModel : BaseViewModel
                         PrecioUnitario = s.CostoEstimado > 0 ? s.CostoEstimado : 1000m
                     });
                     agregados++;
+
+                    if (agregados <= 4)
+                    {
+                        resumenCalculo.AppendLine($"• {s.NombreProducto}:");
+                        resumenCalculo.AppendLine($"   Consumo mensual: {s.ConsumoMensualReal} un. | Plazo lab: {s.PlazoEntregaDias} días | Reorden: {s.PuntoReorden} un. | Stock actual: {s.StockActual} un. → Sugerido: {s.CantidadSugerida} un.");
+                    }
                 }
             }
 
             CalcularTotales();
-            await Shell.Current.DisplayAlert("Sugerencias Cargadas", $"Se precargaron {agregados} fármacos con stock crítico o debajo del punto de reorden conforme al cálculo automatizado de demanda.", "OK");
+            await Shell.Current.DisplayAlert(
+                "Sugerencias de Reabastecimiento", 
+                $"{resumenCalculo}\nSe precargaron {agregados} fármacos críticos directamente en el pedido.", 
+                "OK");
         }
         catch (Exception ex)
         {
@@ -298,7 +312,6 @@ public class NuevaOrdenViewModel : BaseViewModel
 
             _servicio.UltimaOrdenCreadaId = idOrden;
 
-            // Limpiar formulario de inmediato tras confirmar persistencia
             Carrito.Clear();
             ProductoSeleccionado = null;
             CantidadFiltro = "10";
@@ -320,7 +333,6 @@ public class NuevaOrdenViewModel : BaseViewModel
                     "OK");
             }
 
-            // Volver al listado (que recargará automáticamente con la nueva orden)
             await Shell.Current.GoToAsync("..");
         }
         catch (Exception ex)
