@@ -45,6 +45,11 @@ namespace TISW_TUSSI_ERP
             builder.Services.AddSingleton<InventarioService>();
             builder.Services.AddTransient<ReporteService>();
 
+            // Control de Caja
+            builder.Services.AddTransient<CajaService>();
+            builder.Services.AddTransient<CajaViewModel>();
+            builder.Services.AddTransient<CajaPage>();
+
             // Auth
             builder.Services.AddTransient<LoginViewModel>();
             builder.Services.AddTransient<LoginPage>();
@@ -69,16 +74,29 @@ namespace TISW_TUSSI_ERP
             builder.Services.AddTransient<ReporteHistorialPreciosViewModel>();
             builder.Services.AddTransient<ReporteHistorialPreciosPage>();
 
-            // Ventas
+            // Ventas / POS
             builder.Services.AddTransient<PosViewModel>();
             builder.Services.AddTransient<PosPage>();
+            builder.Services.AddTransient<HistorialVentasService>();
+            builder.Services.AddTransient<HistorialVentasViewModel>();
+            builder.Services.AddTransient<HistorialVentasPage>();
             builder.Services.AddSingleton<ClientesService>();
             builder.Services.AddTransient<ClientesViewModel>();
             builder.Services.AddTransient<ClientesPage>();
-            builder.Services.AddTransient<RankingVentasViewModel>();
-            builder.Services.AddTransient<RankingVentasPage>();
             builder.Services.AddTransient<ConveniosViewModel>();
             builder.Services.AddTransient<ConveniosPage>();
+            builder.Services.AddTransient<RankingVentasViewModel>();
+            builder.Services.AddTransient<RankingVentasPage>();
+            builder.Services.AddTransient<ReporteProductosService>();
+            builder.Services.AddTransient<ReporteProductosViewModel>();
+            builder.Services.AddTransient<ReporteProductosPage>();
+            builder.Services.AddSingleton<CuentasPorCobrarVentasService>();
+            builder.Services.AddTransient<CuentasPorCobrarVentasViewModel>();
+            builder.Services.AddTransient<CuentasPorCobrarVentasPage>();
+            builder.Services.AddSingleton<DevolucionesService>();
+            builder.Services.AddTransient<SelectorVentasDevolucionService>();
+            builder.Services.AddTransient<DevolucionesViewModel>();
+            builder.Services.AddTransient<DevolucionesPage>();
 
             // Contabilidad (RF-CON-01 a RF-CON-09)
             builder.Services.AddSingleton<ContabilidadService>();

@@ -17,9 +17,14 @@ public partial class AppShell : Shell
         "DashboardPage",
         "OrdenesCompraPage",
         "PosPage",
+        "HistorialVentasPage",
         "ClientesPage",
         "ConveniosPage",
         "RankingVentasPage",
+        "ReporteProductosPage",
+        "CuentasPorCobrarVentasPage",
+        "DevolucionesPage",
+        "CajaPage",
         "ProveedoresPage",
         "RecepcionFacturasPage",
         "ReporteComprasPage",
@@ -54,10 +59,14 @@ public partial class AppShell : Shell
         new("OPERACIÓN", new[]
         {
             new ItemMenu("", "Punto de Venta", "PosPage", "OPERACIÓN"),
+            new ItemMenu("", "Historial de Ventas", "HistorialVentasPage", "OPERACIÓN"),
             new ItemMenu("", "Control de Caja", "CajaPage", "OPERACIÓN"),
             new ItemMenu("", "Clientes", "ClientesPage", "OPERACIÓN"),
             new ItemMenu("", "Convenios", "ConveniosPage", "OPERACIÓN"),
             new ItemMenu("", "Ranking de Ventas", "RankingVentasPage", "OPERACIÓN"),
+            new ItemMenu("", "Ventas por Producto y Categoría", "ReporteProductosPage", "OPERACIÓN"),
+            new ItemMenu("", "Cuentas por Cobrar (Ventas)", "CuentasPorCobrarVentasPage", "OPERACIÓN"),
+            new ItemMenu("", "Devoluciones de Ventas", "DevolucionesPage", "OPERACIÓN"),
         }),
         new("INVENTARIOS", new[]
         {
@@ -144,6 +153,7 @@ public partial class AppShell : Shell
                     FontSize = 13,
                     TextColor = Color.FromArgb("#374151")
                 };
+
                 var borde = new Border
                 {
                     StrokeThickness = 0,
@@ -152,6 +162,7 @@ public partial class AppShell : Shell
                     BackgroundColor = Colors.Transparent,
                     Content = texto
                 };
+
                 var tap = new TapGestureRecognizer();
                 tap.Tapped += async (_, _) => await Navegar(item);
                 borde.GestureRecognizers.Add(tap);
@@ -174,9 +185,14 @@ public partial class AppShell : Shell
         }
 
         if (Implementadas.Contains(item.Ruta))
+        {
             await GoToAsync($"//{item.Ruta}");
+        }
         else
-            await DisplayAlertAsync("Módulo en desarrollo", $"\"{item.Titulo}\" aún no está implementado.", "OK");
+        {
+            await DisplayAlertAsync("Módulo en desarrollo",
+                $"\"{item.Titulo}\" aún no está implementado.", "OK");
+        }
     }
 
     private void Resaltar(string ubicacion)
@@ -193,15 +209,9 @@ public partial class AppShell : Shell
     private static void CerrarSesion()
     {
         Sesion.CerrarSesion();
-
-        var login = IPlatformApplication.Current!
-            .Services.GetRequiredService<LoginPage>();
-
+        var login = IPlatformApplication.Current!.Services.GetRequiredService<LoginPage>();
         var ventana = Application.Current?.Windows.FirstOrDefault();
-
         if (ventana != null)
-        {
             ventana.Page = new NavigationPage(login);
-        }
     }
 }

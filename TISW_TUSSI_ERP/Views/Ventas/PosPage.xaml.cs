@@ -1,3 +1,5 @@
+
+using System;
 using TISW_TUSSI_ERP.ViewModels.Ventas;
 
 namespace TISW_TUSSI_ERP.Views.Ventas;
@@ -9,12 +11,25 @@ public partial class PosPage : ContentPage
     public PosPage(PosViewModel viewModel)
     {
         InitializeComponent();
-        BindingContext = _vm = viewModel;
+
+        _vm = viewModel;
+        BindingContext = _vm;
     }
 
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        await _vm.CargarAsync();
+
+        try
+        {
+            await _vm.CargarAsync();
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlertAsync(
+                "Error al cargar el POS",
+                ex.Message,
+                "Aceptar");
+        }
     }
 }

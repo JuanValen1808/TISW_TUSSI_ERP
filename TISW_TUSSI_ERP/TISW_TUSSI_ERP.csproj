@@ -43,15 +43,15 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <MauiXaml Update="Views\Inventario\InventarioPage.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="Views\Inventario\KardexPage.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="Views\Inventario\MermasPage.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
+		<MauiXaml Update="Views\Inventario\InventarioPage.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</MauiXaml>
+		<MauiXaml Update="Views\Inventario\KardexPage.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</MauiXaml>
+		<MauiXaml Update="Views\Inventario\MermasPage.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</MauiXaml>
 	</ItemGroup>
 
 	<ItemGroup>
@@ -79,6 +79,21 @@
 		<Compile Update="Views\Ventas\ConveniosPage.xaml.cs">
 			<DependentUpon>ConveniosPage.xaml</DependentUpon>
 		</Compile>
+		<Compile Update="Views\Ventas\CuentasPorCobrarVentasPage.xaml.cs">
+			<DependentUpon>CuentasPorCobrarVentasPage.xaml</DependentUpon>
+		</Compile>
+		<Compile Update="Views\Ventas\DevolucionesPage.xaml.cs">
+			<DependentUpon>DevolucionesPage.xaml</DependentUpon>
+		</Compile>
+		<Compile Update="Views\Ventas\CajaPage.xaml.cs">
+			<DependentUpon>CajaPage.xaml</DependentUpon>
+		</Compile>
+		<Compile Update="Views\Ventas\HistorialVentasPage.xaml.cs">
+			<DependentUpon>HistorialVentasPage.xaml</DependentUpon>
+		</Compile>
+		<Compile Update="Views\Ventas\ReporteProductosPage.xaml.cs">
+			<DependentUpon>ReporteProductosPage.xaml</DependentUpon>
+		</Compile>
 		<Compile Update="Views\Ventas\RankingVentasPage.xaml.cs">
 			<DependentUpon>RankingVentasPage.xaml</DependentUpon>
 		</Compile>
@@ -92,6 +107,21 @@
 			<Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
 		<MauiXaml Update="Views\Ventas\ConveniosPage.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</MauiXaml>
+		<MauiXaml Update="Views\Ventas\CuentasPorCobrarVentasPage.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</MauiXaml>
+		<MauiXaml Update="Views\Ventas\DevolucionesPage.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</MauiXaml>
+		<MauiXaml Update="Views\Ventas\CajaPage.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</MauiXaml>
+		<MauiXaml Update="Views\Ventas\HistorialVentasPage.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</MauiXaml>
+		<MauiXaml Update="Views\Ventas\ReporteProductosPage.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
 		<MauiXaml Update="Views\Ventas\RankingVentasPage.xaml">

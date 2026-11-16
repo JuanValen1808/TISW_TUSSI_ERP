@@ -1,0 +1,642 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:TISW_TUSSI_ERP.ViewModels.Ventas"
+    xmlns:m="clr-namespace:TISW_TUSSI_ERP.Models.Ventas"
+    xmlns:ctrl="clr-namespace:TISW_TUSSI_ERP.Views.Shared"
+    x:Class="TISW_TUSSI_ERP.Views.Ventas.ReporteProductosPage"
+    x:DataType="vm:ReporteProductosViewModel"
+    Shell.NavBarIsVisible="False"
+    BackgroundColor="#F5F7FB"
+    Title="Ventas por Producto y Categoría">
+
+    <Grid RowDefinitions="Auto,*">
+
+        <ctrl:PageHeader
+            Grid.Row="0"
+            Ruta="ERP › Ventas › Reportes"
+            Titulo="Ventas por Producto y Categoría" />
+
+        <ScrollView Grid.Row="1">
+
+            <VerticalStackLayout
+                Padding="24"
+                Spacing="16">
+
+                <!-- ENCABEZADO -->
+                <Grid ColumnDefinitions="*,Auto">
+
+                    <VerticalStackLayout Spacing="4">
+
+                        <Label
+                            Text="Ventas por producto y categoría"
+                            FontSize="21"
+                            FontAttributes="Bold"
+                            TextColor="#172B4D" />
+
+                        <Label
+                            Text="Consulta los productos más vendidos y su distribución por categoría."
+                            FontSize="12"
+                            TextColor="#64748B" />
+
+                    </VerticalStackLayout>
+
+                    <Button
+                        Grid.Column="1"
+                        Text="Actualizar reporte"
+                        Command="{Binding ComandoActualizar}"
+                        BackgroundColor="#2563EB"
+                        TextColor="White"
+                        CornerRadius="9"
+                        Padding="18,10"
+                        VerticalOptions="Center" />
+
+                </Grid>
+
+                <!-- ERROR -->
+                <Border
+                    IsVisible="{Binding HayError}"
+                    BackgroundColor="#FEF2F2"
+                    Stroke="#FECACA"
+                    StrokeShape="RoundRectangle 9"
+                    Padding="12">
+
+                    <Label
+                        Text="{Binding MensajeError}"
+                        TextColor="#B91C1C"
+                        FontSize="12" />
+
+                </Border>
+
+                <!-- INDICADORES -->
+                <Grid
+                    ColumnDefinitions="*,*,*,*"
+                    ColumnSpacing="12">
+
+                    <Border
+                        BackgroundColor="White"
+                        Stroke="#E2E8F0"
+                        StrokeShape="RoundRectangle 12"
+                        Padding="18">
+
+                        <VerticalStackLayout Spacing="8">
+
+                            <Label
+                                Text="IMPORTE DE LÍNEAS"
+                                FontSize="10"
+                                FontAttributes="Bold"
+                                TextColor="#64748B" />
+
+                            <Label
+                                Text="{Binding TotalVendidoTexto}"
+                                FontSize="25"
+                                FontAttributes="Bold"
+                                TextColor="#2563EB" />
+
+                            <Label
+                                Text="Antes de descuentos generales"
+                                FontSize="10"
+                                TextColor="#94A3B8" />
+
+                        </VerticalStackLayout>
+
+                    </Border>
+
+                    <Border
+                        Grid.Column="1"
+                        BackgroundColor="White"
+                        Stroke="#E2E8F0"
+                        StrokeShape="RoundRectangle 12"
+                        Padding="18">
+
+                        <VerticalStackLayout Spacing="8">
+
+                            <Label
+                                Text="UNIDADES VENDIDAS"
+                                FontSize="10"
+                                FontAttributes="Bold"
+                                TextColor="#64748B" />
+
+                            <Label
+                                Text="{Binding TotalUnidadesTexto}"
+                                FontSize="25"
+                                FontAttributes="Bold"
+                                TextColor="#172B4D" />
+
+                            <Label
+                                Text="Cantidad total de unidades"
+                                FontSize="10"
+                                TextColor="#94A3B8" />
+
+                        </VerticalStackLayout>
+
+                    </Border>
+
+                    <Border
+                        Grid.Column="2"
+                        BackgroundColor="White"
+                        Stroke="#E2E8F0"
+                        StrokeShape="RoundRectangle 12"
+                        Padding="18">
+
+                        <VerticalStackLayout Spacing="8">
+
+                            <Label
+                                Text="PRODUCTOS VENDIDOS"
+                                FontSize="10"
+                                FontAttributes="Bold"
+                                TextColor="#64748B" />
+
+                            <Label
+                                Text="{Binding TotalProductosTexto}"
+                                FontSize="25"
+                                FontAttributes="Bold"
+                                TextColor="#172B4D" />
+
+                            <Label
+                                Text="Productos diferentes"
+                                FontSize="10"
+                                TextColor="#94A3B8" />
+
+                        </VerticalStackLayout>
+
+                    </Border>
+
+                    <Border
+                        Grid.Column="3"
+                        BackgroundColor="White"
+                        Stroke="#E2E8F0"
+                        StrokeShape="RoundRectangle 12"
+                        Padding="18">
+
+                        <VerticalStackLayout Spacing="8">
+
+                            <Label
+                                Text="CATEGORÍAS"
+                                FontSize="10"
+                                FontAttributes="Bold"
+                                TextColor="#64748B" />
+
+                            <Label
+                                Text="{Binding TotalCategoriasTexto}"
+                                FontSize="25"
+                                FontAttributes="Bold"
+                                TextColor="#172B4D" />
+
+                            <Label
+                                Text="Categorías con ventas"
+                                FontSize="10"
+                                TextColor="#94A3B8" />
+
+                        </VerticalStackLayout>
+
+                    </Border>
+
+                </Grid>
+
+                <!-- FILTROS -->
+                <Border
+                    BackgroundColor="White"
+                    Stroke="#E2E8F0"
+                    StrokeShape="RoundRectangle 12"
+                    Padding="18">
+
+                    <VerticalStackLayout Spacing="12">
+
+                        <Label
+                            Text="Filtros del reporte"
+                            FontSize="16"
+                            FontAttributes="Bold"
+                            TextColor="#172B4D" />
+
+                        <Grid
+                            ColumnDefinitions="2*,1*,Auto"
+                            ColumnSpacing="12">
+
+                            <VerticalStackLayout Spacing="5">
+
+                                <Label
+                                    Text="Buscar producto"
+                                    FontSize="11"
+                                    TextColor="#64748B" />
+
+                                <Entry
+                                    Text="{Binding Busqueda}"
+                                    Placeholder="Nombre, SKU o categoría"
+                                    BackgroundColor="#F8FAFC"
+                                    TextColor="#172B4D"
+                                    HeightRequest="44"
+                                    FontSize="13" />
+
+                            </VerticalStackLayout>
+
+                            <VerticalStackLayout
+                                Grid.Column="1"
+                                Spacing="5">
+
+                                <Label
+                                    Text="Categoría"
+                                    FontSize="11"
+                                    TextColor="#64748B" />
+
+                                <Picker
+                                    ItemsSource="{Binding OpcionesCategoria}"
+                                    SelectedItem="{Binding CategoriaSeleccionada}"
+                                    BackgroundColor="#F8FAFC"
+                                    TextColor="#172B4D"
+                                    HeightRequest="44"
+                                    FontSize="13" />
+
+                            </VerticalStackLayout>
+
+                            <Button
+                                Grid.Column="2"
+                                Text="Limpiar"
+                                Command="{Binding ComandoLimpiar}"
+                                BackgroundColor="#E8F1FD"
+                                TextColor="#2563EB"
+                                CornerRadius="8"
+                                Padding="16,8"
+                                VerticalOptions="End" />
+
+                        </Grid>
+
+                        <HorizontalStackLayout
+                            Spacing="12"
+                            VerticalOptions="Center">
+
+                            <CheckBox
+                                IsChecked="{Binding UsarFechas}"
+                                Color="#2563EB" />
+
+                            <Label
+                                Text="Filtrar por fechas"
+                                VerticalOptions="Center"
+                                FontSize="12"
+                                TextColor="#475569" />
+
+                        </HorizontalStackLayout>
+
+                        <Grid
+                            IsVisible="{Binding UsarFechas}"
+                            ColumnDefinitions="*,*"
+                            ColumnSpacing="12">
+
+                            <VerticalStackLayout Spacing="5">
+
+                                <Label
+                                    Text="Desde"
+                                    FontSize="11"
+                                    TextColor="#64748B" />
+
+                                <DatePicker
+                                    Date="{Binding FechaDesde}"
+                                    BackgroundColor="#F8FAFC"
+                                    TextColor="#172B4D" />
+
+                            </VerticalStackLayout>
+
+                            <VerticalStackLayout
+                                Grid.Column="1"
+                                Spacing="5">
+
+                                <Label
+                                    Text="Hasta"
+                                    FontSize="11"
+                                    TextColor="#64748B" />
+
+                                <DatePicker
+                                    Date="{Binding FechaHasta}"
+                                    BackgroundColor="#F8FAFC"
+                                    TextColor="#172B4D" />
+
+                            </VerticalStackLayout>
+
+                        </Grid>
+
+                        <Label
+                            Text="Presiona Actualizar reporte para aplicar las fechas seleccionadas."
+                            IsVisible="{Binding UsarFechas}"
+                            FontSize="11"
+                            TextColor="#64748B" />
+
+                    </VerticalStackLayout>
+
+                </Border>
+
+                <!-- TABLA PRODUCTOS -->
+                <Border
+                    BackgroundColor="White"
+                    Stroke="#E2E8F0"
+                    StrokeShape="RoundRectangle 12"
+                    Padding="18">
+
+                    <VerticalStackLayout Spacing="12">
+
+                        <Grid ColumnDefinitions="*,Auto">
+
+                            <VerticalStackLayout Spacing="4">
+
+                                <Label
+                                    Text="Productos más vendidos"
+                                    FontSize="17"
+                                    FontAttributes="Bold"
+                                    TextColor="#172B4D" />
+
+                                <Label
+                                    Text="Ordenados por importe de venta"
+                                    FontSize="11"
+                                    TextColor="#64748B" />
+
+                            </VerticalStackLayout>
+
+                            <Label
+                                Grid.Column="1"
+                                Text="{Binding CantidadResultadosTexto}"
+                                FontSize="12"
+                                TextColor="#64748B"
+                                VerticalOptions="Center" />
+
+                        </Grid>
+
+                        <Grid
+                            ColumnDefinitions="2*,1.3*,0.8*,0.8*,1*"
+                            ColumnSpacing="10"
+                            BackgroundColor="#F1F5F9"
+                            Padding="12">
+
+                            <Label
+                                Text="PRODUCTO"
+                                FontSize="10"
+                                FontAttributes="Bold"
+                                TextColor="#64748B" />
+
+                            <Label
+                                Grid.Column="1"
+                                Text="CATEGORÍA"
+                                FontSize="10"
+                                FontAttributes="Bold"
+                                TextColor="#64748B" />
+
+                            <Label
+                                Grid.Column="2"
+                                Text="UNIDADES"
+                                FontSize="10"
+                                FontAttributes="Bold"
+                                TextColor="#64748B" />
+
+                            <Label
+                                Grid.Column="3"
+                                Text="DOCS."
+                                FontSize="10"
+                                FontAttributes="Bold"
+                                TextColor="#64748B" />
+
+                            <Label
+                                Grid.Column="4"
+                                Text="IMPORTE"
+                                FontSize="10"
+                                FontAttributes="Bold"
+                                TextColor="#64748B"
+                                HorizontalTextAlignment="End" />
+
+                        </Grid>
+
+                        <CollectionView
+                            ItemsSource="{Binding Productos}"
+                            SelectionMode="None"
+                            MaximumHeightRequest="440">
+
+                            <CollectionView.EmptyView>
+
+                                <Label
+                                    Text="No hay ventas de productos para los filtros seleccionados."
+                                    Padding="18"
+                                    HorizontalTextAlignment="Center"
+                                    TextColor="#64748B"
+                                    FontSize="12" />
+
+                            </CollectionView.EmptyView>
+
+                            <CollectionView.ItemTemplate>
+
+                                <DataTemplate x:DataType="m:ReporteProductoVenta">
+
+                                    <VerticalStackLayout Spacing="0">
+
+                                        <Grid
+                                            ColumnDefinitions="2*,1.3*,0.8*,0.8*,1*"
+                                            ColumnSpacing="10"
+                                            Padding="12,14">
+
+                                            <VerticalStackLayout Spacing="3">
+
+                                                <Label
+                                                    Text="{Binding NombreProducto}"
+                                                    FontSize="12"
+                                                    FontAttributes="Bold"
+                                                    TextColor="#172B4D" />
+
+                                                <Label
+                                                    Text="{Binding Sku}"
+                                                    FontSize="10"
+                                                    TextColor="#94A3B8" />
+
+                                            </VerticalStackLayout>
+
+                                            <Label
+                                                Grid.Column="1"
+                                                Text="{Binding Categoria}"
+                                                FontSize="12"
+                                                TextColor="#475569"
+                                                VerticalOptions="Center" />
+
+                                            <Label
+                                                Grid.Column="2"
+                                                Text="{Binding UnidadesTexto}"
+                                                FontSize="12"
+                                                TextColor="#475569"
+                                                VerticalOptions="Center" />
+
+                                            <Label
+                                                Grid.Column="3"
+                                                Text="{Binding NumeroVentas}"
+                                                FontSize="12"
+                                                TextColor="#475569"
+                                                VerticalOptions="Center" />
+
+                                            <Label
+                                                Grid.Column="4"
+                                                Text="{Binding TotalTexto}"
+                                                FontSize="12"
+                                                FontAttributes="Bold"
+                                                TextColor="#172B4D"
+                                                HorizontalTextAlignment="End"
+                                                VerticalOptions="Center" />
+
+                                        </Grid>
+
+                                        <BoxView
+                                            HeightRequest="1"
+                                            BackgroundColor="#F1F5F9" />
+
+                                    </VerticalStackLayout>
+
+                                </DataTemplate>
+
+                            </CollectionView.ItemTemplate>
+
+                        </CollectionView>
+
+                    </VerticalStackLayout>
+
+                </Border>
+
+                <!-- TABLA CATEGORIAS -->
+                <Border
+                    BackgroundColor="White"
+                    Stroke="#E2E8F0"
+                    StrokeShape="RoundRectangle 12"
+                    Padding="18">
+
+                    <VerticalStackLayout Spacing="12">
+
+                        <Label
+                            Text="Resumen por categoría"
+                            FontSize="17"
+                            FontAttributes="Bold"
+                            TextColor="#172B4D" />
+
+                        <Grid
+                            ColumnDefinitions="2*,1*,1*,1.4*"
+                            BackgroundColor="#F1F5F9"
+                            ColumnSpacing="12"
+                            Padding="12">
+
+                            <Label
+                                Text="CATEGORÍA"
+                                FontSize="10"
+                                FontAttributes="Bold"
+                                TextColor="#64748B" />
+
+                            <Label
+                                Grid.Column="1"
+                                Text="PRODUCTOS"
+                                FontSize="10"
+                                FontAttributes="Bold"
+                                TextColor="#64748B" />
+
+                            <Label
+                                Grid.Column="2"
+                                Text="UNIDADES"
+                                FontSize="10"
+                                FontAttributes="Bold"
+                                TextColor="#64748B" />
+
+                            <Label
+                                Grid.Column="3"
+                                Text="IMPORTE"
+                                FontSize="10"
+                                FontAttributes="Bold"
+                                TextColor="#64748B"
+                                HorizontalTextAlignment="End" />
+
+                        </Grid>
+
+                        <CollectionView
+                            ItemsSource="{Binding Categorias}"
+                            SelectionMode="None"
+                            MaximumHeightRequest="340">
+
+                            <CollectionView.EmptyView>
+
+                                <Label
+                                    Text="No hay categorías con ventas."
+                                    Padding="18"
+                                    HorizontalTextAlignment="Center"
+                                    TextColor="#64748B" />
+
+                            </CollectionView.EmptyView>
+
+                            <CollectionView.ItemTemplate>
+
+                                <DataTemplate x:DataType="m:ReporteCategoriaVenta">
+
+                                    <VerticalStackLayout Spacing="0">
+
+                                        <Grid
+                                            ColumnDefinitions="2*,1*,1*,1.4*"
+                                            ColumnSpacing="12"
+                                            Padding="12,14">
+
+                                            <Label
+                                                Text="{Binding Categoria}"
+                                                FontSize="12"
+                                                FontAttributes="Bold"
+                                                TextColor="#172B4D" />
+
+                                            <Label
+                                                Grid.Column="1"
+                                                Text="{Binding ProductosDistintos}"
+                                                FontSize="12"
+                                                TextColor="#475569" />
+
+                                            <Label
+                                                Grid.Column="2"
+                                                Text="{Binding UnidadesTexto}"
+                                                FontSize="12"
+                                                TextColor="#475569" />
+
+                                            <Label
+                                                Grid.Column="3"
+                                                Text="{Binding TotalTexto}"
+                                                FontSize="12"
+                                                FontAttributes="Bold"
+                                                TextColor="#2563EB"
+                                                HorizontalTextAlignment="End" />
+
+                                        </Grid>
+
+                                        <BoxView
+                                            HeightRequest="1"
+                                            BackgroundColor="#F1F5F9" />
+
+                                    </VerticalStackLayout>
+
+                                </DataTemplate>
+
+                            </CollectionView.ItemTemplate>
+
+                        </CollectionView>
+
+                    </VerticalStackLayout>
+
+                </Border>
+
+                <Border
+                    BackgroundColor="#EFF6FF"
+                    Stroke="#DBEAFE"
+                    StrokeShape="RoundRectangle 10"
+                    Padding="14">
+
+                    <Label
+                        Text="Nota: los importes corresponden a las líneas de venta antes de descuentos generales. Se excluyen documentos anulados."
+                        FontSize="12"
+                        TextColor="#475569" />
+
+                </Border>
+
+                <ActivityIndicator
+                    IsVisible="{Binding EstaOcupado}"
+                    IsRunning="{Binding EstaOcupado}"
+                    Color="#2563EB" />
+
+            </VerticalStackLayout>
+
+        </ScrollView>
+
+    </Grid>
+
+</ContentPage>
