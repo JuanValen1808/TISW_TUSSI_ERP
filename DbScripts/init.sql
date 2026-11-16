@@ -267,7 +267,7 @@ CREATE TABLE ventas_encabezado (
     folio_documento VARCHAR(50) NOT NULL,
     tipo_documento ENUM('BOLETA', 'FACTURA', 'NOTA_CREDITO', 'OTRO') NOT NULL,
     fecha_hora_emision TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    id_cliente INT NOT NULL,
+    id_cliente INT NULL,
     id_convenio INT NULL,
     estado_documento ENUM('EMITIDO', 'PAGADO', 'ANULADO', 'PENDIENTE') NOT NULL,
     forma_pago ENUM('EFECTIVO', 'TARJETA', 'TRANSFERENCIA', 'CREDITO', 'OTRO') NOT NULL,
@@ -320,6 +320,88 @@ CREATE TABLE cuentas_por_cobrar (
     CONSTRAINT fk_cxc_convenio
         FOREIGN KEY (id_convenio) REFERENCES convenios_salud(id_convenio),
     UNIQUE KEY uk_cxc_venta (id_venta)
+) ENGINE=InnoDB;
+
+CREATE TABLE cajas (
+    id_caja INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_caja VARCHAR(100) NOT NULL,
+    descripcion VARCHAR(255) NULL,
+    activa BOOLEAN NOT NULL DEFAULT TRUE
+) ENGINE=InnoDB;
+
+CREATE TABLE caja_turnos (
+    id_turno INT AUTO_INCREMENT PRIMARY KEY,
+    id_caja INT NOT NULL,
+    id_usuario_apertura INT NOT NULL,
+    id_usuario_cierre INT NULL,
+    fecha_apertura DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    fecha_cierre DATETIME NULL,
+    monto_inicial DECIMAL(15,2) NOT NULL DEFAULT 0,
+    monto_final_esperado DECIMAL(15,2) NULL,
+    monto_final_real DECIMAL(15,2) NULL,
+    diferencia DECIMAL(15,2) NULL,
+    observaciones VARCHAR(500) NULL,
+    estado VARCHAR(30) NOT NULL DEFAULT 'ABIERTA',
+    CONSTRAINT fk_caja_turnos_caja
+        FOREIGN KEY (id_caja) REFERENCES cajas(id_caja),
+    CONSTRAINT fk_caja_turnos_usr_ap
+        FOREIGN KEY (id_usuario_apertura) REFERENCES usuarios(id_usuario)
+) ENGINE=InnoDB;
+
+CREATE TABLE abonos_cuentas_por_cobrar (
+    id_abono INT AUTO_INCREMENT PRIMARY KEY,
+    id_cuenta_cobrar INT NOT NULL,
+    monto_abono DECIMAL(15,2) NOT NULL,
+    forma_pago VARCHAR(50) NOT NULL,
+    observacion VARCHAR(255) NULL,
+    fecha_abono DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_abonos_cxc
+        FOREIGN KEY (id_cuenta_cobrar) REFERENCES cuentas_por_cobrar(id_cuenta_cobrar)
+) ENGINE=InnoDB;
+
+CREATE TABLE caja_movimientos (
+    id_movimiento INT AUTO_INCREMENT PRIMARY KEY,
+    id_turno INT NOT NULL,
+    id_usuario INT NOT NULL,
+    tipo_movimiento VARCHAR(30) NOT NULL,
+    concepto VARCHAR(255) NOT NULL,
+    monto DECIMAL(15,2) NOT NULL,
+    fecha_movimiento DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id_venta INT NULL,
+    id_abono INT NULL,
+    CONSTRAINT fk_caja_mov_turno
+        FOREIGN KEY (id_turno) REFERENCES caja_turnos(id_turno),
+    CONSTRAINT fk_caja_mov_usuario
+        FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
+) ENGINE=InnoDB;
+
+CREATE TABLE devoluciones_ventas (
+    id_devolucion INT AUTO_INCREMENT PRIMARY KEY,
+    id_venta_original INT NOT NULL,
+    id_usuario INT NOT NULL,
+    fecha_devolucion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    motivo VARCHAR(255) NOT NULL,
+    monto_total DECIMAL(15,2) NOT NULL DEFAULT 0,
+    folio_nota_credito VARCHAR(100) NOT NULL,
+    estado VARCHAR(30) NOT NULL DEFAULT 'REGISTRADA',
+    CONSTRAINT fk_dev_venta_orig
+        FOREIGN KEY (id_venta_original) REFERENCES ventas_encabezado(id_venta),
+    CONSTRAINT fk_dev_venta_usr
+        FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
+) ENGINE=InnoDB;
+
+CREATE TABLE devoluciones_detalle (
+    id_detalle_devolucion INT AUTO_INCREMENT PRIMARY KEY,
+    id_devolucion INT NOT NULL,
+    id_detalle_venta INT NOT NULL,
+    cantidad_devuelta INT NOT NULL,
+    precio_unitario DECIMAL(15,2) NOT NULL,
+    subtotal DECIMAL(15,2) NOT NULL,
+    condicion_producto VARCHAR(50) NOT NULL DEFAULT 'CUARENTENA',
+    CONSTRAINT fk_dev_det_cab
+        FOREIGN KEY (id_devolucion) REFERENCES devoluciones_ventas(id_devolucion),
+    CONSTRAINT fk_dev_det_vdet
+        FOREIGN KEY (id_detalle_venta) REFERENCES ventas_detalle(id_detalle_venta)
 ) ENGINE=InnoDB;
 
 -- =========================
@@ -431,6 +513,11 @@ INSERT INTO plan_cuentas (codigo_cuenta, nombre_cuenta, tipo_cuenta, nivel, cuen
 
 INSERT INTO proveedores (rut_proveedor, razon_social, nombre_contacto, telefono, email, condiciones_comerciales) VALUES
     ('77.888.999-0', 'Distribuidora Farmacéutica Demo Ltda.', 'Juan Pérez', '+56221112233', 'ventas@distribuidorademo.cl', 'Pago a 30 días');
+
+INSERT INTO cajas (id_caja, nombre_caja, descripcion, activa) VALUES
+    (1, 'Caja 1 - Principal POS', 'Terminal principal de sala de ventas', TRUE),
+    (2, 'Caja 2 - Convenios y Recetas', 'Atención preferencial e instituciones', TRUE),
+    (3, 'Caja 3 - Dermocosmética', 'Módulo secundario de atención rápida', TRUE);
 
 -- ==========================================================
 -- BLOQUE 2: PRIMER SET DE REGISTROS ADICIONALES

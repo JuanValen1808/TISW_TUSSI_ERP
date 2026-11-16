@@ -34,6 +34,7 @@ public class CajaService
 
         using var cn = _db.CrearConexion();
         await cn.OpenAsync();
+        await _db.AsegurarSemillaSeguridadYContabilidadAsync(cn);
 
         const string sql = @"
             SELECT id_caja, nombre_caja, descripcion, activa

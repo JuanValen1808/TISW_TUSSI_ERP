@@ -7,6 +7,8 @@ public class Caja
     public string NombreCaja { get; set; } = "";
     public string Descripcion { get; set; } = "";
     public bool Activa { get; set; }
+
+    public override string ToString() => NombreCaja;
 }
 
 public class CajaTurno
