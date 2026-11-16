@@ -45,15 +45,29 @@
 
                     </VerticalStackLayout>
 
-                    <Button
-                        Grid.Column="1"
-                        Text="Actualizar reporte"
-                        Command="{Binding ComandoActualizar}"
-                        BackgroundColor="#2563EB"
-                        TextColor="White"
-                        CornerRadius="9"
-                        Padding="18,10"
-                        VerticalOptions="Center" />
+                    <HorizontalStackLayout Grid.Column="1" Spacing="8" VerticalOptions="Center">
+                        <Button
+                            Text="Actualizar reporte"
+                            Command="{Binding ComandoActualizar}"
+                            BackgroundColor="#2563EB"
+                            TextColor="White"
+                            CornerRadius="9"
+                            Padding="18,10" />
+                        <Button
+                            Text="Exportar PDF"
+                            Command="{Binding ExportarPdfCommand}"
+                            BackgroundColor="#0F172A"
+                            TextColor="White"
+                            CornerRadius="9"
+                            Padding="14,10" />
+                        <Button
+                            Text="Exportar Excel (CSV)"
+                            Command="{Binding ExportarCsvCommand}"
+                            BackgroundColor="#059669"
+                            TextColor="White"
+                            CornerRadius="9"
+                            Padding="14,10" />
+                    </HorizontalStackLayout>
 
                 </Grid>
 

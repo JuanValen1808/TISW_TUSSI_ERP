@@ -32,9 +32,17 @@
 
                         <HorizontalStackLayout Grid.Column="1" Spacing="10" VerticalOptions="Center">
                             <Button Text="Exportar PDF" Command="{Binding ExportarPdfCommand}" Style="{StaticResource CtbBtnPrimary}" />
-                            <Button Text="Exportar CSV" Command="{Binding ExportarCsvCommand}" Style="{StaticResource CtbBtnOutline}" BackgroundColor="#1E293B" TextColor="White" BorderColor="#475569" />
+                            <Button Text="Exportar Excel (CSV)" Command="{Binding ExportarCsvCommand}" Style="{StaticResource CtbBtnOutline}" BackgroundColor="#1E293B" TextColor="White" BorderColor="#475569" />
                         </HorizontalStackLayout>
                     </Grid>
+                </Border>
+
+                <!-- BANNERS DE ESTADO -->
+                <Border Style="{StaticResource CtbErrorBanner}" IsVisible="{Binding HayError}">
+                    <Label Text="{Binding MensajeError}" TextColor="#991B1B" FontSize="13" FontAttributes="Bold" />
+                </Border>
+                <Border Style="{StaticResource CtbOkBanner}" IsVisible="{Binding HayExito}">
+                    <Label Text="{Binding MensajeExito}" TextColor="#065F46" FontSize="13" FontAttributes="Bold" />
                 </Border>
 
                 <!-- BARRA DE FILTROS / SELECTOR CXC vs CXP -->

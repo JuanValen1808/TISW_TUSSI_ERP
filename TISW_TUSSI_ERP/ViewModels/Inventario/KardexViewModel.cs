@@ -118,17 +118,7 @@ namespace TISW_TUSSI_ERP.ViewModels.Inventario
             {
                 string nombreFiltro = ProductoSeleccionado?.NombreComercial ?? "Todos los productos";
                 byte[] pdfBytes = _reporteService.GenerarReporteKardexPdf(Movimientos.ToList(), nombreFiltro);
-
-                string nombreArchivo = $"Kardex_Trazabilidad_{DateTime.Now:yyyyMMdd_HHmm}.pdf";
-                string rutaArchivo = Path.Combine(FileSystem.CacheDirectory, nombreArchivo);
-
-                await File.WriteAllBytesAsync(rutaArchivo, pdfBytes);
-
-                await Share.Default.RequestAsync(new ShareFileRequest
-                {
-                    Title = "Informe de Kardex y Trazabilidad (PDF)",
-                    File = new ShareFile(rutaArchivo)
-                });
+                await TISW_TUSSI_ERP.Helpers.ExportadorReportes.GuardarYAbrirPdfBytesAsync("Kardex_Trazabilidad", pdfBytes);
             }
             catch (Exception ex)
             {

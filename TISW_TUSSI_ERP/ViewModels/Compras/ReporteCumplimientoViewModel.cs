@@ -44,6 +44,7 @@ public class ReporteCumplimientoViewModel : BaseViewModel
     public ICommand ComandoGenerar { get; }
     public ICommand ComandoLimpiarFiltros { get; }
     public ICommand ComandoExportarCsv { get; }
+    public ICommand ComandoExportarPdf { get; }
 
     public ReporteCumplimientoViewModel(ComprasService servicio)
     {
@@ -60,7 +61,8 @@ public class ReporteCumplimientoViewModel : BaseViewModel
             ProveedorFiltro = null;
             await GenerarReporteAsync();
         }, () => NoEstaOcupado);
-        ComandoExportarCsv = new Command(async () => await ExportarCsvAsync(), () => NoEstaOcupado);
+        ComandoExportarCsv = new Command(async () => await ExportarCsvAsync(false), () => NoEstaOcupado);
+        ComandoExportarPdf = new Command(async () => await ExportarCsvAsync(true), () => NoEstaOcupado);
 
         PropertyChanged += (_, e) =>
         {
@@ -153,7 +155,7 @@ public class ReporteCumplimientoViewModel : BaseViewModel
         SinResultados = Items.Count == 0;
     }
 
-    private async Task ExportarCsvAsync()
+    private async Task ExportarCsvAsync(bool pdf = false)
     {
         if (EstaOcupado) return;
         EstaOcupado = true;
@@ -182,7 +184,10 @@ public class ReporteCumplimientoViewModel : BaseViewModel
                 i.MontoTotal.ToString("0", Formato.Cultura)
             });
 
-            await CsvExportHelper.ExportarYCompartirAsync("Reporte_Cumplimiento_Ordenes_Compra", headers, rows);
+            if (pdf)
+                await CsvExportHelper.ExportarPdfAsync("Reporte_Cumplimiento_Ordenes_Compra", headers, rows);
+            else
+                await CsvExportHelper.ExportarYCompartirAsync("Reporte_Cumplimiento_Ordenes_Compra", headers, rows);
         }
         catch (Exception ex)
         {

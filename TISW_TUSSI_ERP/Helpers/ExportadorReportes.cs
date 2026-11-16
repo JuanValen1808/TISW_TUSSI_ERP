@@ -1,14 +1,19 @@
+using System.Diagnostics;
 using System.Globalization;
 using System.Net;
 using System.Text;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
 using TISW_TUSSI_ERP.Models.Auth;
+using Colors = QuestPDF.Helpers.Colors;
 
 namespace TISW_TUSSI_ERP.Helpers;
 
 // ===================================================================
-//  Modelo genérico de reporte exportable (PDF imprimible / CSV Excel)
+//  Modelo genérico de reporte exportable (PDF real con QuestPDF / CSV Excel)
 //  Cada ViewModel de reporte arma un DocumentoReporte y el
-//  ExportadorReportes se encarga de generar el archivo.
+//  ExportadorReportes se encarga de generar y abrir el archivo.
 // ===================================================================
 
 public enum TipoColumna { Texto, Moneda, Numero, Fecha, Porcentaje }
@@ -58,6 +63,11 @@ public static class ExportadorReportes
 {
     private static readonly CultureInfo Cl = Formato.Cultura;
 
+    static ExportadorReportes()
+    {
+        QuestPDF.Settings.License = LicenseType.Community;
+    }
+
     // Carpeta de salida: Documentos\FarmSalud ERP\Reportes en Windows; caché en móviles.
     public static string CarpetaReportes
     {
@@ -73,16 +83,27 @@ public static class ExportadorReportes
         }
     }
 
-    /// <summary>Genera un HTML con estilo de informe y lo abre en el navegador listo para "Imprimir / Guardar como PDF".</summary>
+    /// <summary>Genera un archivo PDF nativo (.pdf) mediante QuestPDF y lo abre automáticamente en el visor del sistema.</summary>
     public static async Task<string> ExportarPdfAsync(DocumentoReporte doc)
     {
-        var ruta = Path.Combine(CarpetaReportes, NombreArchivo(doc.Titulo, "html"));
-        await File.WriteAllTextAsync(ruta, GenerarHtml(doc), new UTF8Encoding(true));
-        await AbrirAsync(doc.Titulo, ruta, "text/html");
+        QuestPDF.Settings.License = LicenseType.Community;
+        var ruta = Path.Combine(CarpetaReportes, NombreArchivo(doc.Titulo, "pdf"));
+        var bytes = await Task.Run(() => GenerarPdfBytes(doc));
+        await File.WriteAllBytesAsync(ruta, bytes);
+        await AbrirAsync(doc.Titulo, ruta, "application/pdf");
         return ruta;
     }
 
-    /// <summary>Genera un CSV (separador ';' + BOM UTF-8) que Excel en español abre directamente.</summary>
+    /// <summary>Guarda un arreglo de bytes PDF en la carpeta de reportes y lo abre en el visor predeterminado.</summary>
+    public static async Task<string> GuardarYAbrirPdfBytesAsync(string titulo, byte[] pdfBytes)
+    {
+        var ruta = Path.Combine(CarpetaReportes, NombreArchivo(titulo, "pdf"));
+        await File.WriteAllBytesAsync(ruta, pdfBytes);
+        await AbrirAsync(titulo, ruta, "application/pdf");
+        return ruta;
+    }
+
+    /// <summary>Genera un CSV (separador ';' + BOM UTF-8) que Microsoft Excel en español abre directamente con columnas separadas.</summary>
     public static async Task<string> ExportarCsvAsync(DocumentoReporte doc)
     {
         var ruta = Path.Combine(CarpetaReportes, NombreArchivo(doc.Titulo, "csv"));
@@ -93,19 +114,35 @@ public static class ExportadorReportes
 
     private static async Task AbrirAsync(string titulo, string ruta, string mime)
     {
+#if WINDOWS
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = ruta,
+                UseShellExecute = true
+            });
+            return;
+        }
+        catch
+        {
+            // Fallback a Launcher de MAUI si falla ShellExecute
+        }
+#endif
         try
         {
             await Launcher.Default.OpenAsync(new OpenFileRequest(titulo, new ReadOnlyFile(ruta, mime)));
         }
         catch
         {
-            // Si no hay aplicación asociada, el archivo igualmente queda guardado en la carpeta de reportes.
+            // El archivo igualmente queda guardado en CarpetaReportes.
         }
     }
 
     private static string NombreArchivo(string titulo, string ext)
     {
         var limpio = new string(SinTildes(titulo).Select(c => char.IsLetterOrDigit(c) ? c : '_').ToArray()).Trim('_');
+        if (string.IsNullOrWhiteSpace(limpio)) limpio = "Reporte_ERP";
         return $"{limpio}_{DateTime.Now:yyyyMMdd_HHmmss}.{ext}";
     }
 
@@ -122,7 +159,7 @@ public static class ExportadorReportes
     // ------------------------------------------------------------------
     //  Formato de celdas
     // ------------------------------------------------------------------
-    private static string FormatearHtml(object? valor, TipoColumna tipo) => valor switch
+    private static string FormatearTextoPdf(object? valor, TipoColumna tipo) => valor switch
     {
         null => "",
         string s => s,
@@ -150,7 +187,218 @@ public static class ExportadorReportes
     private static bool AlineaDerecha(TipoColumna t) => t is TipoColumna.Moneda or TipoColumna.Numero or TipoColumna.Porcentaje;
 
     // ------------------------------------------------------------------
-    //  CSV
+    //  Generación PDF Nativo con QuestPDF
+    // ------------------------------------------------------------------
+    public static byte[] GenerarPdfBytes(DocumentoReporte doc)
+    {
+        QuestPDF.Settings.License = LicenseType.Community;
+        var usuario = Sesion.UsuarioActual?.NombreCompleto ?? "Contador / Administrador";
+        var rol = Sesion.UsuarioActual?.NombreRol ?? "Contabilidad";
+
+        return Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                page.Size(doc.Horizontal ? PageSizes.A4.Landscape() : PageSizes.A4);
+                page.Margin(1.4f, Unit.Centimetre);
+                page.PageColor(Colors.White);
+                page.DefaultTextStyle(x => x.FontSize(doc.Horizontal ? 8.5f : 9.5f).FontColor("#0F172A"));
+
+                // ENCABEZADO CORPORATIVO
+                page.Header().Column(headerCol =>
+                {
+                    headerCol.Item().Background("#0F172A").Padding(14).Row(row =>
+                    {
+                        row.RelativeItem().Column(col =>
+                        {
+                            col.Item().Text("FARMSALUD · T.U.S.S.I. ERP FARMACÉUTICO · NORMATIVA SII CHILE")
+                                .FontSize(8).Bold().FontColor("#93C5FD");
+                            col.Item().PaddingTop(2).Text(doc.Titulo)
+                                .FontSize(16).Bold().FontColor(Colors.White);
+                            if (!string.IsNullOrWhiteSpace(doc.Subtitulo))
+                            {
+                                col.Item().PaddingTop(2).Text(doc.Subtitulo)
+                                    .FontSize(9.5f).FontColor("#CBD5E1");
+                            }
+                        });
+
+                        row.ConstantItem(175).Column(col =>
+                        {
+                            col.Item().AlignRight().Text($"Emitido: {DateTime.Now:dd/MM/yyyy HH:mm}")
+                                .FontSize(8.5f).FontColor("#E2E8F0");
+                            col.Item().AlignRight().Text($"Responsable: {usuario}")
+                                .FontSize(8.5f).FontColor("#E2E8F0");
+                            col.Item().AlignRight().Text($"Perfil: {rol} · Estado: OFICIAL")
+                                .FontSize(8f).Bold().FontColor("#6EE7B7");
+                        });
+                    });
+
+                    // Filtros aplicados
+                    if (doc.Filtros.Count > 0)
+                    {
+                        headerCol.Item().Background("#F1F5F9").BorderBottom(1).BorderColor("#CBD5E1").PaddingHorizontal(12).PaddingVertical(6).Row(r =>
+                        {
+                            foreach (var (etiqueta, valor) in doc.Filtros)
+                            {
+                                r.AutoItem().PaddingRight(16).Text(t =>
+                                {
+                                    t.Span($"{etiqueta}: ").FontSize(8).Bold().FontColor("#475569");
+                                    t.Span(valor).FontSize(8).FontColor("#0F172A");
+                                });
+                            }
+                        });
+                    }
+
+                    headerCol.Item().Height(8);
+                });
+
+                // CONTENIDO PRINCIPAL
+                page.Content().Column(col =>
+                {
+                    // Tarjetas KPI de resumen
+                    if (doc.Kpis.Count > 0)
+                    {
+                        col.Item().PaddingBottom(10).Row(row =>
+                        {
+                            foreach (var (etiqueta, valor) in doc.Kpis)
+                            {
+                                row.RelativeItem().PaddingHorizontal(3).Border(1).BorderColor("#CBD5E1")
+                                    .Background("#F8FAFC").Padding(8).Column(k =>
+                                    {
+                                        k.Item().Text(etiqueta.ToUpper(Cl)).FontSize(7.5f).Bold().FontColor("#64748B");
+                                        k.Item().PaddingTop(2).Text(valor).FontSize(11f).Bold().FontColor("#1D4ED8");
+                                    });
+                            }
+                        });
+                    }
+
+                    // Secciones tabulares del reporte
+                    foreach (var seccion in doc.Secciones)
+                    {
+                        if (seccion.Columnas.Count == 0) continue;
+
+                        col.Item().PaddingTop(6).PaddingBottom(4).Text(seccion.Titulo.ToUpper(Cl))
+                            .FontSize(10).Bold().FontColor("#1E3A8A");
+
+                        col.Item().PaddingBottom(10).Table(table =>
+                        {
+                            int numCols = seccion.Columnas.Count;
+                            table.ColumnsDefinition(columns =>
+                            {
+                                for (int i = 0; i < numCols; i++)
+                                {
+                                    var tipo = seccion.Columnas[i].Tipo;
+                                    if (i == 0 && numCols > 4)
+                                        columns.RelativeColumn(1.1f);
+                                    else if (tipo == TipoColumna.Texto)
+                                        columns.RelativeColumn(1.8f);
+                                    else
+                                        columns.RelativeColumn(1.1f);
+                                }
+                            });
+
+                            table.Header(header =>
+                            {
+                                foreach (var c in seccion.Columnas)
+                                {
+                                    var cell = header.Cell().Background("#E2E8F0").BorderBottom(1.5f).BorderColor("#94A3B8")
+                                        .PaddingVertical(5).PaddingHorizontal(5);
+                                    if (AlineaDerecha(c.Tipo))
+                                        cell.AlignRight().Text(c.Titulo).FontSize(8).Bold().FontColor("#1E293B");
+                                    else
+                                        cell.AlignLeft().Text(c.Titulo).FontSize(8).Bold().FontColor("#1E293B");
+                                }
+                            });
+
+                            int filaIdx = 0;
+                            foreach (var fila in seccion.Filas)
+                            {
+                                if (fila.EsSubtitulo)
+                                {
+                                    var textoSub = fila.Celdas.FirstOrDefault()?.ToString() ?? "";
+                                    table.Cell().ColumnSpan((uint)numCols)
+                                        .Background("#EFF6FF").BorderBottom(1).BorderColor("#BFDBFE")
+                                        .PaddingVertical(5).PaddingHorizontal(6)
+                                        .Text(textoSub).FontSize(8.5f).Bold().FontColor("#1D4ED8");
+                                    continue;
+                                }
+
+                                string bg = fila.EsTotal
+                                    ? "#E0E7FF"
+                                    : (filaIdx % 2 == 1 ? "#F8FAFC" : "#FFFFFF");
+
+                                for (int i = 0; i < numCols; i++)
+                                {
+                                    var colDef = seccion.Columnas[i];
+                                    var val = i < fila.Celdas.Length ? fila.Celdas[i] : null;
+                                    var txt = FormatearTextoPdf(val, colDef.Tipo);
+                                    if (i == 0 && fila.Nivel > 0)
+                                        txt = new string(' ', fila.Nivel * 3) + txt;
+
+                                    var cell = table.Cell()
+                                        .Background(bg)
+                                        .BorderBottom(fila.EsTotal ? 1.5f : 0.5f)
+                                        .BorderColor(fila.EsTotal ? "#6366F1" : "#E2E8F0")
+                                        .PaddingVertical(fila.EsTotal ? 5 : 4)
+                                        .PaddingHorizontal(5);
+
+                                    if (AlineaDerecha(colDef.Tipo))
+                                    {
+                                        var t = cell.AlignRight().Text(txt);
+                                        if (fila.EsTotal) t.Bold().FontColor("#1E1B4B");
+                                    }
+                                    else
+                                    {
+                                        var t = cell.AlignLeft().Text(txt);
+                                        if (fila.EsTotal) t.Bold().FontColor("#1E1B4B");
+                                    }
+                                }
+
+                                filaIdx++;
+                            }
+                        });
+                    }
+
+                    // Nota al pie y bloque de firma contable
+                    if (!string.IsNullOrWhiteSpace(doc.NotaPie))
+                    {
+                        col.Item().PaddingTop(6).Background("#F8FAFC").Border(1).BorderColor("#E2E8F0")
+                            .Padding(8).Text(doc.NotaPie!).FontSize(8).FontColor("#475569");
+                    }
+
+                    col.Item().PaddingTop(24).Row(r =>
+                    {
+                        r.RelativeItem();
+                        r.ConstantItem(210).Column(f =>
+                        {
+                            f.Item().LineHorizontal(1).LineColor("#94A3B8");
+                            f.Item().PaddingTop(4).AlignCenter().Text("Firma Contador General / Auditoría Tributaria")
+                                .FontSize(8.5f).Bold().FontColor("#334155");
+                            f.Item().AlignCenter().Text("T.U.S.S.I. ERP Farmacéutico · SII Chile")
+                                .FontSize(7.5f).FontColor("#64748B");
+                        });
+                    });
+                });
+
+                // PIE DE PÁGINA
+                page.Footer().PaddingTop(6).BorderTop(0.5f).BorderColor("#CBD5E1").Row(row =>
+                {
+                    row.RelativeItem().Text("FarmSalud · T.U.S.S.I. ERP — Documento contable oficial generado electrónicamente")
+                        .FontSize(7.5f).FontColor("#64748B");
+                    row.ConstantItem(100).AlignRight().Text(x =>
+                    {
+                        x.Span("Página ").FontSize(7.5f).FontColor("#64748B");
+                        x.CurrentPageNumber().FontSize(7.5f).Bold().FontColor("#334155");
+                        x.Span(" de ").FontSize(7.5f).FontColor("#64748B");
+                        x.TotalPages().FontSize(7.5f).Bold().FontColor("#334155");
+                    });
+                });
+            });
+        }).GeneratePdf();
+    }
+
+    // ------------------------------------------------------------------
+    //  CSV (Compatible directamente con Microsoft Excel en español)
     // ------------------------------------------------------------------
     public static string GenerarCsv(DocumentoReporte doc)
     {
@@ -164,7 +412,7 @@ public static class ExportadorReportes
         if (doc.Kpis.Count > 0)
         {
             sb.AppendLine();
-            Linea(new[] { "RESUMEN" });
+            Linea(new[] { "RESUMEN EJECUTIVO" });
             foreach (var (e, v) in doc.Kpis) Linea(new[] { e, v });
         }
 
@@ -200,126 +448,5 @@ public static class ExportadorReportes
         if (v.Contains(';') || v.Contains('"') || v.Contains('\n'))
             return "\"" + v.Replace("\"", "\"\"") + "\"";
         return v;
-    }
-
-    // ------------------------------------------------------------------
-    //  HTML (vista imprimible -> PDF)
-    // ------------------------------------------------------------------
-    public static string GenerarHtml(DocumentoReporte doc)
-    {
-        static string H(string? s) => WebUtility.HtmlEncode(s ?? "");
-        var usuario = Sesion.UsuarioActual?.NombreCompleto ?? "-";
-        var sb = new StringBuilder();
-
-        sb.Append($@"<!DOCTYPE html>
-<html lang=""es"">
-<head>
-<meta charset=""utf-8"" />
-<meta name=""viewport"" content=""width=device-width, initial-scale=1"" />
-<meta name=""description"" content=""{H(doc.Titulo)} - FarmSalud ERP"" />
-<title>{H(doc.Titulo)} · FarmSalud ERP</title>
-<style>
-  @page {{ size: A4 {(doc.Horizontal ? "landscape" : "portrait")}; margin: 12mm; }}
-  * {{ box-sizing: border-box; }}
-  body {{ font-family: 'Segoe UI', Inter, Roboto, Arial, sans-serif; color: #111827; margin: 0; background: #F4F6FA; }}
-  .page {{ max-width: {(doc.Horizontal ? "1200px" : "900px")}; margin: 24px auto; background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(15,23,42,.08); }}
-  .hero {{ background: linear-gradient(135deg, #0B2A4A 0%, #1D4ED8 65%, #6366F1 100%); color: #fff; padding: 28px 32px; }}
-  .brand {{ display: flex; align-items: center; gap: 10px; font-size: 12px; letter-spacing: 1.4px; color: #C7D2FE; font-weight: 700; text-transform: uppercase; }}
-  .logo {{ width: 30px; height: 30px; border-radius: 8px; background: rgba(255,255,255,.18); display: grid; place-items: center; color: #fff; font-weight: 800; }}
-  h1 {{ margin: 12px 0 4px; font-size: 26px; }}
-  .sub {{ color: #DBEAFE; font-size: 13px; margin: 0; }}
-  .meta {{ display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }}
-  .chip {{ background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.3); border-radius: 999px; padding: 4px 12px; font-size: 11px; }}
-  .content {{ padding: 24px 32px 32px; }}
-  .kpis {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 22px; }}
-  .kpi {{ border: 1px solid #E3E8EF; border-left: 4px solid #4F46E5; border-radius: 12px; padding: 12px 14px; }}
-  .kpi span {{ display: block; font-size: 10px; font-weight: 700; letter-spacing: .8px; color: #6B7280; text-transform: uppercase; }}
-  .kpi b {{ display: block; font-size: 18px; margin-top: 4px; }}
-  h2 {{ font-size: 14px; margin: 22px 0 8px; color: #0B2A4A; text-transform: uppercase; letter-spacing: .6px; }}
-  table {{ width: 100%; border-collapse: collapse; font-size: 12px; }}
-  thead th {{ background: #F1F5F9; color: #475569; font-size: 10px; letter-spacing: .6px; text-transform: uppercase; text-align: left; padding: 9px 10px; border-bottom: 2px solid #E2E8F0; }}
-  td {{ padding: 8px 10px; border-bottom: 1px solid #EEF2F7; }}
-  tbody tr:nth-child(even) td {{ background: #FAFBFD; }}
-  .r {{ text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }}
-  tr.total td {{ background: #EEF2FF !important; font-weight: 700; border-top: 2px solid #C7D2FE; }}
-  tr.subt td {{ background: #F8FAFC !important; font-weight: 700; color: #1D4ED8; }}
-  .foot {{ margin-top: 26px; padding-top: 12px; border-top: 1px dashed #CBD5E1; font-size: 11px; color: #64748B; display: flex; justify-content: space-between; gap: 12px; }}
-  .firma {{ margin-top: 48px; display: flex; justify-content: flex-end; }}
-  .firma div {{ width: 240px; border-top: 1px solid #94A3B8; text-align: center; font-size: 11px; color: #475569; padding-top: 6px; }}
-  .print {{ position: fixed; right: 24px; bottom: 24px; background: #1D4ED8; color: #fff; border: 0; border-radius: 999px; padding: 12px 20px; font-weight: 700; cursor: pointer; box-shadow: 0 8px 20px rgba(29,78,216,.35); }}
-  .print:hover {{ background: #1E40AF; }}
-  @media print {{ body {{ background: #fff; }} .page {{ box-shadow: none; margin: 0; max-width: none; border-radius: 0; }} .print {{ display: none; }}
-                 .hero {{ -webkit-print-color-adjust: exact; print-color-adjust: exact; }} thead th, tr.total td, tr.subt td, .kpi {{ -webkit-print-color-adjust: exact; print-color-adjust: exact; }} }}
-</style>
-</head>
-<body>
-<main class=""page"">
-  <header class=""hero"">
-    <div class=""brand""><div class=""logo"">FS</div>FarmSalud ERP · Contabilidad</div>
-    <h1>{H(doc.Titulo)}</h1>
-    <p class=""sub"">{H(doc.Subtitulo)}</p>
-    <div class=""meta"">
-      <span class=""chip"">Generado: {DateTime.Now.ToString("dd/MM/yyyy HH:mm", Cl)}</span>
-      <span class=""chip"">Usuario: {H(usuario)}</span>");
-        foreach (var (e, v) in doc.Filtros)
-            sb.Append($@"
-      <span class=""chip"">{H(e)}: {H(v)}</span>");
-        sb.Append(@"
-    </div>
-  </header>
-  <section class=""content"">");
-
-        if (doc.Kpis.Count > 0)
-        {
-            sb.Append(@"
-    <div class=""kpis"">");
-            foreach (var (e, v) in doc.Kpis)
-                sb.Append($@"<div class=""kpi""><span>{H(e)}</span><b>{H(v)}</b></div>");
-            sb.Append("</div>");
-        }
-
-        foreach (var s in doc.Secciones)
-        {
-            sb.Append($@"
-    <h2>{H(s.Titulo)}</h2>
-    <table>
-      <thead><tr>");
-            foreach (var c in s.Columnas)
-                sb.Append($@"<th class=""{(AlineaDerecha(c.Tipo) ? "r" : "")}"">{H(c.Titulo)}</th>");
-            sb.Append("</tr></thead>\n      <tbody>");
-
-            if (s.Filas.Count == 0)
-                sb.Append($@"<tr><td colspan=""{s.Columnas.Count}"" style=""text-align:center;color:#94A3B8;padding:18px"">Sin registros para los filtros seleccionados</td></tr>");
-
-            foreach (var f in s.Filas)
-            {
-                if (f.EsSubtitulo)
-                {
-                    sb.Append($@"<tr class=""subt""><td colspan=""{s.Columnas.Count}"">{H(Convert.ToString(f.Celdas.FirstOrDefault(), Cl))}</td></tr>");
-                    continue;
-                }
-                sb.Append(f.EsTotal ? @"<tr class=""total"">" : "<tr>");
-                for (int i = 0; i < s.Columnas.Count; i++)
-                {
-                    var col = s.Columnas[i];
-                    var v = i < f.Celdas.Length ? f.Celdas[i] : null;
-                    var estilo = i == 0 && f.Nivel > 0 ? $@" style=""padding-left:{10 + f.Nivel * 18}px""" : "";
-                    sb.Append($@"<td class=""{(AlineaDerecha(col.Tipo) ? "r" : "")}""{estilo}>{H(FormatearHtml(v, col.Tipo))}</td>");
-                }
-                sb.Append("</tr>");
-            }
-            sb.Append("</tbody>\n    </table>");
-        }
-
-        sb.Append($@"
-    <div class=""firma""><div>Contador / Responsable</div></div>
-    <div class=""foot""><span>{H(doc.NotaPie ?? "Documento generado automáticamente por FarmSalud ERP.")}</span><span>Montos expresados en pesos chilenos (CLP)</span></div>
-  </section>
-</main>
-<button class=""print"" onclick=""window.print()"">Imprimir / Guardar PDF</button>
-<script>window.addEventListener('load', function () {{ setTimeout(function () {{ window.print(); }}, 600); }});</script>
-</body>
-</html>");
-        return sb.ToString();
     }
 }

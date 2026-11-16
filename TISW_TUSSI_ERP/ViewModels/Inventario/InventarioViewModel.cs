@@ -169,17 +169,7 @@ public class InventarioViewModel : BaseViewModel
 
             // Generar PDF usando QuestPDF a través del ReporteService
             byte[] pdfBytes = _reporteService.GenerarReporteInventarioPdf(Resumen, Productos.ToList());
-
-            string nombreArchivo = $"Informe_Inventario_{DateTime.Now:yyyyMMdd_HHmm}.pdf";
-            string rutaArchivo = Path.Combine(FileSystem.CacheDirectory, nombreArchivo);
-
-            await File.WriteAllBytesAsync(rutaArchivo, pdfBytes);
-
-            await Share.Default.RequestAsync(new ShareFileRequest
-            {
-                Title = "Informe Consolidado de Inventario (PDF)",
-                File = new ShareFile(rutaArchivo)
-            });
+            await TISW_TUSSI_ERP.Helpers.ExportadorReportes.GuardarYAbrirPdfBytesAsync("Informe_Inventario", pdfBytes);
         }
         catch (Exception ex)
         {

@@ -60,17 +60,7 @@ public class MermasViewModel : BaseViewModel
         try
         {
             byte[] pdfBytes = _reporteService.GenerarReporteMermasPdf(Mermas.ToList());
-
-            string nombreArchivo = $"Informe_Mermas_{DateTime.Now:yyyyMMdd_HHmm}.pdf";
-            string rutaArchivo = Path.Combine(FileSystem.CacheDirectory, nombreArchivo);
-
-            await File.WriteAllBytesAsync(rutaArchivo, pdfBytes);
-
-            await Share.Default.RequestAsync(new ShareFileRequest
-            {
-                Title = "Informe Oficial de Mermas y Bajas (PDF)",
-                File = new ShareFile(rutaArchivo)
-            });
+            await TISW_TUSSI_ERP.Helpers.ExportadorReportes.GuardarYAbrirPdfBytesAsync("Informe_Mermas", pdfBytes);
         }
         catch (Exception ex)
         {

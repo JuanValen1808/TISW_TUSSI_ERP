@@ -40,6 +40,7 @@ public class ReporteComprasViewModel : BaseViewModel
     public ICommand ComandoGenerar { get; }
     public ICommand ComandoLimpiarFiltro { get; }
     public ICommand ComandoExportarCsv { get; }
+    public ICommand ComandoExportarPdf { get; }
 
     public ReporteComprasViewModel(ComprasService servicio)
     {
@@ -57,7 +58,8 @@ public class ReporteComprasViewModel : BaseViewModel
             await GenerarAsync();
         }, () => NoEstaOcupado);
 
-        ComandoExportarCsv = new Command(async () => await ExportarCsvAsync(), () => NoEstaOcupado);
+        ComandoExportarCsv = new Command(async () => await ExportarCsvAsync(false), () => NoEstaOcupado);
+        ComandoExportarPdf = new Command(async () => await ExportarCsvAsync(true), () => NoEstaOcupado);
 
         PropertyChanged += (_, e) =>
         {
@@ -109,7 +111,7 @@ public class ReporteComprasViewModel : BaseViewModel
         }
     }
 
-    private async Task ExportarCsvAsync()
+    private async Task ExportarCsvAsync(bool pdf = false)
     {
         if (EstaOcupado) return;
         EstaOcupado = true;
@@ -135,7 +137,10 @@ public class ReporteComprasViewModel : BaseViewModel
                 f.UltimaCompraTexto
             });
 
-            await CsvExportHelper.ExportarYCompartirAsync("Reporte_Compras_Por_Laboratorio", headers, rows);
+            if (pdf)
+                await CsvExportHelper.ExportarPdfAsync("Reporte_Compras_Por_Laboratorio", headers, rows);
+            else
+                await CsvExportHelper.ExportarYCompartirAsync("Reporte_Compras_Por_Laboratorio", headers, rows);
         }
         catch (Exception ex)
         {

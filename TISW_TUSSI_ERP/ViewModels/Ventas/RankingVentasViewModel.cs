@@ -73,6 +73,8 @@ public class RankingVentasViewModel : BaseViewModel
 
     public ICommand ComandoActualizar { get; }
     public ICommand ComandoLimpiarFiltro { get; }
+    public ICommand ExportarPdfCommand { get; }
+    public ICommand ExportarCsvCommand { get; }
 
     public RankingVentasViewModel(VentasService servicio)
     {
@@ -87,6 +89,51 @@ public class RankingVentasViewModel : BaseViewModel
         {
             Busqueda = string.Empty;
         });
+
+        ExportarPdfCommand = new Command(async () => await ExportarAsync(true));
+        ExportarCsvCommand = new Command(async () => await ExportarAsync(false));
+    }
+
+    private async Task ExportarAsync(bool pdf)
+    {
+        if (!Filas.Any())
+            await CargarAsync();
+        if (!Filas.Any()) return;
+
+        var sec = new SeccionReporte(
+            "Ranking de Ventas por Cliente y Convenio",
+            new ColumnaReporte("RUT Cliente"),
+            new ColumnaReporte("Cliente / Institución"),
+            new ColumnaReporte("Tipo"),
+            new ColumnaReporte("Convenio de Salud"),
+            new ColumnaReporte("N° Documentos", TipoColumna.Numero),
+            new ColumnaReporte("Total Ventas", TipoColumna.Moneda),
+            new ColumnaReporte("Participación %", TipoColumna.Porcentaje));
+
+        foreach (var f in Filas)
+        {
+            sec.Fila(f.RutCliente, f.NombreCliente, f.TipoCliente, f.NombreConvenio, f.Documentos, f.TotalVentas, f.Porcentaje);
+        }
+        sec.Total("TOTAL GENERAL", "", "", "", Filas.Sum(x => x.Documentos), Filas.Sum(x => x.TotalVentas), 100m);
+
+        var doc = new DocumentoReporte
+        {
+            Titulo = "Ranking de Ventas por Cliente y Convenio (RF-VEN-04)",
+            Subtitulo = "Análisis Pareto de clientes e instituciones de salud con mayores montos acumulados",
+            Horizontal = true,
+            Kpis =
+            {
+                ("Total Vendido", TotalGeneralTexto),
+                ("Documentos Emitidos", TotalDocumentosTexto),
+                ("Clientes con Ventas", TotalClientesTexto)
+            },
+            Secciones = { sec }
+        };
+
+        if (pdf)
+            await ExportadorReportes.ExportarPdfAsync(doc);
+        else
+            await ExportadorReportes.ExportarCsvAsync(doc);
     }
 
     public async Task CargarAsync()

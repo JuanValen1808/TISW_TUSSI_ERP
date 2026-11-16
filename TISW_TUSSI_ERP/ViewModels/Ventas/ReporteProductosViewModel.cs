@@ -116,6 +116,8 @@ public class ReporteProductosViewModel : BaseViewModel
 
     public ICommand ComandoActualizar { get; }
     public ICommand ComandoLimpiar { get; }
+    public ICommand ExportarPdfCommand { get; }
+    public ICommand ExportarCsvCommand { get; }
 
     public ReporteProductosViewModel(
         ReporteProductosService servicio)
@@ -135,6 +137,59 @@ public class ReporteProductosViewModel : BaseViewModel
             UsarFechas = false;
             _ = CargarAsync();
         });
+
+        ExportarPdfCommand = new Command(async () => await ExportarAsync(true));
+        ExportarCsvCommand = new Command(async () => await ExportarAsync(false));
+    }
+
+    private async Task ExportarAsync(bool pdf)
+    {
+        if (!Productos.Any())
+            await CargarAsync();
+        if (!Productos.Any()) return;
+
+        var secProd = new SeccionReporte(
+            "Ventas por Producto (SKU)",
+            new ColumnaReporte("SKU"),
+            new ColumnaReporte("Producto Farmacéutico"),
+            new ColumnaReporte("Categoría"),
+            new ColumnaReporte("Unidades Vendidas", TipoColumna.Numero),
+            new ColumnaReporte("N° Documentos", TipoColumna.Numero),
+            new ColumnaReporte("Total Vendido", TipoColumna.Moneda));
+
+        foreach (var p in Productos)
+            secProd.Fila(p.Sku, p.NombreProducto, p.Categoria, p.UnidadesVendidas, p.NumeroVentas, p.TotalVendido);
+        secProd.Total("TOTAL PRODUCTOS", "", "", Productos.Sum(x => x.UnidadesVendidas), Productos.Sum(x => x.NumeroVentas), Productos.Sum(x => x.TotalVendido));
+
+        var secCat = new SeccionReporte(
+            "Resumen por Categoría Farmacéutica",
+            new ColumnaReporte("Categoría"),
+            new ColumnaReporte("SKUs Distintos", TipoColumna.Numero),
+            new ColumnaReporte("Unidades Vendidas", TipoColumna.Numero),
+            new ColumnaReporte("Total Ingresos", TipoColumna.Moneda));
+
+        foreach (var c in Categorias)
+            secCat.Fila(c.Categoria, c.ProductosDistintos, c.UnidadesVendidas, c.TotalVendido);
+
+        var doc = new DocumentoReporte
+        {
+            Titulo = "Reporte de Ventas por Producto y Categoría (RF-VEN-05)",
+            Subtitulo = "Volumen de unidades dispensadas e ingresos generados por SKU y categoría terapéutica",
+            Horizontal = true,
+            Kpis =
+            {
+                ("Total Vendido", TotalVendidoTexto),
+                ("Unidades Vendidas", TotalUnidadesTexto),
+                ("SKUs con Movimiento", TotalProductosTexto),
+                ("Categorías", TotalCategoriasTexto)
+            },
+            Secciones = { secProd, secCat }
+        };
+
+        if (pdf)
+            await ExportadorReportes.ExportarPdfAsync(doc);
+        else
+            await ExportadorReportes.ExportarCsvAsync(doc);
     }
 
     public async Task CargarAsync()

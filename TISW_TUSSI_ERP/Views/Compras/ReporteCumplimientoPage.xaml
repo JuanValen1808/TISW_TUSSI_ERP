@@ -27,8 +27,12 @@
                         <Label Text="Monitoreo del porcentaje de entrega a tiempo y análisis de discrepancias entre cantidades solicitadas y recibidas."
                                Style="{StaticResource ErpSubtitle}" />
                     </VerticalStackLayout>
-                    <Button Grid.Column="1" Text="Exportar CSV" Style="{StaticResource ErpGhostButton}"
-                            Command="{Binding ComandoExportarCsv}" IsEnabled="{Binding NoEstaOcupado}" VerticalOptions="Center" />
+                    <HorizontalStackLayout Grid.Column="1" Spacing="8" VerticalOptions="Center">
+                        <Button Text="Exportar PDF" Style="{StaticResource ErpPrimaryButton}"
+                                Command="{Binding ComandoExportarPdf}" IsEnabled="{Binding NoEstaOcupado}" />
+                        <Button Text="Exportar Excel (CSV)" Style="{StaticResource ErpGhostButton}"
+                                Command="{Binding ComandoExportarCsv}" IsEnabled="{Binding NoEstaOcupado}" />
+                    </HorizontalStackLayout>
                 </Grid>
 
                 <!-- Filtros -->

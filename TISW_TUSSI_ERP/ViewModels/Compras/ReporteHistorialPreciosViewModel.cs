@@ -41,6 +41,7 @@ public class ReporteHistorialPreciosViewModel : BaseViewModel
     public ICommand ComandoGenerar { get; }
     public ICommand ComandoLimpiarFiltros { get; }
     public ICommand ComandoExportarCsv { get; }
+    public ICommand ComandoExportarPdf { get; }
 
     public ReporteHistorialPreciosViewModel(ComprasService servicio)
     {
@@ -56,7 +57,8 @@ public class ReporteHistorialPreciosViewModel : BaseViewModel
             ProductoFiltro = null;
             await GenerarReporteAsync();
         }, () => NoEstaOcupado);
-        ComandoExportarCsv = new Command(async () => await ExportarCsvAsync(), () => NoEstaOcupado);
+        ComandoExportarCsv = new Command(async () => await ExportarCsvAsync(false), () => NoEstaOcupado);
+        ComandoExportarPdf = new Command(async () => await ExportarCsvAsync(true), () => NoEstaOcupado);
 
         PropertyChanged += (_, e) =>
         {
@@ -148,7 +150,7 @@ public class ReporteHistorialPreciosViewModel : BaseViewModel
         SinResultados = Items.Count == 0;
     }
 
-    private async Task ExportarCsvAsync()
+    private async Task ExportarCsvAsync(bool pdf = false)
     {
         if (EstaOcupado) return;
         EstaOcupado = true;
@@ -177,7 +179,10 @@ public class ReporteHistorialPreciosViewModel : BaseViewModel
                 i.IndicadorTendencia
             });
 
-            await CsvExportHelper.ExportarYCompartirAsync("Reporte_Historial_Precios", headers, rows);
+            if (pdf)
+                await CsvExportHelper.ExportarPdfAsync("Reporte_Historial_Precios", headers, rows);
+            else
+                await CsvExportHelper.ExportarYCompartirAsync("Reporte_Historial_Precios", headers, rows);
         }
         catch (Exception ex)
         {

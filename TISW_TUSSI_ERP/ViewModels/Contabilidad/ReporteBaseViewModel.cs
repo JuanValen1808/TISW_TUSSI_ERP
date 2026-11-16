@@ -82,17 +82,25 @@ public abstract class ReporteBaseViewModel : BaseViewModel
 
         if (!HayDatos)
         {
-            MensajeError = "No hay datos para exportar. Genera el reporte primero o ajusta los filtros.";
+            await GenerarAsync();
+        }
+
+        if (!HayDatos)
+        {
+            MensajeError = "No hay datos disponibles para exportar en el período seleccionado.";
             return;
         }
 
         try
         {
             var doc = ConstruirDocumento();
-            var ruta = pdf ? await ExportadorReportes.ExportarPdfAsync(doc) : await ExportadorReportes.ExportarCsvAsync(doc);
+            var ruta = pdf
+                ? await ExportadorReportes.ExportarPdfAsync(doc)
+                : await ExportadorReportes.ExportarCsvAsync(doc);
+
             MensajeExito = pdf
-                ? $"Reporte abierto en el navegador para imprimir / guardar como PDF. Archivo: {ruta}"
-                : $"Archivo CSV generado (se abre con Excel). Archivo: {ruta}";
+                ? $"✓ Reporte PDF oficial generado y abierto: {ruta}"
+                : $"✓ Reporte Excel (CSV) generado y abierto: {ruta}";
         }
         catch (Exception ex)
         {
