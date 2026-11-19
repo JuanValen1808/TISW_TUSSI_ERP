@@ -564,7 +564,8 @@ INSERT INTO productos (sku, codigo_barras, nombre_comercial, principio_activo, r
 
 INSERT INTO lotes (id_producto, numero_lote, fecha_vencimiento, stock_actual, estado_cuarentena) VALUES
     (2, 'LOTE-2026-002', '2027-12-31', 300, 'LIBERADO'),
-    (3, 'LOTE-2026-003', '2029-01-01', 1500, 'LIBERADO');
+    (3, 'LOTE-2026-003', '2029-01-01', 1500, 'LIBERADO'),
+    (2, 'LOTE-2026-004', '2028-10-10', 100, 'LIBERADO');
 
 INSERT INTO libro_diario_asientos (numero_asiento, fecha_asiento, glosa_descripcion, origen, id_usuario) VALUES
     (1, '2026-10-15', 'Apertura de caja inicial', 'AJUSTE', 1);
@@ -602,7 +603,7 @@ INSERT INTO kardex_movimientos (id_producto, id_lote, tipo_movimiento, origen_do
     (1, 1, 'SALIDA', 'VENTA', 1, 1, 1200.00, 149, 2);
 
 INSERT INTO registro_mermas (id_producto, id_lote, cantidad, motivo, costo_total_perdida, id_usuario) VALUES
-    (3, 2, 5, 'DANO', 500.00, 3);
+    (3, 3, 5, 'DANO', 500.00, 3);
 
 -- ==========================================================
 -- BLOQUE 3: CARGA MASIVA DE DATOS DE PRUEBA (IDs 10+)
@@ -820,8 +821,8 @@ BEGIN
     UPDATE cuentas_por_pagar
     SET monto_pagado = LEAST(monto_pagado + p_monto_abono, monto_total),
         estado_pago = CASE 
-            WHEN (monto_pagado + p_monto_abono) >= monto_total THEN 'PAGADO'
-            WHEN (monto_pagado + p_monto_abono) > 0 THEN 'PARCIAL'
+            WHEN monto_pagado >= monto_total THEN 'PAGADO'
+            WHEN monto_pagado > 0 THEN 'PARCIAL'
             ELSE estado_pago 
         END
     WHERE id_cuenta_pagar = p_id_cuenta_pagar;
@@ -852,3 +853,35 @@ BEGIN
     COMMIT;
 END //
 DELIMITER ;
+
+-- ------------------- codigo del juan :D
+
+CREATE TABLE IF NOT EXISTS ubicaciones (
+    id_ubicacion INT AUTO_INCREMENT PRIMARY KEY,
+    tipo_zona ENUM('BODEGA', 'SALA_VENTAS') NOT NULL DEFAULT 'BODEGA',
+    codigo_ubicacion VARCHAR(50) NOT NULL UNIQUE, -- Ej: BOD-A-E1-R1
+    sector_pasillo VARCHAR(60) NOT NULL,          -- Pasillo o Zona (Ej: Pasillo A)
+    estante_mueble VARCHAR(60) NOT NULL,          -- Estante o Vitrina (Ej: Estante 1)
+    repisa_nivel VARCHAR(60) NULL,                -- Repisa o Nivel (Ej: Repisa 1)
+    descripcion VARCHAR(150) NULL,
+    activo TINYINT(1) NOT NULL DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS lote_ubicaciones (
+    id_lote_ubicacion INT AUTO_INCREMENT PRIMARY KEY,
+    id_lote INT NOT NULL,                        -- Tipo INT coincidente con la tabla lotes (id_lote)
+    id_ubicacion INT NOT NULL,
+    cantidad INT NOT NULL CHECK (cantidad >= 0),
+    fecha_asignacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id_usuario INT NULL,                         -- Tipo INT coincidente con la tabla usuarios (id_usuario)
+    UNIQUE KEY uk_lote_ubicacion (id_lote, id_ubicacion),
+    CONSTRAINT fk_lu_lote FOREIGN KEY (id_lote) REFERENCES lotes(id_lote),
+    CONSTRAINT fk_lu_ubicacion FOREIGN KEY (id_ubicacion) REFERENCES ubicaciones(id_ubicacion),
+    CONSTRAINT fk_lu_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
+);
+
+INSERT IGNORE INTO ubicaciones (tipo_zona, codigo_ubicacion, sector_pasillo, estante_mueble, repisa_nivel, descripcion, activo) VALUES
+('BODEGA', 'BOD-A-E1-R1', 'Pasillo A', 'Estante 1', 'Repisa 1', 'Analgésicos y Antiinflamatorios', 1),
+('BODEGA', 'BOD-A-E1-R2', 'Pasillo A', 'Estante 1', 'Repisa 2', 'Antibióticos Uso General', 1),
+('BODEGA', 'BOD-B-E2-R1', 'Pasillo B', 'Estante 2', 'Repisa 1', 'Insumos Médicos y Jeringas', 1),
+('BODEGA', 'BOD-C-REF-01', 'Pasillo C', 'Refrigerador 1', 'Bandeja Superior', 'Cadena de Frío (2°C - 8°C)', 1);
