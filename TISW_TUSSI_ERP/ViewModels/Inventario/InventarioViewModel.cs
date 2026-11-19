@@ -7,6 +7,8 @@ using Microsoft.Maui.Controls;
 using TISW_TUSSI_ERP.Helpers;
 using TISW_TUSSI_ERP.Models.Inventario;
 using TISW_TUSSI_ERP.Services.Api;
+using TISW_TUSSI_ERP.Views.Inventario;
+using CommunityToolkit.Maui.Storage;
 
 namespace TISW_TUSSI_ERP.ViewModels.Inventario;
 
@@ -112,19 +114,57 @@ public class InventarioViewModel : BaseViewModel
         });
 
         ComandoNuevoProducto = new Command(async () =>
-            await Aviso("Nuevo Producto", "El formulario de alta de SKU se implementará en la siguiente etapa del módulo Inventario."));
+        {
+            var modal = new NuevoProductoPage(async productoNuevo =>
+            {
+                if (productoNuevo != null)
+                {
+                    var (exito, mensaje) = await _servicio.GuardarProductoAsync(productoNuevo);
+                    await Aviso(exito ? "Éxito" : "Atención", mensaje);
+                    if (exito)
+                    {
+                        await CargarAsync(); // Recargar lista y KPIs
+                    }
+                }
+            });
 
-        ComandoRegistrarMerma = new Command(async () =>
-            await Aviso("Registrar Merma", "Se implementará en la pantalla dedicada a \"Ajustes y Mermas\"."));
-
-        ComandoRegistrarAjuste = new Command(async () =>
-            await Aviso("Registrar Ajuste", "Se implementará en la pantalla dedicada a \"Ajustes y Mermas\"."));
+            await Shell.Current.Navigation.PushModalAsync(modal);
+        });
 
         ComandoEditarProducto = new Command(async () =>
-            await Aviso("Editar Ficha", "La edición de productos estará disponible en la siguiente versión."));
+        {
+            if (ProductoSeleccionado is null)
+            {
+                await Aviso("Editar Ficha", "Seleccione un producto de la lista para editar.");
+                return;
+            }
+
+            // Abrir ventana emergente modal con el diseño de la plataforma
+            var modal = new EditarProductoPage(ProductoSeleccionado, async productoModificado =>
+            {
+                if (productoModificado != null)
+                {
+                    // Guardar cambios a través del servicio
+                    var (exito, mensaje) = await _servicio.GuardarProductoAsync(productoModificado);
+                    await Aviso(exito ? "Éxito" : "Atención", mensaje);
+                    if (exito)
+                    {
+                        await CargarAsync(); // Recargar la lista y KPIs
+                    }
+                }
+            });
+
+            await Shell.Current.Navigation.PushModalAsync(modal);
+        });
+
+        ComandoRegistrarMerma = new Command(async () =>
+            await Shell.Current.GoToAsync("//MermasPage"));
+
+        ComandoRegistrarAjuste = new Command(async () =>
+            await Shell.Current.GoToAsync("//MermasPage"));
 
         ComandoVerKardex = new Command(async () =>
-            await Aviso("Consultar Kardex", "Dirígete a la sección Kardex y Lotes en el menú lateral."));
+            await Shell.Current.GoToAsync("//KardexPage"));
 
         ComandoExportarDocumento = new Command(async () => await ExportarDocumentoPdfAsync());
     }
@@ -167,23 +207,43 @@ public class InventarioViewModel : BaseViewModel
         {
             EstaOcupado = true;
 
-            // Generar PDF usando QuestPDF a través del ReporteService
+            // 1. Generar los bytes del PDF mediante QuestPDF
             byte[] pdfBytes = _reporteService.GenerarReporteInventarioPdf(Resumen, Productos.ToList());
 
-            string nombreArchivo = $"Informe_Inventario_{DateTime.Now:yyyyMMdd_HHmm}.pdf";
-            string rutaArchivo = Path.Combine(FileSystem.CacheDirectory, nombreArchivo);
+            string nombreArchivo = $"Informe_Valorizacion_Inventario_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
 
-            await File.WriteAllBytesAsync(rutaArchivo, pdfBytes);
+            // 2. Usar el FileSaver nativo de .NET MAUI Community Toolkit para que el usuario elija dónde guardar
+            using var stream = new MemoryStream(pdfBytes);
 
-            await Share.Default.RequestAsync(new ShareFileRequest
+            var fileSaveResult = await FileSaver.Default.SaveAsync(nombreArchivo, stream, CancellationToken.None);
+
+            if (fileSaveResult.IsSuccessful && !string.IsNullOrEmpty(fileSaveResult.FilePath))
             {
-                Title = "Informe Consolidado de Inventario (PDF)",
-                File = new ShareFile(rutaArchivo)
-            });
+                // 3. Notificar éxito y preguntar si desea abrir el PDF inmediatamente
+                bool abrir = await Shell.Current.DisplayAlert(
+                    "Reporte Guardado",
+                    $"El archivo se ha guardado correctamente en:\n{fileSaveResult.FilePath}\n\n¿Desea abrirlo ahora?",
+                    "Abrir Archivo",
+                    "Cerrar");
+
+                if (abrir)
+                {
+                    // 4. Abrir el archivo con el visor o navegador predeterminado del sistema operativo
+                    await Launcher.Default.OpenAsync(new OpenFileRequest
+                    {
+                        File = new ReadOnlyFile(fileSaveResult.FilePath)
+                    });
+                }
+            }
+            else if (!fileSaveResult.IsSuccessful && fileSaveResult.Exception != null)
+            {
+                await Shell.Current.DisplayAlert("Cancelado", "No se guardó el archivo o se canceló la operación.", "OK");
+            }
         }
         catch (Exception ex)
         {
-            MensajeError = "Error al generar el reporte PDF: " + ex.Message;
+            MensajeError = "Error al exportar y guardar el reporte PDF: " + ex.Message;
+            await Shell.Current.DisplayAlert("Error", MensajeError, "OK");
         }
         finally
         {

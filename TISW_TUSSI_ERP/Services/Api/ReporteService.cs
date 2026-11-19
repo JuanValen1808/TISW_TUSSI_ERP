@@ -207,7 +207,7 @@ public class ReporteService
         }).GeneratePdf();
     }
 
-public byte[] GenerarReporteMermasPdf(List<MermaModel> mermas)
+    public byte[] GenerarReporteMermasPdf(List<MermaModel> mermas)
     {
         return Document.Create(container =>
         {
@@ -288,4 +288,86 @@ public byte[] GenerarReporteMermasPdf(List<MermaModel> mermas)
         }).GeneratePdf();
     }
 
+public byte[] GenerarReporteStockMinimoPdf(List<ProductoModel> productosBajoReorden)
+    {
+        return Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                page.Size(PageSizes.A4);
+                page.Margin(1.5f, Unit.Centimetre);
+                page.PageColor(QuestPDF.Helpers.Colors.White);
+                page.DefaultTextStyle(x => x.FontSize(9));
+
+                // Encabezado del Reporte
+                page.Header().Row(row =>
+                {
+                    row.RelativeItem().Column(col =>
+                    {
+                        col.Item().Text("FarmSalud ERP").FontSize(18).Bold().FontColor("#1D6FD8");
+                        col.Item().Text("Informe Oficial de Alertas de Stock Mínimo y Reorden (CU-INV-06)").FontSize(11).SemiBold().FontColor("#4B5563");
+                    });
+
+                    row.ConstantItem(180).Column(col =>
+                    {
+                        col.Item().AlignRight().Text($"Fecha: {DateTime.Now:dd/MM/yyyy HH:mm}").FontSize(8).FontColor("#6B7280");
+                        col.Item().AlignRight().Text("Gestión de Reabastecimiento").FontSize(8).Bold().FontColor("#D97706");
+                    });
+                });
+
+                // Cuerpo del informe con la tabla detallada
+                page.Content().PaddingVertical(1, Unit.Centimetre).Column(col =>
+                {
+                    col.Item().Table(table =>
+                    {
+                        table.ColumnsDefinition(columns =>
+                        {
+                            columns.ConstantColumn(80);  // SKU
+                            columns.RelativeColumn(2);   // Producto
+                            columns.ConstantColumn(60);  // Stock Actual
+                            columns.ConstantColumn(60);  // Stock Mín.
+                            columns.ConstantColumn(60);  // Reorden
+                            columns.ConstantColumn(60);  // Déficit
+                            columns.ConstantColumn(80);  // Estado
+                        });
+
+                        // Encabezados de Tabla
+                        table.Header(header =>
+                        {
+                            header.Cell().Background("#FEF3C7").Padding(5).Text("SKU").Bold();
+                            header.Cell().Background("#FEF3C7").Padding(5).Text("Producto").Bold();
+                            header.Cell().Background("#FEF3C7").Padding(5).AlignRight().Text("Stock").Bold();
+                            header.Cell().Background("#FEF3C7").Padding(5).AlignRight().Text("Mínimo").Bold();
+                            header.Cell().Background("#FEF3C7").Padding(5).AlignRight().Text("Reorden").Bold();
+                            header.Cell().Background("#FEF3C7").Padding(5).AlignRight().Text("Déficit").Bold();
+                            header.Cell().Background("#FEF3C7").Padding(5).Text("Estado").Bold();
+                        });
+
+                        // Filas de productos bajo reorden
+                        foreach (var p in productosBajoReorden)
+                        {
+                            int deficit = Math.Max(0, p.PuntoReorden - p.StockActual);
+
+                            table.Cell().BorderBottom(1).BorderColor("#E5E7EB").Padding(4).Text(p.Sku);
+                            table.Cell().BorderBottom(1).BorderColor("#E5E7EB").Padding(4).Text(p.NombreComercial);
+                            table.Cell().BorderBottom(1).BorderColor("#E5E7EB").Padding(4).AlignRight().Text($"{p.StockActual}");
+                            table.Cell().BorderBottom(1).BorderColor("#E5E7EB").Padding(4).AlignRight().Text($"{p.StockMinimo}");
+                            table.Cell().BorderBottom(1).BorderColor("#E5E7EB").Padding(4).AlignRight().Text($"{p.PuntoReorden}");
+                            table.Cell().BorderBottom(1).BorderColor("#E5E7EB").Padding(4).AlignRight().Text($"{deficit}").FontColor("#B91C1C").Bold();
+                            table.Cell().BorderBottom(1).BorderColor("#E5E7EB").Padding(4).Text(p.EstadoStock);
+                        }
+                    });
+                });
+
+                // Pie de página
+                page.Footer().AlignRight().Text(x =>
+                {
+                    x.Span("Página ");
+                    x.CurrentPageNumber();
+                    x.Span(" de ");
+                    x.TotalPages();
+                });
+            });
+        }).GeneratePdf();
+    }
 }

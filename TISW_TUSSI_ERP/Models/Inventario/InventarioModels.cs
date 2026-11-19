@@ -1,5 +1,4 @@
-﻿using System.Text.Json.Serialization;
-using System;
+﻿using System;
 using System.Text.Json.Serialization;
 
 namespace TISW_TUSSI_ERP.Models.Inventario;
@@ -103,7 +102,7 @@ public class LoteModel
     public int IdProducto { get; set; }
 
     [JsonPropertyName("sku")]
-    public string Sku { get; set; } = string.Empty;
+    public string Sku { get; set; } = string.Empty; // Corregido: era get.set;
 
     [JsonPropertyName("nombreProducto")]
     public string NombreProducto { get; set; } = string.Empty;

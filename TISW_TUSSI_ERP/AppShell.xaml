@@ -61,6 +61,10 @@
               ContentTemplate="{DataTemplate inventario:KardexPage}" />
     <ShellContent Route="MermasPage" Shell.FlyoutItemIsVisible="False"
               ContentTemplate="{DataTemplate inventario:MermasPage}" />
+    <ShellContent Route="UbicacionesBodegaPage" Shell.FlyoutItemIsVisible="False"
+              ContentTemplate="{DataTemplate inventario:UbicacionesBodegaPage}" />
+    <ShellContent Route="UbicacionesSalaPage" Shell.FlyoutItemIsVisible="False"
+              ContentTemplate="{DataTemplate inventario:UbicacionesSalaPage}" />
     <ShellContent Route="LibroDiarioPage" Shell.FlyoutItemIsVisible="False"
                   ContentTemplate="{DataTemplate contabilidad:LibroDiarioPage}" />
     <ShellContent Route="LibroMayorPage" Shell.FlyoutItemIsVisible="False"

@@ -11,6 +11,7 @@ using TISW_TUSSI_ERP.ViewModels.Contabilidad;
 using TISW_TUSSI_ERP.Views.Contabilidad;
 using TISW_TUSSI_ERP.ViewModels.Inventario;
 using TISW_TUSSI_ERP.Views.Inventario;
+using CommunityToolkit.Maui;
 
 namespace TISW_TUSSI_ERP
 {
@@ -21,6 +22,7 @@ namespace TISW_TUSSI_ERP
             var builder = MauiApp.CreateBuilder();
             builder
                 .UseMauiApp<App>()
+                .UseMauiCommunityToolkit()
                 .ConfigureFonts(fonts =>
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
@@ -87,7 +89,11 @@ namespace TISW_TUSSI_ERP
             builder.Services.AddTransient<KardexViewModel>();
             builder.Services.AddTransient<KardexPage>();
             builder.Services.AddTransient<MermasViewModel>();
-            builder.Services.AddTransient<MermasPage>();
+            builder.Services.AddTransient<MermasPage>(); 
+            builder.Services.AddTransient<UbicacionesBodegaViewModel>();
+            builder.Services.AddTransient<UbicacionesBodegaPage>();
+            builder.Services.AddTransient<UbicacionesSalaViewModel>();
+            builder.Services.AddTransient<UbicacionesSalaPage>();
 
             return builder.Build();
         }

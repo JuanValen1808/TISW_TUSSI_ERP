@@ -5,6 +5,7 @@ using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
 using TISW_TUSSI_ERP.Models.Inventario;
 using TISW_TUSSI_ERP.Services.Api;
+using CommunityToolkit.Maui.Storage; // <-- Añadir este using
 
 namespace TISW_TUSSI_ERP.ViewModels.Inventario;
 
@@ -59,22 +60,35 @@ public class MermasViewModel : BaseViewModel
 
         try
         {
+            // 1. Generar bytes del reporte mediante QuestPDF
             byte[] pdfBytes = _reporteService.GenerarReporteMermasPdf(Mermas.ToList());
 
-            string nombreArchivo = $"Informe_Mermas_{DateTime.Now:yyyyMMdd_HHmm}.pdf";
-            string rutaArchivo = Path.Combine(FileSystem.CacheDirectory, nombreArchivo);
+            string nombreArchivo = $"Informe_Mermas_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
 
-            await File.WriteAllBytesAsync(rutaArchivo, pdfBytes);
+            // 2. Usar FileSaver nativo para que el usuario elija dónde guardar el PDF
+            using var stream = new MemoryStream(pdfBytes);
+            var fileSaveResult = await FileSaver.Default.SaveAsync(nombreArchivo, stream, CancellationToken.None);
 
-            await Share.Default.RequestAsync(new ShareFileRequest
+            if (fileSaveResult.IsSuccessful && !string.IsNullOrEmpty(fileSaveResult.FilePath))
             {
-                Title = "Informe Oficial de Mermas y Bajas (PDF)",
-                File = new ShareFile(rutaArchivo)
-            });
+                bool abrir = await Shell.Current.DisplayAlert(
+                    "Reporte Guardado",
+                    $"El informe de mermas se ha guardado correctamente en:\n{fileSaveResult.FilePath}\n\n¿Desea abrirlo ahora?",
+                    "Abrir Archivo",
+                    "Cerrar");
+
+                if (abrir)
+                {
+                    await Launcher.Default.OpenAsync(new OpenFileRequest
+                    {
+                        File = new ReadOnlyFile(fileSaveResult.FilePath)
+                    });
+                }
+            }
         }
         catch (Exception ex)
         {
-            await Shell.Current.DisplayAlert("Error", "No se pudo generar el PDF de mermas: " + ex.Message, "OK");
+            await Shell.Current.DisplayAlert("Error", "No se pudo generar o guardar el PDF de mermas: " + ex.Message, "OK");
         }
     }
 }

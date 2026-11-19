@@ -23,6 +23,8 @@ public partial class AppShell : Shell
         "InventarioPage",
         "KardexPage",
         "MermasPage",
+        "UbicacionesBodegaPage",
+        "UbicacionesSalaPage",
         "LibroDiarioPage",
         "LibroMayorPage",
         "BalanceOchoColumnasPage",
@@ -49,6 +51,8 @@ public partial class AppShell : Shell
             new ItemMenu("", "Catálogo SKUs", "InventarioPage"),
             new ItemMenu("", "Kardex y Lotes", "KardexPage"),
             new ItemMenu("", "Mermas", "MermasPage"),
+            new ItemMenu("", "Ubicaciones Bodega", "UbicacionesBodegaPage"), 
+            new ItemMenu("", "Sala de Ventas", "UbicacionesSalaPage"),
         }),
         new("COMPRAS", new[]
         {
@@ -152,7 +156,7 @@ public partial class AppShell : Shell
     private async Task Navegar(ItemMenu item)
     {
         if (Implementadas.Contains(item.Ruta))
-            await GoToAsync($"//{item.Ruta}");
+            await GoToAsync($"///{item.Ruta}");
         else
             await DisplayAlert("Módulo en desarrollo", $"\"{item.Titulo}\" aún no está implementado.", "OK");
     }

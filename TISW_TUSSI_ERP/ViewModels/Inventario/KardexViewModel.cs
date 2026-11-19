@@ -6,6 +6,7 @@ using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
 using TISW_TUSSI_ERP.Models.Inventario;
 using TISW_TUSSI_ERP.Services.Api;
+using CommunityToolkit.Maui.Storage;
 
 namespace TISW_TUSSI_ERP.ViewModels.Inventario
 {
@@ -106,6 +107,8 @@ namespace TISW_TUSSI_ERP.ViewModels.Inventario
             }
         }
 
+
+
         private async Task ExportarKardexPdfAsync()
         {
             if (!Movimientos.Any())
@@ -119,20 +122,32 @@ namespace TISW_TUSSI_ERP.ViewModels.Inventario
                 string nombreFiltro = ProductoSeleccionado?.NombreComercial ?? "Todos los productos";
                 byte[] pdfBytes = _reporteService.GenerarReporteKardexPdf(Movimientos.ToList(), nombreFiltro);
 
-                string nombreArchivo = $"Kardex_Trazabilidad_{DateTime.Now:yyyyMMdd_HHmm}.pdf";
-                string rutaArchivo = Path.Combine(FileSystem.CacheDirectory, nombreArchivo);
+                string nombreArchivo = $"Kardex_Trazabilidad_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
 
-                await File.WriteAllBytesAsync(rutaArchivo, pdfBytes);
+                // Usar el FileSaver nativo de .NET MAUI Community Toolkit para elegir dónde guardar
+                using var stream = new MemoryStream(pdfBytes);
+                var fileSaveResult = await FileSaver.Default.SaveAsync(nombreArchivo, stream, CancellationToken.None);
 
-                await Share.Default.RequestAsync(new ShareFileRequest
+                if (fileSaveResult.IsSuccessful && !string.IsNullOrEmpty(fileSaveResult.FilePath))
                 {
-                    Title = "Informe de Kardex y Trazabilidad (PDF)",
-                    File = new ShareFile(rutaArchivo)
-                });
+                    bool abrir = await Shell.Current.DisplayAlert(
+                        "Reporte Guardado",
+                        $"El informe de Kardex se ha guardado correctamente en:\n{fileSaveResult.FilePath}\n\n¿Desea abrirlo ahora?",
+                        "Abrir Archivo",
+                        "Cerrar");
+
+                    if (abrir)
+                    {
+                        await Launcher.Default.OpenAsync(new OpenFileRequest
+                        {
+                            File = new ReadOnlyFile(fileSaveResult.FilePath)
+                        });
+                    }
+                }
             }
             catch (Exception ex)
             {
-                await Shell.Current.DisplayAlert("Error", "No se pudo generar el PDF del Kardex: " + ex.Message, "OK");
+                await Shell.Current.DisplayAlert("Error", "No se pudo generar o guardar el PDF del Kardex: " + ex.Message, "OK");
             }
         }
     }

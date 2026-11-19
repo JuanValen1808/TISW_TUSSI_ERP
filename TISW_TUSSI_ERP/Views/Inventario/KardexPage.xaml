@@ -46,14 +46,14 @@
             <!-- Tabla / Lista de Movimientos del Kardex -->
             <Border Grid.Row="2" Style="{StaticResource ErpCard}" Padding="0">
                 <Grid RowDefinitions="Auto,*">
-                    <!-- Cabecera de la Tabla -->
-                    <Grid Grid.Row="0" ColumnDefinitions="100,120,*,110,90,90,90,130" ColumnSpacing="8" Padding="16,12" BackgroundColor="#F8FAFC">
+                    <!-- Cabecera de la Tabla (Anchos unificados con las filas) -->
+                    <Grid Grid.Row="0" ColumnDefinitions="110,130,*,100,90,80,90,110" ColumnSpacing="8" Padding="16,12" BackgroundColor="#F8FAFC">
                         <Label Text="FECHA" Style="{StaticResource ErpCaption}" />
                         <Label Grid.Column="1" Text="SKU / LOTE" Style="{StaticResource ErpCaption}" />
                         <Label Grid.Column="2" Text="PRODUCTO" Style="{StaticResource ErpCaption}" />
                         <Label Grid.Column="3" Text="MOVIMIENTO" Style="{StaticResource ErpCaption}" HorizontalTextAlignment="Center" />
                         <Label Grid.Column="4" Text="ORIGEN" Style="{StaticResource ErpCaption}" HorizontalTextAlignment="Center" />
-                        <Label Grid.Column="5" Text="CANTIDAD" Style="{StaticResource ErpCaption}" HorizontalTextAlignment="End" />
+                        <Label Grid.Column="5" Text="CANT." Style="{StaticResource ErpCaption}" HorizontalTextAlignment="End" />
                         <Label Grid.Column="6" Text="COSTO U." Style="{StaticResource ErpCaption}" HorizontalTextAlignment="End" />
                         <Label Grid.Column="7" Text="STOCK FINAL" Style="{StaticResource ErpCaption}" HorizontalTextAlignment="End" />
                     </Grid>
@@ -64,7 +64,7 @@
                         <CollectionView.ItemTemplate>
                             <DataTemplate x:DataType="m:KardexMovimientoModel">
                                 <VerticalStackLayout>
-                                    <Grid ColumnDefinitions="100,120,*,110,90,90,90,130" ColumnSpacing="8" Padding="16,10" VerticalOptions="Center">
+                                    <Grid ColumnDefinitions="110,130,*,100,90,80,90,110" ColumnSpacing="8" Padding="16,10" VerticalOptions="Center">
                                         <Label Text="{Binding FechaTexto}" FontSize="11" TextColor="{StaticResource ErpMuted}" VerticalOptions="Center" />
 
                                         <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
@@ -74,8 +74,8 @@
 
                                         <Label Grid.Column="2" Text="{Binding NombreProducto}" Style="{StaticResource ErpBody}" VerticalOptions="Center" />
 
-                                        <Border Grid.Column="3" BackgroundColor="{Binding FondoTipo}" StrokeThickness="0" StrokeShape="RoundRectangle 8" Padding="6,2" HorizontalOptions="Center" VerticalOptions="Center">
-                                            <Label Text="{Binding TipoMovimiento}" FontSize="10" FontAttributes="Bold" TextColor="{Binding ColorTipo}" />
+                                        <Border Grid.Column="3" BackgroundColor="{Binding FondoTipo}" StrokeThickness="0" StrokeShape="RoundRectangle 8" Padding="4,2" HorizontalOptions="Center" VerticalOptions="Center">
+                                            <Label Text="{Binding TipoMovimiento}" FontSize="9" FontAttributes="Bold" TextColor="{Binding ColorTipo}" HorizontalTextAlignment="Center" />
                                         </Border>
 
                                         <Label Grid.Column="4" Text="{Binding OrigenDocumento}" FontSize="11" TextColor="{StaticResource ErpMuted}" HorizontalTextAlignment="Center" VerticalOptions="Center" />
