@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Text;
 using System.Windows.Input;
@@ -106,6 +106,8 @@ namespace TISW_TUSSI_ERP.ViewModels.Inventario
             }
         }
 
+
+
         private async Task ExportarKardexPdfAsync()
         {
             if (!Movimientos.Any())
@@ -122,7 +124,7 @@ namespace TISW_TUSSI_ERP.ViewModels.Inventario
             }
             catch (Exception ex)
             {
-                await Shell.Current.DisplayAlert("Error", "No se pudo generar el PDF del Kardex: " + ex.Message, "OK");
+                await Shell.Current.DisplayAlert("Error", "No se pudo generar o guardar el PDF del Kardex: " + ex.Message, "OK");
             }
         }
     }

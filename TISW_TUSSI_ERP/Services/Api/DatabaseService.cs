@@ -85,6 +85,42 @@ public class DatabaseService
                 condicion_producto VARCHAR(50) NOT NULL DEFAULT 'CUARENTENA'
             ) ENGINE=InnoDB;",
 
+            @"CREATE TABLE IF NOT EXISTS ubicaciones (
+                id_ubicacion INT AUTO_INCREMENT PRIMARY KEY,
+                tipo_zona VARCHAR(30) NOT NULL DEFAULT 'BODEGA',
+                codigo_ubicacion VARCHAR(50) NOT NULL UNIQUE,
+                sector_pasillo VARCHAR(100) NOT NULL,
+                estante_mueble VARCHAR(100) NOT NULL,
+                repisa_nivel VARCHAR(100) NULL,
+                descripcion VARCHAR(255) NULL,
+                activo BOOLEAN NOT NULL DEFAULT TRUE
+            ) ENGINE=InnoDB;",
+
+            @"CREATE TABLE IF NOT EXISTS lote_ubicaciones (
+                id_lote_ubicacion INT AUTO_INCREMENT PRIMARY KEY,
+                id_lote INT NOT NULL,
+                id_ubicacion INT NOT NULL,
+                cantidad INT NOT NULL DEFAULT 0,
+                fecha_asignacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                id_usuario INT NULL,
+                UNIQUE KEY uk_lote_ubicacion (id_lote, id_ubicacion)
+            ) ENGINE=InnoDB;",
+
+            @"INSERT IGNORE INTO ubicaciones (id_ubicacion, tipo_zona, codigo_ubicacion, sector_pasillo, estante_mueble, repisa_nivel, descripcion, activo) VALUES
+                (1, 'BODEGA', 'BOD-P1-E01-R1', 'Pasillo 1 (Analgésicos)', 'Estante 01', 'Repisa 1', 'Almacenamiento general de comprimidos', 1),
+                (2, 'BODEGA', 'BOD-P1-E02-R2', 'Pasillo 1 (Analgésicos)', 'Estante 02', 'Repisa 2', 'Insumos médicos y jeringas', 1),
+                (3, 'BODEGA', 'BOD-P2-E01-R1', 'Pasillo 2 (Vitaminas y Crónicos)', 'Estante 01', 'Repisa 1', 'Vitaminas y suplementos', 1),
+                (4, 'SALA_VENTAS', 'SAL-GON-01-N1', 'Góndola 1 (OTC y Vitaminas)', 'Cuerpo A', 'Nivel 1', 'Exhibición principal público general', 1),
+                (5, 'SALA_VENTAS', 'SAL-VIT-01-N2', 'Vitrina Mostrador Principal', 'Sección Central', 'Bandeja 2', 'Dispensación rápida de mostrador', 1);",
+
+            @"INSERT IGNORE INTO lote_ubicaciones (id_lote, id_ubicacion, cantidad, id_usuario) VALUES
+                (1, 1, 100, 1),
+                (1, 5, 49, 1),
+                (2, 1, 200, 1),
+                (2, 5, 100, 1),
+                (10, 3, 150, 1),
+                (10, 4, 49, 1);",
+
             @"INSERT IGNORE INTO cajas (id_caja, nombre_caja, descripcion, activa) VALUES
                 (1, 'Caja 1 - Principal POS', 'Terminal principal de sala de ventas', 1),
                 (2, 'Caja 2 - Convenios y Recetas', 'Atención preferencial e instituciones', 1),

@@ -446,6 +446,31 @@ CREATE TABLE registro_mermas (
     CHECK (cantidad > 0)
 ) ENGINE=InnoDB;
 
+CREATE TABLE ubicaciones (
+    id_ubicacion INT AUTO_INCREMENT PRIMARY KEY,
+    tipo_zona VARCHAR(30) NOT NULL DEFAULT 'BODEGA',
+    codigo_ubicacion VARCHAR(50) NOT NULL UNIQUE,
+    sector_pasillo VARCHAR(100) NOT NULL,
+    estante_mueble VARCHAR(100) NOT NULL,
+    repisa_nivel VARCHAR(100) NULL,
+    descripcion VARCHAR(255) NULL,
+    activo BOOLEAN NOT NULL DEFAULT TRUE
+) ENGINE=InnoDB;
+
+CREATE TABLE lote_ubicaciones (
+    id_lote_ubicacion INT AUTO_INCREMENT PRIMARY KEY,
+    id_lote INT NOT NULL,
+    id_ubicacion INT NOT NULL,
+    cantidad INT NOT NULL DEFAULT 0,
+    fecha_asignacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id_usuario INT NULL,
+    UNIQUE KEY uk_lote_ubicacion (id_lote, id_ubicacion),
+    CONSTRAINT fk_lote_ubic_lote
+        FOREIGN KEY (id_lote) REFERENCES lotes(id_lote),
+    CONSTRAINT fk_lote_ubic_ubicacion
+        FOREIGN KEY (id_ubicacion) REFERENCES ubicaciones(id_ubicacion)
+) ENGINE=InnoDB;
+
 -- =========================
 -- ÍNDICES ADICIONALES
 -- =========================

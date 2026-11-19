@@ -160,6 +160,10 @@ namespace TISW_TUSSI_ERP
             builder.Services.AddTransient<KardexPage>();
             builder.Services.AddTransient<MermasViewModel>();
             builder.Services.AddTransient<MermasPage>();
+            builder.Services.AddTransient<UbicacionesBodegaViewModel>();
+            builder.Services.AddTransient<UbicacionesBodegaPage>();
+            builder.Services.AddTransient<UbicacionesSalaViewModel>();
+            builder.Services.AddTransient<UbicacionesSalaPage>();
 
             return builder.Build();
         }

@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows.Input;
 using Microsoft.Maui.ApplicationModel;
@@ -59,12 +59,13 @@ public class MermasViewModel : BaseViewModel
 
         try
         {
+            // 1. Generar bytes del reporte mediante QuestPDF
             byte[] pdfBytes = _reporteService.GenerarReporteMermasPdf(Mermas.ToList());
             await TISW_TUSSI_ERP.Helpers.ExportadorReportes.GuardarYAbrirPdfBytesAsync("Informe_Mermas", pdfBytes);
         }
         catch (Exception ex)
         {
-            await Shell.Current.DisplayAlert("Error", "No se pudo generar el PDF de mermas: " + ex.Message, "OK");
+            await Shell.Current.DisplayAlert("Error", "No se pudo generar o guardar el PDF de mermas: " + ex.Message, "OK");
         }
     }
 }

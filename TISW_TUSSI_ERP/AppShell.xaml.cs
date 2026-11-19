@@ -33,6 +33,8 @@ public partial class AppShell : Shell
         "InventarioPage",
         "KardexPage",
         "MermasPage",
+        "UbicacionesBodegaPage",
+        "UbicacionesSalaPage",
         "PlanCuentasPage",
         "LibroDiarioPage",
         "LibroMayorPage",
@@ -73,6 +75,8 @@ public partial class AppShell : Shell
             new ItemMenu("", "Catálogo SKUs", "InventarioPage", "INVENTARIOS"),
             new ItemMenu("", "Kardex y Lotes", "KardexPage", "INVENTARIOS"),
             new ItemMenu("", "Mermas", "MermasPage", "INVENTARIOS"),
+            new ItemMenu("", "Ubicaciones Bodega", "UbicacionesBodegaPage", "INVENTARIOS"),
+            new ItemMenu("", "Sala de Ventas", "UbicacionesSalaPage", "INVENTARIOS"),
         }),
         new("COMPRAS", new[]
         {

@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:m="clr-namespace:TISW_TUSSI_ERP.Models.Inventario"
+             x:Class="TISW_TUSSI_ERP.Views.Inventario.GestionUbicacionesSalaModalPage"
+             BackgroundColor="#80000000"
+             Title="Administrar Sala de Ventas">
+
+    <Grid VerticalOptions="Center" HorizontalOptions="Center" WidthRequest="780" MaximumHeightRequest="620" Padding="16">
+        <Border BackgroundColor="White" Stroke="{StaticResource ErpBorder}" StrokeShape="RoundRectangle 12" Padding="24">
+            <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="16">
+
+                <!-- Cabecera -->
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="Administración de Góndolas, Vitrinas y Mostradores" FontSize="18" FontAttributes="Bold" TextColor="{StaticResource ErpText}" />
+                        <Label Text="Cree, edite o active/inactive ubicaciones de exhibición en Sala de Ventas" FontSize="12" TextColor="{StaticResource ErpMuted}" />
+                    </VerticalStackLayout>
+                    <Button Grid.Column="1" Text="✕" Clicked="OnCerrarClicked" Style="{StaticResource ErpGhostButton}" WidthRequest="36" HeightRequest="36" />
+                </Grid>
+
+                <!-- Formulario Crear / Editar -->
+                <Border Grid.Row="1" BackgroundColor="#F8FAFC" Stroke="{StaticResource ErpBorder}" StrokeShape="RoundRectangle 8" Padding="14">
+                    <VerticalStackLayout Spacing="10">
+                        <Label x:Name="LblModoFormulario" Text="Nueva Ubicación en Sala de Ventas" FontSize="13" FontAttributes="Bold" TextColor="{StaticResource ErpPrimary}" />
+
+                        <Grid ColumnDefinitions="1.1*,1*,1*,1*" ColumnSpacing="8">
+                            <VerticalStackLayout Spacing="2">
+                                <Label Text="Código Único *" Style="{StaticResource ErpCaption}" />
+                                <Entry x:Name="TxtCodigo" Placeholder="Ej: SAL-GON-01" BackgroundColor="White" TextColor="Black" FontSize="12" />
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                <Label Text="Zona / Exhibidor *" Style="{StaticResource ErpCaption}" />
+                                <Entry x:Name="TxtZona" Placeholder="Ej: Góndola 1" BackgroundColor="White" TextColor="Black" FontSize="12" />
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="2" Spacing="2">
+                                <Label Text="Cuerpo / Sección *" Style="{StaticResource ErpCaption}" />
+                                <Entry x:Name="TxtSeccion" Placeholder="Ej: Cuerpo A" BackgroundColor="White" TextColor="Black" FontSize="12" />
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="3" Spacing="2">
+                                <Label Text="Nivel / Bandeja" Style="{StaticResource ErpCaption}" />
+                                <Entry x:Name="TxtNivel" Placeholder="Ej: Nivel 1" BackgroundColor="White" TextColor="Black" FontSize="12" />
+                            </VerticalStackLayout>
+                        </Grid>
+
+                        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                            <Entry x:Name="TxtDescripcion" Placeholder="Descripción comercial (Opcional)..." BackgroundColor="White" TextColor="Black" FontSize="12" />
+                            <Button Grid.Column="1" x:Name="BtnLimpiar" Text="Cancelar Edición" Clicked="OnLimpiarClicked" Style="{StaticResource ErpGhostButton}" IsVisible="False" HeightRequest="36" />
+                            <Button Grid.Column="2" x:Name="BtnGuardar" Text="💾 Guardar Exhibidor" Clicked="OnGuardarClicked" Style="{StaticResource ErpPrimaryButton}" HeightRequest="36" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Listado de Ubicaciones de Sala -->
+                <CollectionView Grid.Row="2" x:Name="ListaUbicacionesSala">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="m:UbicacionModel">
+                            <Border Margin="0,0,0,6" Padding="10,8" BackgroundColor="White" Stroke="{StaticResource ErpBorder}" StrokeShape="RoundRectangle 8">
+                                <Grid ColumnDefinitions="130,*,Auto,Auto,Auto" ColumnSpacing="8" VerticalOptions="Center">
+                                    <Label Text="{Binding CodigoUbicacion}" FontSize="12" FontAttributes="Bold" TextColor="#1D6FD8" VerticalOptions="Center" />
+                                    <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
+                                        <Label Text="{Binding RutaCompleta}" FontSize="12" FontAttributes="Bold" TextColor="{StaticResource ErpText}" />
+                                        <Label Text="{Binding Descripcion}" FontSize="10" TextColor="{StaticResource ErpMuted}" />
+                                    </VerticalStackLayout>
+                                    <Border Grid.Column="2" Padding="8,3" StrokeThickness="0" StrokeShape="RoundRectangle 6" BackgroundColor="#F3F4F6" VerticalOptions="Center">
+                                        <Label Text="{Binding Activo, StringFormat='Activa: {0}'}" FontSize="10" FontAttributes="Bold" TextColor="#374151" />
+                                    </Border>
+                                    <Button Grid.Column="3" Text="✏️ Editar" Clicked="OnEditarItemClicked" CommandParameter="{Binding .}" Style="{StaticResource ErpGhostButton}" HeightRequest="32" FontSize="11" />
+                                    <Button Grid.Column="4" Text="Activar / Inactivar" Clicked="OnToggleEstadoClicked" CommandParameter="{Binding .}" Style="{StaticResource ErpGhostButton}" HeightRequest="32" FontSize="11" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <Button Grid.Row="3" Text="Cerrar y Actualizar Sala" Clicked="OnCerrarClicked" Style="{StaticResource ErpGhostButton}" HorizontalOptions="End" HeightRequest="38" />
+            </Grid>
+        </Border>
+    </Grid>
+</ContentPage>

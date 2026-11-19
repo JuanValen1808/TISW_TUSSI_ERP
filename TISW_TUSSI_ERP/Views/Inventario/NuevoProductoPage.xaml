@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="TISW_TUSSI_ERP.Views.Inventario.NuevoProductoPage"
+             BackgroundColor="#80000000"
+             Title="Nuevo Producto">
+
+    <Grid VerticalOptions="Center" HorizontalOptions="Center" Padding="20">
+        <Border Style="{StaticResource ErpCard}" Padding="24" BackgroundColor="{StaticResource ErpBg}" WidthRequest="540">
+            <VerticalStackLayout Spacing="16">
+
+                <!-- Encabezado -->
+                <Grid ColumnDefinitions="*,Auto">
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="Registrar Nuevo Medicamento" Style="{StaticResource ErpTitle}" FontSize="18" />
+                        <Label Text="Ingrese los datos del nuevo SKU para el catálogo" Style="{StaticResource ErpSubtitle}" />
+                    </VerticalStackLayout>
+                    <Button Grid.Column="1" Text="✕" Style="{StaticResource ErpGhostButton}" WidthRequest="36" HeightRequest="36" Command="{Binding ComandoCerrar}" />
+                </Grid>
+
+                <BoxView HeightRequest="1" Color="{StaticResource ErpBorder}" />
+
+                <!-- Formulario -->
+                <ScrollView MaximumHeightRequest="440">
+                    <VerticalStackLayout Spacing="14" Padding="0,0,4,0">
+
+                        <!-- SKU y Código de Barras -->
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                            <VerticalStackLayout Grid.Column="0" Spacing="4">
+                                <Label Text="SKU *" Style="{StaticResource ErpCaption}" />
+                                <Entry Text="{Binding Sku}" Placeholder="Ej. PAR-500" BackgroundColor="White" TextColor="Black" PlaceholderColor="#9CA3AF" FontSize="13" />
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="1" Spacing="4">
+                                <Label Text="Código de Barras" Style="{StaticResource ErpCaption}" />
+                                <Entry Text="{Binding CodigoBarras}" Placeholder="Ej. 780000123" BackgroundColor="White" TextColor="Black" PlaceholderColor="#9CA3AF" FontSize="13" />
+                            </VerticalStackLayout>
+                        </Grid>
+
+                        <!-- Nombre Comercial -->
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="Nombre Comercial *" Style="{StaticResource ErpCaption}" />
+                            <Entry Text="{Binding NombreComercial}" Placeholder="Ej. Paracetamol 500mg" BackgroundColor="White" TextColor="Black" PlaceholderColor="#9CA3AF" FontSize="13" />
+                        </VerticalStackLayout>
+
+                        <!-- Principio Activo y Registro Sanitario -->
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                            <VerticalStackLayout Grid.Column="0" Spacing="4">
+                                <Label Text="Principio Activo" Style="{StaticResource ErpCaption}" />
+                                <Entry Text="{Binding PrincipioActivo}" Placeholder="Ej. Paracetamol" BackgroundColor="White" TextColor="Black" PlaceholderColor="#9CA3AF" FontSize="13" />
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="1" Spacing="4">
+                                <Label Text="Registro Sanitario *" Style="{StaticResource ErpCaption}" />
+                                <Entry Text="{Binding RegistroSanitario}" Placeholder="Ej. F-123/24" BackgroundColor="White" TextColor="Black" PlaceholderColor="#9CA3AF" FontSize="13" />
+                            </VerticalStackLayout>
+                        </Grid>
+
+                        <!-- Formato y Stock Mínimo -->
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                            <VerticalStackLayout Grid.Column="0" Spacing="4">
+                                <Label Text="Formato de Presentación" Style="{StaticResource ErpCaption}" />
+                                <Entry Text="{Binding FormatoPresentacion}" Placeholder="Ej. Caja x 20 comprimidos" BackgroundColor="White" TextColor="Black" PlaceholderColor="#9CA3AF" FontSize="13" />
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="1" Spacing="4">
+                                <Label Text="Stock Mín. / Reorden" Style="{StaticResource ErpCaption}" />
+                                <Grid ColumnDefinitions="*,*" ColumnSpacing="6">
+                                    <Entry Text="{Binding StockMinimo}" Keyboard="Numeric" Placeholder="10" BackgroundColor="White" TextColor="Black" PlaceholderColor="#9CA3AF" FontSize="13" />
+                                    <Entry Grid.Column="1" Text="{Binding PuntoReorden}" Keyboard="Numeric" Placeholder="20" BackgroundColor="White" TextColor="Black" PlaceholderColor="#9CA3AF" FontSize="13" />
+                                </Grid>
+                            </VerticalStackLayout>
+                        </Grid>
+
+                        <!-- Costo Promedio y Precio Estimado Venta -->
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                            <VerticalStackLayout Grid.Column="0" Spacing="4">
+                                <Label Text="Costo Promedio ($) *" Style="{StaticResource ErpCaption}" />
+                                <Entry Text="{Binding CostoPromedio}" Keyboard="Numeric" Placeholder="3000.00" BackgroundColor="White" TextColor="Black" PlaceholderColor="#9CA3AF" FontSize="13" />
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="1" Spacing="4">
+                                <Label Text="Precio Estimado Venta ($) *" Style="{StaticResource ErpCaption}" />
+                                <Entry Text="{Binding PrecioVenta}" Keyboard="Numeric" Placeholder="5000.00" BackgroundColor="White" TextColor="Black" PlaceholderColor="#9CA3AF" FontSize="13" />
+                            </VerticalStackLayout>
+                        </Grid>
+
+                    </VerticalStackLayout>
+                </ScrollView>
+
+                <BoxView HeightRequest="1" Color="{StaticResource ErpBorder}" />
+
+                <!-- Botones -->
+                <HorizontalStackLayout Spacing="10" HorizontalOptions="End">
+                    <Button Text="Cancelar" Style="{StaticResource ErpGhostButton}" HeightRequest="40" WidthRequest="110" Command="{Binding ComandoCerrar}" />
+                    <Button Text="Registrar Producto" Style="{StaticResource ErpPrimaryButton}" HeightRequest="40" WidthRequest="160" Command="{Binding ComandoGuardar}" />
+                </HorizontalStackLayout>
+
+            </VerticalStackLayout>
+        </Border>
+    </Grid>
+</ContentPage>

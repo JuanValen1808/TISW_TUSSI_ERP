@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Text;
 using System.Windows.Input;
@@ -7,6 +7,7 @@ using Microsoft.Maui.Controls;
 using TISW_TUSSI_ERP.Helpers;
 using TISW_TUSSI_ERP.Models.Inventario;
 using TISW_TUSSI_ERP.Services.Api;
+using TISW_TUSSI_ERP.Views.Inventario;
 
 namespace TISW_TUSSI_ERP.ViewModels.Inventario;
 
@@ -112,19 +113,57 @@ public class InventarioViewModel : BaseViewModel
         });
 
         ComandoNuevoProducto = new Command(async () =>
-            await Aviso("Nuevo Producto", "El formulario de alta de SKU se implementará en la siguiente etapa del módulo Inventario."));
+        {
+            var modal = new NuevoProductoPage(async productoNuevo =>
+            {
+                if (productoNuevo != null)
+                {
+                    var (exito, mensaje) = await _servicio.GuardarProductoAsync(productoNuevo);
+                    await Aviso(exito ? "Éxito" : "Atención", mensaje);
+                    if (exito)
+                    {
+                        await CargarAsync(); // Recargar lista y KPIs
+                    }
+                }
+            });
 
-        ComandoRegistrarMerma = new Command(async () =>
-            await Aviso("Registrar Merma", "Se implementará en la pantalla dedicada a \"Ajustes y Mermas\"."));
-
-        ComandoRegistrarAjuste = new Command(async () =>
-            await Aviso("Registrar Ajuste", "Se implementará en la pantalla dedicada a \"Ajustes y Mermas\"."));
+            await Shell.Current.Navigation.PushModalAsync(modal);
+        });
 
         ComandoEditarProducto = new Command(async () =>
-            await Aviso("Editar Ficha", "La edición de productos estará disponible en la siguiente versión."));
+        {
+            if (ProductoSeleccionado is null)
+            {
+                await Aviso("Editar Ficha", "Seleccione un producto de la lista para editar.");
+                return;
+            }
+
+            // Abrir ventana emergente modal con el diseño de la plataforma
+            var modal = new EditarProductoPage(ProductoSeleccionado, async productoModificado =>
+            {
+                if (productoModificado != null)
+                {
+                    // Guardar cambios a través del servicio
+                    var (exito, mensaje) = await _servicio.GuardarProductoAsync(productoModificado);
+                    await Aviso(exito ? "Éxito" : "Atención", mensaje);
+                    if (exito)
+                    {
+                        await CargarAsync(); // Recargar la lista y KPIs
+                    }
+                }
+            });
+
+            await Shell.Current.Navigation.PushModalAsync(modal);
+        });
+
+        ComandoRegistrarMerma = new Command(async () =>
+            await Shell.Current.GoToAsync("//MermasPage"));
+
+        ComandoRegistrarAjuste = new Command(async () =>
+            await Shell.Current.GoToAsync("//MermasPage"));
 
         ComandoVerKardex = new Command(async () =>
-            await Aviso("Consultar Kardex", "Dirígete a la sección Kardex y Lotes en el menú lateral."));
+            await Shell.Current.GoToAsync("//KardexPage"));
 
         ComandoExportarDocumento = new Command(async () => await ExportarDocumentoPdfAsync());
     }
@@ -167,13 +206,14 @@ public class InventarioViewModel : BaseViewModel
         {
             EstaOcupado = true;
 
-            // Generar PDF usando QuestPDF a través del ReporteService
+            // 1. Generar los bytes del PDF mediante QuestPDF
             byte[] pdfBytes = _reporteService.GenerarReporteInventarioPdf(Resumen, Productos.ToList());
-            await TISW_TUSSI_ERP.Helpers.ExportadorReportes.GuardarYAbrirPdfBytesAsync("Informe_Inventario", pdfBytes);
+            await TISW_TUSSI_ERP.Helpers.ExportadorReportes.GuardarYAbrirPdfBytesAsync("Informe_Valorizacion_Inventario", pdfBytes);
         }
         catch (Exception ex)
         {
-            MensajeError = "Error al generar el reporte PDF: " + ex.Message;
+            MensajeError = "Error al exportar y guardar el reporte PDF: " + ex.Message;
+            await Shell.Current.DisplayAlert("Error", MensajeError, "OK");
         }
         finally
         {

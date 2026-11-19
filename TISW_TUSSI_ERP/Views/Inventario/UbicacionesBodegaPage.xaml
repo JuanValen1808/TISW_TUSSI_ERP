@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:TISW_TUSSI_ERP.ViewModels.Inventario"
+             xmlns:m="clr-namespace:TISW_TUSSI_ERP.Models.Inventario"
+             xmlns:ctrl="clr-namespace:TISW_TUSSI_ERP.Views.Shared"
+             x:Class="TISW_TUSSI_ERP.Views.Inventario.UbicacionesBodegaPage"
+             x:DataType="vm:UbicacionesBodegaViewModel"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource ErpBg}"
+             Title="Ubicaciones en Bodega">
+
+    <Grid RowDefinitions="Auto,*">
+        <ctrl:PageHeader Grid.Row="0" Ruta="ERP › Inventario › Ubicaciones Bodega" Titulo="Gestión de Ubicaciones en Bodega" />
+
+        <Grid Grid.Row="1" ColumnDefinitions="1.15*,1*" ColumnSpacing="16" Padding="24">
+
+            <!-- COLUMNA IZQUIERDA: Buscador y Lista de Lotes -->
+            <Border Grid.Column="0" Style="{StaticResource ErpCard}" Padding="16">
+                <Grid RowDefinitions="Auto,Auto,*" RowSpacing="12">
+                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                        <Entry Grid.Column="0"
+                               Text="{Binding TextoBusqueda}"
+                               Placeholder="Buscar por SKU, código de barras, producto o lote..."
+                               BackgroundColor="White"
+                               TextColor="Black"
+                               PlaceholderColor="#9CA3AF"
+                               FontSize="13" />
+                        <Button Grid.Column="1" Text="⚙ Gestionar Estantes" Style="{StaticResource ErpGhostButton}" Command="{Binding ComandoNuevaUbicacion}" HeightRequest="38" />
+                        <Button Grid.Column="2" Text="🔄" Style="{StaticResource ErpGhostButton}" Command="{Binding ComandoRecargar}" HeightRequest="38" WidthRequest="42" />
+                    </Grid>
+
+                    <Label Grid.Row="1" Text="{Binding LotesFiltrados.Count, StringFormat='Lotes Activos en Bodega ({0})'}" Style="{StaticResource ErpCardTitle}" />
+
+                    <CollectionView Grid.Row="2"
+                                    ItemsSource="{Binding LotesFiltrados}"
+                                    SelectionMode="Single"
+                                    SelectedItem="{Binding LoteSeleccionado, Mode=TwoWay}">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="m:LoteBodegaItemModel">
+                                <Border Margin="0,0,0,8" Padding="12" BackgroundColor="White" Stroke="{StaticResource ErpBorder}" StrokeShape="RoundRectangle 8">
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                        <VerticalStackLayout Spacing="2">
+                                            <HorizontalStackLayout Spacing="6">
+                                                <Label Text="{Binding Sku}" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource ErpPrimary}" />
+                                                <Label Text="{Binding NumeroLote, StringFormat='· Lote: {0}'}" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource ErpMuted}" />
+                                            </HorizontalStackLayout>
+                                            <Label Text="{Binding NombreProducto}" Style="{StaticResource ErpBody}" FontAttributes="Bold" />
+                                            <Label FontSize="11" TextColor="{StaticResource ErpMuted}">
+                                                <Label.FormattedText>
+                                                    <FormattedString>
+                                                        <Span Text="Vence: " />
+                                                        <Span Text="{Binding VencimientoTexto}" />
+                                                        <Span Text=" · Stock Total: " />
+                                                        <Span Text="{Binding StockTotalLote}" FontAttributes="Bold" />
+                                                        <Span Text=" un." />
+                                                    </FormattedString>
+                                                </Label.FormattedText>
+                                            </Label>
+                                        </VerticalStackLayout>
+
+                                        <Border Grid.Column="1" BackgroundColor="{Binding FondoEstado}" StrokeThickness="0" StrokeShape="RoundRectangle 8" Padding="8,4" VerticalOptions="Center">
+                                            <Label Text="{Binding EstadoUbicacionTexto}" FontSize="10" FontAttributes="Bold" TextColor="{Binding ColorEstado}" />
+                                        </Border>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </Grid>
+            </Border>
+
+            <!-- COLUMNA DERECHA: Posiciones Actuales, Asignación y Reubicación -->
+            <ScrollView Grid.Column="1">
+                <VerticalStackLayout Spacing="16" IsVisible="{Binding HayLoteSeleccionado}">
+
+                    <!-- Tarjeta 1: Asignar Ubicación -->
+                    <Border Style="{StaticResource ErpCard}" Padding="16">
+                        <VerticalStackLayout Spacing="12">
+                            <Label Text="Asignar Posición en Bodega" Style="{StaticResource ErpCardTitle}" />
+                            <Label Text="{Binding LoteSeleccionado.NombreProducto, StringFormat='Producto: {0}'}" FontSize="12" TextColor="{StaticResource ErpMuted}" />
+
+                            <Grid ColumnDefinitions="*,110" ColumnSpacing="10">
+                                <VerticalStackLayout Spacing="4">
+                                    <Label Text="Pasillo / Estante / Repisa *" Style="{StaticResource ErpCaption}" />
+                                    <Border Stroke="{StaticResource ErpBorder}" StrokeShape="RoundRectangle 6" Padding="8,0" BackgroundColor="White">
+                                        <Picker Title="Seleccionar ubicación..."
+                                                ItemsSource="{Binding UbicacionesBodega}"
+                                                ItemDisplayBinding="{Binding DisplayPicker}"
+                                                SelectedItem="{Binding UbicacionSeleccionada, Mode=TwoWay}"
+                                                TextColor="Black"
+                                                TitleColor="#6B7280"
+                                                FontSize="12" />
+                                    </Border>
+                                </VerticalStackLayout>
+                                <VerticalStackLayout Grid.Column="1" Spacing="4">
+                                    <Label Text="Cantidad *" Style="{StaticResource ErpCaption}" />
+                                    <Entry Text="{Binding CantidadAsignar}"
+                                           Keyboard="Numeric"
+                                           BackgroundColor="White"
+                                           TextColor="Black"
+                                           FontSize="13" />
+                                </VerticalStackLayout>
+                            </Grid>
+
+                            <Button Text="📍 Asignar Ubicación" Style="{StaticResource ErpPrimaryButton}" Command="{Binding ComandoAsignar}" HeightRequest="40" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- Tarjeta 2: Ubicaciones Actuales del Lote -->
+                    <Border Style="{StaticResource ErpCard}" Padding="16">
+                        <VerticalStackLayout Spacing="10">
+                            <Label Text="Ubicaciones Actuales del Lote en Bodega" Style="{StaticResource ErpCardTitle}" />
+
+                            <CollectionView ItemsSource="{Binding UbicacionesDelLote}" HeightRequest="150">
+                                <CollectionView.EmptyView>
+                                    <Label Text="Este lote aún no tiene unidades asignadas a un estante en bodega." FontSize="12" TextColor="{StaticResource ErpMuted}" Margin="0,12" />
+                                </CollectionView.EmptyView>
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate x:DataType="m:LoteUbicacionDetalleModel">
+                                        <Border Margin="0,0,0,6" Padding="10" BackgroundColor="#F8FAFC" Stroke="{StaticResource ErpBorder}" StrokeShape="RoundRectangle 6">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <VerticalStackLayout Spacing="2">
+                                                    <Label Text="{Binding CodigoUbicacion}" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource ErpPrimary}" />
+                                                    <Label Text="{Binding RutaCompleta}" FontSize="12" TextColor="{StaticResource ErpText}" />
+                                                    <Label Text="{Binding FechaTexto, StringFormat='Asignado: {0}'}" FontSize="10" TextColor="{StaticResource ErpMuted}" />
+                                                </VerticalStackLayout>
+                                                <Label Grid.Column="1" Text="{Binding Cantidad, StringFormat='{0} un.'}" FontSize="13" FontAttributes="Bold" TextColor="#15803D" VerticalOptions="Center" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- Tarjeta 3: Reubicar entre Estantes -->
+                    <Border Style="{StaticResource ErpCard}" Padding="16">
+                        <VerticalStackLayout Spacing="12">
+                            <Label Text="Reubicar Unidades entre Estantes" Style="{StaticResource ErpCardTitle}" />
+
+                            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                                <VerticalStackLayout Spacing="4">
+                                    <Label Text="Desde Ubicación Actual" Style="{StaticResource ErpCaption}" />
+                                    <Border Stroke="{StaticResource ErpBorder}" StrokeShape="RoundRectangle 6" Padding="8,0" BackgroundColor="White">
+                                        <Picker Title="Origen..."
+                                                ItemsSource="{Binding UbicacionesDelLote}"
+                                                ItemDisplayBinding="{Binding CodigoUbicacion}"
+                                                SelectedItem="{Binding UbicacionOrigenReubicar, Mode=TwoWay}"
+                                                TextColor="Black"
+                                                TitleColor="#6B7280"
+                                                FontSize="12" />
+                                    </Border>
+                                </VerticalStackLayout>
+                                <VerticalStackLayout Grid.Column="1" Spacing="4">
+                                    <Label Text="Hacia Nueva Ubicación" Style="{StaticResource ErpCaption}" />
+                                    <Border Stroke="{StaticResource ErpBorder}" StrokeShape="RoundRectangle 6" Padding="8,0" BackgroundColor="White">
+                                        <Picker Title="Destino..."
+                                                ItemsSource="{Binding UbicacionesBodega}"
+                                                ItemDisplayBinding="{Binding DisplayPicker}"
+                                                SelectedItem="{Binding UbicacionDestinoReubicar, Mode=TwoWay}"
+                                                TextColor="Black"
+                                                TitleColor="#6B7280"
+                                                FontSize="12" />
+                                    </Border>
+                                </VerticalStackLayout>
+                            </Grid>
+
+                            <Grid ColumnDefinitions="120,*" ColumnSpacing="10">
+                                <Entry Text="{Binding CantidadReubicar}" Keyboard="Numeric" Placeholder="Cant." BackgroundColor="White" TextColor="Black" FontSize="13" />
+                                <Button Grid.Column="1" Text="⇄ Trasladar en Bodega" Style="{StaticResource ErpGhostButton}" Command="{Binding ComandoReubicar}" HeightRequest="40" />
+                            </Grid>
+                        </VerticalStackLayout>
+                    </Border>
+
+                </VerticalStackLayout>
+            </ScrollView>
+
+        </Grid>
+    </Grid>
+</ContentPage>
