@@ -678,8 +678,60 @@ INSERT INTO plan_cuentas (id_cuenta, codigo_cuenta, nombre_cuenta, tipo_cuenta, 
     (11, '2.1.01', 'Cuentas por Pagar Proveedores', 'PASIVO', 2, 2),
     (12, '2.1.02', 'IVA Débito Fiscal', 'PASIVO', 2, 2),
     (13, '1.1.04', 'IVA Crédito Fiscal', 'ACTIVO', 2, 1),
-    (14, '5.1.02', 'Gastos de Administración', 'GASTO', 2, 5),
-    (15, '4.1.02', 'Ingresos por Convenios', 'INGRESO', 2, 4);
+    (14, '5.1.02', 'Gastos de Administración y Ventas', 'GASTO', 2, 5),
+    (15, '4.1.02', 'Ingresos por Convenios de Salud', 'INGRESO', 2, 4),
+    (16, '1.1.05', 'Banco Cuenta Corriente', 'ACTIVO', 2, 1),
+    (17, '1.1.06', 'PPM por Recuperar (Art. 84 LIR)', 'ACTIVO', 2, 1),
+    (18, '2.1.03', 'Impuestos por Pagar F29 (SII)', 'PASIVO', 2, 2),
+    (19, '3.1.01', 'Capital Social', 'PATRIMONIO', 2, 3),
+    (20, '3.1.02', 'Resultados Acumulados', 'PATRIMONIO', 2, 3),
+    (21, '5.1.03', 'Pérdidas por Mermas y Vencimientos', 'GASTO', 2, 5);
+
+INSERT IGNORE INTO permisos (codigo_permiso, modulo, descripcion) VALUES
+    ('CONTAB_PLAN_CUENTAS', 'Contabilidad', 'RF-CON-01: Gestionar estructura jerárquica del Plan de Cuentas'),
+    ('CONTAB_LIBRO_DIARIO', 'Contabilidad', 'RF-CON-02: Registrar asientos manuales y centralizar movimientos automáticos'),
+    ('CONTAB_MAYOR_BALANCES', 'Contabilidad', 'RF-CON-03/04: Consultar Libro Mayor, Balance General y Balance de 8 Columnas'),
+    ('CONTAB_ESTADO_RESULTADOS', 'Contabilidad', 'RF-CON-05: Consultar Estado de Resultados e Impuesto 1ª Categoría'),
+    ('CONTAB_MAYOR_CENTRALIZADO', 'Contabilidad', 'RF-CON-06: Consultar Libro Mayor Centralizado mensual'),
+    ('CONTAB_CXC_CXP', 'Contabilidad', 'RF-CON-07/08: Gestionar Cuentas por Cobrar, Pagar y Antigüedad de Saldos'),
+    ('CONTAB_IMPUESTOS_SII', 'Contabilidad', 'RF-CON-09: Consultar Centralizador de Impuestos RCV y Formulario 29 SII'),
+    ('ADMIN_USUARIOS', 'Seguridad', 'RF-POR-02: Administración de usuarios y contraseñas encriptadas'),
+    ('ADMIN_RBAC', 'Seguridad', 'RF-POR-03: Administración de perfiles y matriz de control de accesos RBAC'),
+    ('COMPRAS_PROVEEDORES', 'Compras', 'Mantenedor CRUD de proveedores y laboratorios'),
+    ('COMPRAS_ORDENES', 'Compras', 'Creación, seguimiento y emisión de órdenes de compra'),
+    ('COMPRAS_RECEPCION', 'Compras', 'Recepción y liquidación de facturas con ingreso de stock'),
+    ('COMPRAS_REPORTES', 'Compras', 'Reportes de compras por laboratorio, cumplimiento y precios'),
+    ('COMPRAS_DEVOLUCIONES', 'Compras', 'Gestión de devoluciones y notas de crédito a proveedores'),
+    ('COMPRAS_REABASTECIMIENTO', 'Compras', 'Sugerencia automatizada de reabastecimiento'),
+    ('COMPRAS_EQUIVALENCIAS', 'Compras', 'Gestión de equivalencias de presentación y conversión'),
+    ('COMPRAS_NIVEL_SERVICIO', 'Compras', 'Evaluación del nivel de servicio del proveedor'),
+    ('COMPRAS_AUTORIZACION_GERENCIAL', 'Compras', 'Aprobación de órdenes sobre límite presupuestario (Solo Admin/Gerencia)'),
+    ('COMPRAS_CUARENTENA_LIBERAR', 'Compras', 'Aprobación técnica y visual de lotes por Químico Farmacéutico (Solo QF/Admin)');
+
+INSERT IGNORE INTO rol_permisos (id_rol, id_permiso)
+SELECT 1, id_permiso FROM permisos;
+
+INSERT IGNORE INTO rol_permisos (id_rol, id_permiso)
+SELECT r.id_rol, p.id_permiso
+FROM roles r
+CROSS JOIN permisos p
+WHERE r.nombre_rol = 'Contador'
+  AND (p.modulo = 'Contabilidad' OR p.codigo_permiso LIKE 'CONTAB_%');
+
+INSERT IGNORE INTO ubicaciones (id_ubicacion, tipo_zona, codigo_ubicacion, sector_pasillo, estante_mueble, repisa_nivel, descripcion, activo) VALUES
+    (1, 'BODEGA', 'BOD-P1-E01-R1', 'Pasillo 1 (Analgésicos)', 'Estante 01', 'Repisa 1', 'Almacenamiento general de comprimidos', TRUE),
+    (2, 'BODEGA', 'BOD-P1-E02-R2', 'Pasillo 1 (Analgésicos)', 'Estante 02', 'Repisa 2', 'Insumos médicos y jeringas', TRUE),
+    (3, 'BODEGA', 'BOD-P2-E01-R1', 'Pasillo 2 (Vitaminas y Crónicos)', 'Estante 01', 'Repisa 1', 'Vitaminas y suplementos', TRUE),
+    (4, 'SALA_VENTAS', 'SAL-GON-01-N1', 'Góndola 1 (OTC y Vitaminas)', 'Cuerpo A', 'Nivel 1', 'Exhibición principal público general', TRUE),
+    (5, 'SALA_VENTAS', 'SAL-VIT-01-N2', 'Vitrina Mostrador Principal', 'Sección Central', 'Bandeja 2', 'Dispensación rápida de mostrador', TRUE);
+
+INSERT IGNORE INTO lote_ubicaciones (id_lote, id_ubicacion, cantidad, id_usuario) VALUES
+    (1, 1, 100, 1),
+    (1, 5, 49, 1),
+    (2, 1, 200, 1),
+    (2, 5, 100, 1),
+    (10, 3, 150, 1),
+    (10, 4, 49, 1);
 
 INSERT INTO proveedores (id_proveedor, rut_proveedor, razon_social, nombre_contacto, telefono, email, condiciones_comerciales) VALUES
     (10, '76.555.444-3', 'Laboratorios Andinos S.A.', 'Marta López', '+56227778888', 'ventas@labandinos.cl', 'Pago a 60 días'),
