@@ -1,5 +1,6 @@
 ﻿using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
+using Microsoft.Maui.Storage;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 using TISW_TUSSI_ERP.Models.Auth;
@@ -12,6 +13,7 @@ namespace TISW_TUSSI_ERP.ViewModels.Inventario;
 public class UbicacionesSalaViewModel : BaseViewModel
 {
     private readonly InventarioService _servicio;
+    private readonly ReporteService _reporteService;
     private List<LoteSalaItemModel> _todosLotes = new();
 
     public ObservableCollection<LoteSalaItemModel> LotesFiltrados { get; } = new();
@@ -103,15 +105,18 @@ public class UbicacionesSalaViewModel : BaseViewModel
     public ICommand ComandoExhibirEnSala { get; }
     public ICommand ComandoRetirarABodega { get; }
     public ICommand ComandoNuevaUbicacionSala { get; }
+    public ICommand ComandoGenerarReporteSala { get; }
 
-    public UbicacionesSalaViewModel(InventarioService servicio)
+    public UbicacionesSalaViewModel(InventarioService servicio, ReporteService? reporteService = null)
     {
         _servicio = servicio;
+        _reporteService = reporteService ?? new ReporteService();
         Titulo = "Ubicaciones en Sala de Ventas";
 
         ComandoRecargar = new Command(async () => await CargarAsync());
         ComandoExhibirEnSala = new Command(async () => await ExhibirEnSalaAsync());
         ComandoRetirarABodega = new Command(async () => await RetirarABodegaAsync());
+        ComandoGenerarReporteSala = new Command(async () => await GenerarReporteSalaPdfAsync());
         ComandoNuevaUbicacionSala = new Command(async () =>
         {
             string rolActual = Sesion.UsuarioActual?.NombreRol ?? "Encargado de Inventario";
@@ -150,7 +155,6 @@ public class UbicacionesSalaViewModel : BaseViewModel
             UbicacionesBodega.Clear();
             foreach (var b in bodegas) UbicacionesBodega.Add(b);
 
-            // Obtener lotes y mapearlos al modelo limpio LoteSalaItemModel
             var lotesBase = await _servicio.ObtenerLotesParaUbicacionAsync();
             _todosLotes = lotesBase.Select(l => new LoteSalaItemModel
             {
@@ -270,41 +274,33 @@ public class UbicacionesSalaViewModel : BaseViewModel
         if (exito) await CargarAsync();
     }
 
-    private async Task CrearUbicacionSalaAsync()
+    private async Task GenerarReporteSalaPdfAsync()
     {
-        string rolActual = Preferences.Get("UsuarioRol", "Encargado de Inventario");
-
-        bool esEncargado = rolActual.Contains("Encargado", StringComparison.OrdinalIgnoreCase) ||
-                           rolActual.Contains("Administrador", StringComparison.OrdinalIgnoreCase);
-
-        if (!esEncargado)
+        try
         {
-            await Shell.Current.DisplayAlert("Acceso Denegado (CU-04)", "Solo el Encargado de Inventario puede crear ubicaciones en sala de ventas.", "OK");
-            return;
+            string filtroTexto = string.IsNullOrWhiteSpace(TextoBusqueda)
+                ? "Todos los exhibidores"
+                : $"Búsqueda: '{TextoBusqueda.Trim()}'";
+
+            byte[] pdfBytes = _reporteService.GenerarReporteStockSalaVentasPdf(
+                LotesFiltrados.ToList(),
+                UbicacionesSala.ToList(),
+                filtroTexto);
+
+            string nombreArchivo = $"Reporte_Stock_Sala_Ventas_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+            string rutaArchivo = Path.Combine(FileSystem.CacheDirectory, nombreArchivo);
+            await File.WriteAllBytesAsync(rutaArchivo, pdfBytes);
+
+            await Shell.Current.DisplayAlert("Reporte Generado (CU-INV-10)", $"El PDF se guardó en:\n{rutaArchivo}", "OK");
+
+            await Launcher.Default.OpenAsync(new OpenFileRequest
+            {
+                File = new ReadOnlyFile(rutaArchivo)
+            });
         }
-
-        string codigo = await Shell.Current.DisplayPromptAsync("Nueva Ubicación Sala", "Código único (Ej: SAL-GON-02-N1):", "Siguiente", "Cancelar");
-        if (string.IsNullOrWhiteSpace(codigo)) return;
-
-        string zona = await Shell.Current.DisplayPromptAsync("Nueva Ubicación Sala", "Góndola / Vitrina / Mostrador (Ej: Góndola 2):", "Siguiente", "Cancelar");
-        if (string.IsNullOrWhiteSpace(zona)) return;
-
-        string mueble = await Shell.Current.DisplayPromptAsync("Nueva Ubicación Sala", "Cuerpo o Sección (Ej: Cuerpo B):", "Siguiente", "Cancelar");
-        if (string.IsNullOrWhiteSpace(mueble)) return;
-
-        string nivel = await Shell.Current.DisplayPromptAsync("Nueva Ubicación Sala", "Nivel / Bandeja (Opcional, Ej: Nivel 1):", "Guardar", "Cancelar") ?? "";
-
-        var nueva = new UbicacionModel
+        catch (Exception ex)
         {
-            TipoZona = "SALA_VENTAS",
-            CodigoUbicacion = codigo,
-            SectorPasillo = zona,
-            EstanteMueble = mueble,
-            RepisaNivel = nivel
-        };
-
-        var (exito, mensaje) = await _servicio.CrearUbicacionAsync(nueva, rolActual);
-        await Shell.Current.DisplayAlert(exito ? "Éxito" : "Error", mensaje, "OK");
-        if (exito) await CargarAsync();
+            await Shell.Current.DisplayAlert("Error al Generar Reporte", ex.Message, "OK");
+        }
     }
 }
