@@ -576,8 +576,8 @@ public class ComprasService
             LEFT JOIN proveedores prov ON prov.id_proveedor = COALESCE(@idProv, ult_oc.id_proveedor)
             WHERE p.activo = 1
             GROUP BY p.id_producto, p.sku, p.nombre_comercial, p.punto_reorden, p.stock_minimo, p.costo_promedio_ponderado, prov.plazo_entrega_dias, prov.razon_social
-            HAVING stock_actual <= p.punto_reorden
-            ORDER BY (stock_actual - p.punto_reorden) ASC";
+            HAVING COALESCE(SUM(l.stock_actual), 0) <= p.punto_reorden
+            ORDER BY (COALESCE(SUM(l.stock_actual), 0) - p.punto_reorden) ASC";
 
         await using var cmd = new MySqlCommand(sql, cn);
         cmd.Parameters.AddWithValue("@idProv", idProveedorFiltro.HasValue && idProveedorFiltro.Value > 0 ? (object)idProveedorFiltro.Value : DBNull.Value);

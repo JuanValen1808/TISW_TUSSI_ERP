@@ -871,8 +871,8 @@ BEGIN
     LEFT JOIN lotes l ON l.id_producto = p.id_producto
     WHERE p.activo = 1
     GROUP BY p.id_producto, p.sku, p.nombre_comercial, p.punto_reorden, p.stock_minimo, p.costo_promedio_ponderado
-    HAVING stock_actual <= p.punto_reorden
-    ORDER BY (stock_actual - p.punto_reorden) ASC;
+    HAVING COALESCE(SUM(l.stock_actual), 0) <= p.punto_reorden
+    ORDER BY (COALESCE(SUM(l.stock_actual), 0) - p.punto_reorden) ASC;
 END //
 DELIMITER ;
 
