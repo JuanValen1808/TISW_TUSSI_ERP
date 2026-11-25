@@ -52,6 +52,7 @@ public partial class HistorialVentasPage : ContentPage
         object sender,
         EventArgs e)
     {
+        ListaVentasHistorial.SelectedItem = null;
         _vm.CerrarDetalle();
     }
 }

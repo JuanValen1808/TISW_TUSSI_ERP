@@ -98,10 +98,10 @@ public class CuentasPorCobrarVentasService
                 "La forma de pago no es válida.");
         }
 
-        if (formaPago == "EFECTIVO" && idTurno == null)
+        if (idTurno == null)
         {
             throw new InvalidOperationException(
-                "Debes seleccionar una caja con turno abierto.");
+                "Debes tener una caja con turno abierto para registrar cobros.");
         }
 
         await using var cn = _db.CrearConexion();
@@ -159,8 +159,7 @@ public class CuentasPorCobrarVentasService
                     $"El abono supera el saldo pendiente de {saldoActual:N0}.");
             }
 
-            // Validar el turno dentro de la transacción.
-            if (formaPago == "EFECTIVO")
+            // Validar el turno abierto dentro de la transacción para cualquier forma de pago.
             {
                 const string sqlTurno = @"
                     SELECT estado
@@ -258,6 +257,21 @@ public class CuentasPorCobrarVentasService
                 if (filas != 1)
                     throw new InvalidOperationException(
                         "No se pudo actualizar el saldo.");
+            }
+
+            // Si la deuda quedó completamente saldada, marcar también la venta como PAGADO.
+            if (nuevoSaldo == 0)
+            {
+                const string sqlVentaPagada = @"
+                    UPDATE ventas_encabezado
+                    SET estado_documento = 'PAGADO'
+                    WHERE id_venta = @idVenta
+                      AND estado_documento = 'PENDIENTE';";
+
+                await using var cmdVenta = new MySqlCommand(
+                    sqlVentaPagada, cn, tx);
+                cmdVenta.Parameters.AddWithValue("@idVenta", idVenta);
+                await cmdVenta.ExecuteNonQueryAsync();
             }
 
             // Solo los abonos en efectivo afectan

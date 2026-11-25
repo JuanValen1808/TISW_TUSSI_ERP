@@ -33,13 +33,6 @@ public class PosViewModel : BaseViewModel
         "CREDITO"
     };
 
-    public string[] TiposDescuento { get; } =
-    {
-        "Sin descuento",
-        "Cumpleaños (10%)",
-        "Promoción (15%)"
-    };
-
     private string _codigoBuscado = string.Empty;
     public string CodigoBuscado
     {
@@ -61,7 +54,10 @@ public class PosViewModel : BaseViewModel
         private set
         {
             if (SetProperty(ref _producto, value))
+            {
                 OnPropertyChanged(nameof(HayProducto));
+                OnPropertyChanged(nameof(MostrarListaCatalogo));
+            }
         }
     }
 
@@ -93,12 +89,16 @@ public class PosViewModel : BaseViewModel
             _ = CargarConveniosAsync(value);
             OnPropertyChanged(nameof(NombreClienteActual));
             OnPropertyChanged(nameof(EsPublicoGeneral));
+            OnPropertyChanged(nameof(TieneClienteSeleccionado));
             Recalcular();
         }
     }
 
     public bool EsPublicoGeneral =>
         ClienteSeleccionado == null;
+
+    public bool TieneClienteSeleccionado =>
+        ClienteSeleccionado != null;
 
     public string NombreClienteActual =>
         ClienteSeleccionado?.Nombre ?? "Público general";
@@ -110,9 +110,15 @@ public class PosViewModel : BaseViewModel
         set
         {
             if (SetProperty(ref _convenioSeleccionado, value))
+            {
+                OnPropertyChanged(nameof(TieneConvenioSeleccionado));
                 Recalcular();
+            }
         }
     }
+
+    public bool TieneConvenioSeleccionado =>
+        ConvenioSeleccionado != null;
 
     private string _formaPago = "EFECTIVO";
     public string FormaPagoSeleccionada
@@ -125,44 +131,21 @@ public class PosViewModel : BaseViewModel
         }
     }
 
-    private string _tipoDescuentoSeleccionado = "Sin descuento";
-    public string TipoDescuentoSeleccionado
-    {
-        get => _tipoDescuentoSeleccionado;
-        set
-        {
-            if (SetProperty(ref _tipoDescuentoSeleccionado, value))
-                Recalcular();
-        }
-    }
-
-    private decimal PorcentajePromocion =>
-        TipoDescuentoSeleccionado switch
-        {
-            "Cumpleaños (10%)" => 10m,
-            "Promoción (15%)" => 15m,
-            _ => 0m
-        };
-
-    private decimal PorcentajeConvenio =>
-        FormaPagoSeleccionada == "CREDITO"
-            ? ConvenioSeleccionado?.PorcentajeDescuento ?? 0m
-            : 0m;
-
     private decimal PorcentajeDescuento =>
-        FormaPagoSeleccionada == "CREDITO"
-            ? PorcentajeConvenio
-            : PorcentajePromocion;
+        ConvenioSeleccionado?.PorcentajeDescuento ?? 0m;
 
     public string PorcentajeDescuentoTexto =>
         $"{PorcentajeDescuento:0.##}%";
 
+    public string EtiquetaDescuento =>
+        TieneConvenioSeleccionado
+            ? $"Descuento ({PorcentajeDescuentoTexto})"
+            : "Descuento";
+
     public string MotivoDescuento =>
-        FormaPagoSeleccionada == "CREDITO"
-            ? ConvenioSeleccionado == null
-                ? "Sin descuento"
-                : $"Convenio: {ConvenioSeleccionado.NombreConvenio}"
-            : TipoDescuentoSeleccionado;
+        ConvenioSeleccionado == null
+            ? "Sin convenio"
+            : $"Convenio: {ConvenioSeleccionado.NombreConvenio} ({PorcentajeDescuentoTexto})";
 
     private decimal Subtotal =>
         Carrito.Sum(i => i.Subtotal);
@@ -190,6 +173,32 @@ public class PosViewModel : BaseViewModel
     public string TotalTexto => Formato.Moneda(Total);
 
     public bool HayItems => Carrito.Count > 0;
+
+    public int TotalUnidades => Carrito.Sum(i => i.Cantidad);
+
+    public string ResumenCarritoTexto =>
+        Carrito.Count == 1
+            ? $"1 producto · {TotalUnidades} {(TotalUnidades == 1 ? "unidad" : "unidades")}"
+            : $"{Carrito.Count} productos · {TotalUnidades} {(TotalUnidades == 1 ? "unidad" : "unidades")}";
+
+    private bool _mostrarCatalogo = true;
+    public bool MostrarCatalogo
+    {
+        get => _mostrarCatalogo;
+        set
+        {
+            if (SetProperty(ref _mostrarCatalogo, value))
+            {
+                OnPropertyChanged(nameof(TextoBotonCatalogo));
+                OnPropertyChanged(nameof(MostrarListaCatalogo));
+            }
+        }
+    }
+
+    public bool MostrarListaCatalogo => MostrarCatalogo && !HayProducto;
+
+    public string TextoBotonCatalogo =>
+        MostrarCatalogo ? "Catálogo ▲" : "Catálogo ▼";
 
     private bool _cajaCerrada;
     public bool CajaCerrada
@@ -237,6 +246,9 @@ public class PosViewModel : BaseViewModel
     public ICommand ComandoVerRanking { get; }
     public ICommand ComandoLimpiar { get; }
     public ICommand ComandoPublicoGeneral { get; }
+    public ICommand ComandoAlternarCatalogo { get; }
+    public ICommand ComandoCancelarSeleccionProducto { get; }
+    public ICommand ComandoQuitarConvenio { get; }
 
     public PosViewModel(VentasService servicio)
     {
@@ -247,7 +259,33 @@ public class PosViewModel : BaseViewModel
             new Command(async () => await BuscarAsync());
 
         ComandoBuscarCatalogo =
-            new Command(async () => await CargarProductosAsync());
+            new Command(async () =>
+            {
+                Producto = null;
+                LoteSeleccionado = null;
+                Lotes.Clear();
+                MostrarCatalogo = true;
+                await CargarProductosAsync();
+            });
+
+        ComandoAlternarCatalogo =
+            new Command(() => MostrarCatalogo = !MostrarCatalogo);
+
+        ComandoCancelarSeleccionProducto =
+            new Command(() =>
+            {
+                Producto = null;
+                LoteSeleccionado = null;
+                Lotes.Clear();
+                CantidadTexto = "1";
+            });
+
+        ComandoQuitarConvenio =
+            new Command(() =>
+            {
+                if (!EstaOcupado)
+                    ConvenioSeleccionado = null;
+            });
 
         ComandoSeleccionarProducto =
             new Command<ProductoPos>(async producto =>
@@ -502,6 +540,7 @@ public class PosViewModel : BaseViewModel
             {
                 IdProducto = existente.IdProducto,
                 IdLote = existente.IdLote,
+                Sku = existente.Sku,
                 NombreProducto = existente.NombreProducto,
                 NumeroLote = existente.NumeroLote,
                 PrecioUnitario = existente.PrecioUnitario,
@@ -514,6 +553,7 @@ public class PosViewModel : BaseViewModel
             {
                 IdProducto = Producto.IdProducto,
                 IdLote = LoteSeleccionado.IdLote,
+                Sku = Producto.Sku,
                 NombreProducto = Producto.NombreComercial,
                 NumeroLote = LoteSeleccionado.NumeroLote,
                 Cantidad = cantidad,
@@ -608,6 +648,7 @@ public class PosViewModel : BaseViewModel
         {
             IdProducto = item.IdProducto,
             IdLote = item.IdLote,
+            Sku = item.Sku,
             NombreProducto = item.NombreProducto,
             NumeroLote = item.NumeroLote,
             PrecioUnitario = item.PrecioUnitario,
@@ -672,7 +713,6 @@ public class PosViewModel : BaseViewModel
         ConvenioSeleccionado = null;
 
         FormaPagoSeleccionada = "EFECTIVO";
-        TipoDescuentoSeleccionado = "Sin descuento";
 
         MensajeError = string.Empty;
         MensajeOk = string.Empty;
@@ -746,11 +786,7 @@ public class PosViewModel : BaseViewModel
         }
 
         int? idCliente = ClienteSeleccionado?.IdCliente;
-
-        int? idConvenio =
-            FormaPagoSeleccionada == "CREDITO"
-                ? ConvenioSeleccionado?.IdConvenio
-                : null;
+        int? idConvenio = ConvenioSeleccionado?.IdConvenio;
 
         string formaPago = FormaPagoSeleccionada;
 
@@ -758,6 +794,7 @@ public class PosViewModel : BaseViewModel
         {
             IdProducto = i.IdProducto,
             IdLote = i.IdLote,
+            Sku = i.Sku,
             NombreProducto = i.NombreProducto,
             NumeroLote = i.NumeroLote,
             Cantidad = i.Cantidad,
@@ -805,7 +842,6 @@ public class PosViewModel : BaseViewModel
             ConvenioSeleccionado = null;
 
             FormaPagoSeleccionada = "EFECTIVO";
-            TipoDescuentoSeleccionado = "Sin descuento";
 
             Recalcular();
 
@@ -842,7 +878,10 @@ public class PosViewModel : BaseViewModel
         OnPropertyChanged(nameof(IvaTexto));
         OnPropertyChanged(nameof(TotalTexto));
         OnPropertyChanged(nameof(HayItems));
+        OnPropertyChanged(nameof(TotalUnidades));
+        OnPropertyChanged(nameof(ResumenCarritoTexto));
         OnPropertyChanged(nameof(PorcentajeDescuentoTexto));
+        OnPropertyChanged(nameof(EtiquetaDescuento));
         OnPropertyChanged(nameof(MotivoDescuento));
     }
 }

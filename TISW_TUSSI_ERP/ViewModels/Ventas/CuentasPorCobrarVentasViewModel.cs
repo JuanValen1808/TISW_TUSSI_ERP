@@ -127,7 +127,7 @@ public class CuentasPorCobrarVentasViewModel : BaseViewModel
                 "Caja cerrada",
                 "No hay ninguna caja con turno abierto. " +
                 "Abre una caja desde Control de Caja " +
-                "antes de registrar un abono en efectivo.",
+                "antes de registrar un cobro.",
                 "Aceptar");
 
             return null;
@@ -233,26 +233,23 @@ public class CuentasPorCobrarVentasViewModel : BaseViewModel
             formaPago != "TRANSFERENCIA")
             return;
 
-        int? idTurno = null;
+        int? idTurno;
 
-        if (formaPago == "EFECTIVO")
+        try
         {
-            try
-            {
-                idTurno = await SeleccionarTurnoAbiertoAsync();
+            idTurno = await SeleccionarTurnoAbiertoAsync();
 
-                if (idTurno == null)
-                    return;
-            }
-            catch (Exception ex)
-            {
-                await pagina.DisplayAlertAsync(
-                    "Error al consultar caja",
-                    ex.Message,
-                    "Aceptar");
-
+            if (idTurno == null)
                 return;
-            }
+        }
+        catch (Exception ex)
+        {
+            await pagina.DisplayAlertAsync(
+                "Error al consultar caja",
+                ex.Message,
+                "Aceptar");
+
+            return;
         }
 
         int idUsuario = Sesion.UsuarioActual?.IdUsuario ?? 0;

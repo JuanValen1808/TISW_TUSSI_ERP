@@ -366,6 +366,8 @@ public class CajaViewModel : BaseViewModel
         catch (Exception ex)
         {
             Mensaje = "Error: " + ex.Message;
+            if (Shell.Current != null)
+                await Shell.Current.DisplayAlertAsync("No se pudo abrir la caja", ex.Message, "Aceptar");
         }
         finally
         {
@@ -410,6 +412,8 @@ public class CajaViewModel : BaseViewModel
         catch (Exception ex)
         {
             Mensaje = "Error: " + ex.Message;
+            if (Shell.Current != null)
+                await Shell.Current.DisplayAlertAsync("Movimiento inválido", ex.Message, "Aceptar");
         }
         finally
         {
@@ -452,6 +456,8 @@ public class CajaViewModel : BaseViewModel
         catch (Exception ex)
         {
             Mensaje = "Error: " + ex.Message;
+            if (Shell.Current != null)
+                await Shell.Current.DisplayAlertAsync("No se pudo cerrar la caja", ex.Message, "Aceptar");
         }
         finally
         {

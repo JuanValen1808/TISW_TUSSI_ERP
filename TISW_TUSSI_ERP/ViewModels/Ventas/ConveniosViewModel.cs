@@ -13,6 +13,7 @@ public class ConveniosViewModel : BaseViewModel
 
     private List<Cliente> _todosLosClientes = new();
     private int _versionCarga;
+    private bool _viendoTodos = true;
 
     public ObservableCollection<Cliente> Clientes { get; } = new();
     public ObservableCollection<ConvenioSalud> Convenios { get; } = new();
@@ -39,26 +40,30 @@ public class ConveniosViewModel : BaseViewModel
             if (SetProperty(ref _clienteSeleccionado, value))
             {
                 ++_versionCarga;
+                _viendoTodos = value == null;
 
-                IdCliente = value?.IdCliente ?? 0;
-
-                NombreCliente = value?.RazonSocialNombre
-                    ?? "Sin cliente seleccionado";
-
-                RutCliente = value?.RutCliente ?? "";
-                TipoCliente = value?.TipoCliente ?? "";
-                EmailCliente = value?.Email ?? "";
-                TelefonoCliente = value?.Telefono ?? "";
+                AplicarDatosCliente(value);
 
                 ConvenioSeleccionado = null;
                 ConvenioFormulario = null;
                 Convenios.Clear();
 
                 Mensaje = value == null
-                    ? "Selecciona un cliente para ver sus convenios."
+                    ? "Mostrando todos los convenios registrados."
                     : "Cargando convenios del cliente...";
             }
         }
+    }
+
+    private void AplicarDatosCliente(Cliente? cliente)
+    {
+        IdCliente = cliente?.IdCliente ?? 0;
+        NombreCliente = cliente?.RazonSocialNombre
+            ?? "Todos los clientes (vista general)";
+        RutCliente = cliente?.RutCliente ?? "—";
+        TipoCliente = cliente?.TipoCliente ?? "TODOS";
+        EmailCliente = cliente?.Email ?? "";
+        TelefonoCliente = cliente?.Telefono ?? "";
     }
 
     private int _idCliente;
@@ -69,7 +74,7 @@ public class ConveniosViewModel : BaseViewModel
         private set => SetProperty(ref _idCliente, value);
     }
 
-    private string _nombreCliente = "Sin cliente seleccionado";
+    private string _nombreCliente = "Todos los clientes (vista general)";
 
     public string NombreCliente
     {
@@ -77,7 +82,7 @@ public class ConveniosViewModel : BaseViewModel
         private set => SetProperty(ref _nombreCliente, value);
     }
 
-    private string _rutCliente = "";
+    private string _rutCliente = "—";
 
     public string RutCliente
     {
@@ -85,7 +90,7 @@ public class ConveniosViewModel : BaseViewModel
         private set => SetProperty(ref _rutCliente, value);
     }
 
-    private string _tipoCliente = "";
+    private string _tipoCliente = "TODOS";
 
     public string TipoCliente
     {
@@ -120,8 +125,16 @@ public class ConveniosViewModel : BaseViewModel
             {
                 if (value != null)
                 {
+                    // Si estábamos viendo todos los convenios, cargar también los datos de su cliente en el encabezado sin borrar la lista.
+                    var propietario = _todosLosClientes.FirstOrDefault(
+                        c => c.IdCliente == value.IdCliente);
+                    if (propietario != null)
+                        AplicarDatosCliente(propietario);
+                    else
+                        IdCliente = value.IdCliente;
+
                     ConvenioFormulario = CopiarConvenio(value);
-                    Mensaje = "Editando convenio: " + value.NombreConvenio;
+                    Mensaje = $"Editando convenio: {value.NombreConvenio} ({value.NombreCliente})";
                 }
             }
         }
@@ -154,6 +167,7 @@ public class ConveniosViewModel : BaseViewModel
     public ICommand NuevoCommand { get; }
     public ICommand GuardarCommand { get; }
     public ICommand CargarCommand { get; }
+    public ICommand VerTodosCommand { get; }
 
     public ConveniosViewModel(
         ConveniosService service,
@@ -169,6 +183,9 @@ public class ConveniosViewModel : BaseViewModel
 
         CargarCommand = new Command(
             async () => await CargarConveniosAsync());
+
+        VerTodosCommand = new Command(
+            async () => await MostrarTodosAsync());
     }
 
     // BUSCAR CLIENTES
@@ -191,16 +208,32 @@ public class ConveniosViewModel : BaseViewModel
             Clientes.Add(cliente);
     }
 
-    // CARGAR CLIENTES Y SELECCIONAR EL ID RECIBIDO
+    // VOLVER A MOSTRAR TODOS LOS CONVENIOS REGISTRADOS
+    public async Task MostrarTodosAsync()
+    {
+        if (Cargando)
+            return;
+
+        _clienteSeleccionado = null;
+        OnPropertyChanged(nameof(ClienteSeleccionado));
+        _viendoTodos = true;
+        AplicarDatosCliente(null);
+
+        await CargarTodosLosConveniosAsync();
+    }
+
+    // CARGAR CLIENTES Y CONVENIOS INICIALES
     public async Task CargarClientesAsync(
         int? idClientePreferido = null)
     {
+        Cliente? encontrado = null;
+
         try
         {
             Cargando = true;
 
             int? idBuscado = idClientePreferido
-                ?? ClienteSeleccionado?.IdCliente;
+                ?? (_viendoTodos ? null : ClienteSeleccionado?.IdCliente);
 
             var datos = await _clientesService.ObtenerClientesAsync();
 
@@ -209,33 +242,30 @@ public class ConveniosViewModel : BaseViewModel
             BusquedaCliente = "";
             FiltrarClientes();
 
-            Cliente? encontrado = idBuscado.HasValue
+            encontrado = idBuscado.HasValue
                 ? _todosLosClientes.FirstOrDefault(
                     c => c.IdCliente == idBuscado.Value)
                 : null;
 
-            ClienteSeleccionado = encontrado;
-
-            if (encontrado == null)
-            {
-                Mensaje = idBuscado.HasValue
-                    ? $"No se encontró el cliente con ID {idBuscado.Value}."
-                    : datos.Count == 0
-                        ? "No hay clientes registrados."
-                        : "Selecciona un cliente para consultar sus convenios.";
-            }
+            _clienteSeleccionado = encontrado;
+            OnPropertyChanged(nameof(ClienteSeleccionado));
+            _viendoTodos = encontrado == null;
+            AplicarDatosCliente(encontrado);
         }
         catch (Exception ex)
         {
             Mensaje = "Error al cargar clientes: " + ex.Message;
+            return;
         }
         finally
         {
             Cargando = false;
         }
 
-        if (ClienteSeleccionado != null)
+        if (encontrado != null)
             await CargarConveniosAsync();
+        else
+            await CargarTodosLosConveniosAsync();
     }
 
     // ENTRADA DESDE CLIENTES > VER CONVENIOS
@@ -252,14 +282,51 @@ public class ConveniosViewModel : BaseViewModel
         await CargarClientesAsync(idCliente);
     }
 
-    // CONSULTAR CONVENIOS EN MYSQL
+    // CONSULTAR TODOS LOS CONVENIOS REGISTRADOS EN MYSQL
+    public async Task CargarTodosLosConveniosAsync()
+    {
+        int version = ++_versionCarga;
+
+        try
+        {
+            Cargando = true;
+
+            var datos = await _service.ObtenerTodosAsync();
+
+            if (version != _versionCarga)
+                return;
+
+            ConvenioSeleccionado = null;
+            ConvenioFormulario = null;
+            Convenios.Clear();
+
+            foreach (var convenio in datos)
+                Convenios.Add(convenio);
+
+            Mensaje = Convenios.Count == 0
+                ? "No existen convenios registrados en el sistema."
+                : $"Mostrando todos los convenios registrados ({Convenios.Count}). Haz clic en un cliente arriba si deseas filtrar o crear uno nuevo.";
+        }
+        catch (Exception ex)
+        {
+            if (version == _versionCarga)
+                Mensaje = "Error al cargar convenios: " + ex.Message;
+        }
+        finally
+        {
+            if (version == _versionCarga)
+                Cargando = false;
+        }
+    }
+
+    // CONSULTAR CONVENIOS DE UN CLIENTE EN MYSQL
     public async Task CargarConveniosAsync()
     {
         int idConsultado = IdCliente;
 
         if (idConsultado <= 0)
         {
-            Convenios.Clear();
+            await CargarTodosLosConveniosAsync();
             return;
         }
 
@@ -284,8 +351,8 @@ public class ConveniosViewModel : BaseViewModel
                 Convenios.Add(convenio);
 
             Mensaje = Convenios.Count == 0
-                ? "Este cliente no tiene convenios registrados."
-                : $"Convenios registrados: {Convenios.Count}";
+                ? "Este cliente no tiene convenios registrados. Puedes crearle uno con '+ Nuevo convenio' o pulsar 'Ver todos'."
+                : $"Convenios de {NombreCliente}: {Convenios.Count}";
         }
         catch (Exception ex)
         {
@@ -304,7 +371,7 @@ public class ConveniosViewModel : BaseViewModel
     {
         if (IdCliente <= 0)
         {
-            Mensaje = "Primero selecciona un cliente.";
+            Mensaje = "Primero selecciona un cliente en la lista superior para asignarle el nuevo convenio.";
             return;
         }
 
@@ -316,6 +383,7 @@ public class ConveniosViewModel : BaseViewModel
         ConvenioFormulario = new ConvenioSalud
         {
             IdCliente = IdCliente,
+            NombreCliente = NombreCliente,
             NombreConvenio = "",
             PorcentajeDescuento = 0,
             LimiteCredito = 0,
@@ -323,7 +391,7 @@ public class ConveniosViewModel : BaseViewModel
             Activo = true
         };
 
-        Mensaje = "Completa los datos del nuevo convenio.";
+        Mensaje = $"Creando nuevo convenio para {NombreCliente}.";
     }
 
     // GUARDAR CONVENIO
@@ -334,7 +402,7 @@ public class ConveniosViewModel : BaseViewModel
 
         if (IdCliente <= 0 || ConvenioFormulario == null)
         {
-            Mensaje = "Selecciona un cliente y crea o edita un convenio.";
+            Mensaje = "Selecciona un cliente arriba (para crear) o un convenio de la lista (para editar).";
             return;
         }
 
@@ -386,13 +454,18 @@ public class ConveniosViewModel : BaseViewModel
             Cargando = false;
         }
 
-        if (IdCliente != idOriginal)
-            return;
-
         ConvenioSeleccionado = null;
         ConvenioFormulario = null;
 
-        await CargarConveniosAsync();
+        if (_viendoTodos)
+        {
+            AplicarDatosCliente(null);
+            await CargarTodosLosConveniosAsync();
+        }
+        else if (IdCliente == idOriginal)
+        {
+            await CargarConveniosAsync();
+        }
 
         if (!Mensaje.StartsWith("Error al cargar"))
         {
@@ -426,7 +499,7 @@ public class ConveniosViewModel : BaseViewModel
         catch (MySqlConnector.MySqlException ex)
             when (ex.Number == 1451)
         {
-            Mensaje = "No se puede eliminar: tiene registros asociados.";
+            Mensaje = "No se puede eliminar: tiene ventas o cuentas asociadas.";
             return;
         }
         catch (Exception ex)
@@ -439,13 +512,18 @@ public class ConveniosViewModel : BaseViewModel
             Cargando = false;
         }
 
-        if (IdCliente != idCliente)
-            return;
-
         ConvenioSeleccionado = null;
         ConvenioFormulario = null;
 
-        await CargarConveniosAsync();
+        if (_viendoTodos)
+        {
+            AplicarDatosCliente(null);
+            await CargarTodosLosConveniosAsync();
+        }
+        else if (IdCliente == idCliente)
+        {
+            await CargarConveniosAsync();
+        }
 
         if (!Mensaje.StartsWith("Error al cargar"))
             Mensaje = "Convenio eliminado correctamente.";
@@ -458,6 +536,7 @@ public class ConveniosViewModel : BaseViewModel
         {
             IdConvenio = origen.IdConvenio,
             IdCliente = origen.IdCliente,
+            NombreCliente = origen.NombreCliente,
             NombreConvenio = origen.NombreConvenio,
             PorcentajeDescuento = origen.PorcentajeDescuento,
             LimiteCredito = origen.LimiteCredito,

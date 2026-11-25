@@ -139,7 +139,7 @@ public partial class ConveniosPage : ContentPage, IQueryAttributable
         if (e.Parameter is not Cliente cliente)
             return;
 
-        if (_viewModel.IdCliente == cliente.IdCliente)
+        if (_viewModel.ClienteSeleccionado?.IdCliente == cliente.IdCliente)
             return;
 
         try

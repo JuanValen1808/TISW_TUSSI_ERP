@@ -266,6 +266,9 @@ public class ClientesViewModel : BaseViewModel
         ClienteFormulario = null;
         EsNuevoCliente = false;
 
+        if (esNuevo)
+            Busqueda = string.Empty;
+
         await BuscarClientesAsync();
 
         Mensaje = esNuevo

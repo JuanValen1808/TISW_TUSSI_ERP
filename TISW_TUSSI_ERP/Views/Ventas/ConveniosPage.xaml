@@ -202,17 +202,30 @@
 
                         </VerticalStackLayout>
 
-                        <Button
+                        <HorizontalStackLayout
                             Grid.Column="1"
-                            Text="Volver a clientes"
-                            BackgroundColor="White"
-                            TextColor="#1D6FD8"
-                            BorderColor="#1D6FD8"
-                            BorderWidth="1"
-                            CornerRadius="9"
-                            Padding="16,10"
-                            VerticalOptions="Center"
-                            Clicked="OnVolverClicked" />
+                            Spacing="10"
+                            VerticalOptions="Center">
+
+                            <Button
+                                Text="Ver todos los convenios"
+                                BackgroundColor="#EFF6FF"
+                                TextColor="#1D6FD8"
+                                CornerRadius="9"
+                                Padding="16,10"
+                                Command="{Binding VerTodosCommand}" />
+
+                            <Button
+                                Text="Volver a clientes"
+                                BackgroundColor="White"
+                                TextColor="#1D6FD8"
+                                BorderColor="#1D6FD8"
+                                BorderWidth="1"
+                                CornerRadius="9"
+                                Padding="16,10"
+                                Clicked="OnVolverClicked" />
+
+                        </HorizontalStackLayout>
 
                     </Grid>
 
@@ -329,11 +342,23 @@
                                                 ColumnDefinitions="*,85,85"
                                                 ColumnSpacing="8">
 
-                                                <Label
-                                                    Text="{Binding NombreConvenio}"
-                                                    Style="{StaticResource ErpBody}"
-                                                    LineBreakMode="TailTruncation"
-                                                    VerticalOptions="Center" />
+                                                <VerticalStackLayout
+                                                    Spacing="2"
+                                                    VerticalOptions="Center">
+
+                                                    <Label
+                                                        Text="{Binding NombreConvenio}"
+                                                        Style="{StaticResource ErpBody}"
+                                                        FontAttributes="Bold"
+                                                        LineBreakMode="TailTruncation" />
+
+                                                    <Label
+                                                        Text="{Binding NombreCliente}"
+                                                        FontSize="11"
+                                                        TextColor="#64748B"
+                                                        LineBreakMode="TailTruncation" />
+
+                                                </VerticalStackLayout>
 
                                                 <Label
                                                     Grid.Column="1"

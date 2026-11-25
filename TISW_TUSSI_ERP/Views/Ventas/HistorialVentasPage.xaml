@@ -3,31 +3,35 @@
 <ContentPage
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:ctrl="clr-namespace:TISW_TUSSI_ERP.Views.Shared"
     x:Class="TISW_TUSSI_ERP.Views.Ventas.HistorialVentasPage"
-    BackgroundColor="#F3F6FB"
+    Shell.NavBarIsVisible="False"
+    BackgroundColor="{StaticResource ErpBg}"
     Title="Historial de Ventas">
 
-    <ScrollView>
-        <VerticalStackLayout Padding="26" Spacing="18">
+    <Grid RowDefinitions="Auto,*">
 
-            <!-- ENCABEZADO -->
-            <VerticalStackLayout Spacing="5">
-                <Label
-                    Text="ERP / Ventas / Historial"
-                    FontSize="12"
-                    TextColor="#64748B" />
+        <ctrl:PageHeader
+            Grid.Row="0"
+            Ruta="ERP › Ventas"
+            Titulo="Historial y Monitor de Ventas" />
 
-                <Label
-                    Text="Historial y Monitor de Ventas"
-                    FontSize="26"
-                    FontAttributes="Bold"
-                    TextColor="#172033" />
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="24" Spacing="16">
 
-                <Label
-                    Text="Consulta las ventas registradas y revisa sus productos."
-                    FontSize="14"
-                    TextColor="#64748B" />
-            </VerticalStackLayout>
+                <!-- ENCABEZADO -->
+                <VerticalStackLayout Spacing="4">
+                    <Label
+                        Text="Historial y Monitor de Ventas"
+                        FontSize="22"
+                        FontAttributes="Bold"
+                        TextColor="#172033" />
+
+                    <Label
+                        Text="Consulta las ventas registradas y revisa sus productos."
+                        FontSize="13"
+                        TextColor="#64748B" />
+                </VerticalStackLayout>
 
             <!-- INDICADORES -->
             <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
@@ -106,29 +110,40 @@
                         FontAttributes="Bold"
                         TextColor="#172033" />
 
-                    <Entry
-                        Placeholder="Buscar por folio, cliente o RUT..."
-                        Text="{Binding Busqueda}"
-                        BackgroundColor="#F8FAFC"
-                        TextColor="#172033" />
+                    <Border Style="{StaticResource ErpInputBox}">
+                        <Entry
+                            Placeholder="Buscar por folio, cliente o RUT..."
+                            Text="{Binding Busqueda}"
+                            Style="{StaticResource ErpEntry}" />
+                    </Border>
 
                     <Grid
                         ColumnDefinitions="*,*,Auto,Auto"
                         ColumnSpacing="10">
 
-                        <Picker
+                        <Border
                             Grid.Column="0"
-                            Title="Estado"
-                            ItemsSource="{Binding Estados}"
-                            SelectedItem="{Binding EstadoFiltro}"
-                            TextColor="#172033" />
+                            Style="{StaticResource ErpInputBox}">
+                            <Picker
+                                Title="Estado"
+                                ItemsSource="{Binding Estados}"
+                                SelectedItem="{Binding EstadoFiltro}"
+                                TextColor="#172033"
+                                HorizontalOptions="Fill"
+                                VerticalOptions="Center" />
+                        </Border>
 
-                        <Picker
+                        <Border
                             Grid.Column="1"
-                            Title="Forma de pago"
-                            ItemsSource="{Binding FormasPago}"
-                            SelectedItem="{Binding PagoFiltro}"
-                            TextColor="#172033" />
+                            Style="{StaticResource ErpInputBox}">
+                            <Picker
+                                Title="Forma de pago"
+                                ItemsSource="{Binding FormasPago}"
+                                SelectedItem="{Binding PagoFiltro}"
+                                TextColor="#172033"
+                                HorizontalOptions="Fill"
+                                VerticalOptions="Center" />
+                        </Border>
 
                         <Button
                             Grid.Column="2"
@@ -179,6 +194,7 @@
                     </Grid>
 
                     <CollectionView
+                        x:Name="ListaVentasHistorial"
                         ItemsSource="{Binding Ventas}"
                         SelectionMode="Single"
                         SelectionChanged="OnVentaSeleccionada"
@@ -418,6 +434,7 @@
                 </VerticalStackLayout>
             </Border>
 
-        </VerticalStackLayout>
-    </ScrollView>
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
 </ContentPage>

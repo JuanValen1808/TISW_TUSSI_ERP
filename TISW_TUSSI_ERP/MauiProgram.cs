@@ -131,16 +131,32 @@ namespace TISW_TUSSI_ERP
             {
                 handler.PlatformView.BorderThickness = new Microsoft.UI.Xaml.Thickness(0);
                 handler.PlatformView.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
+                handler.PlatformView.Padding = new Microsoft.UI.Xaml.Thickness(0, 6, 0, 6);
+                handler.PlatformView.MinWidth = 0;
             });
             Microsoft.Maui.Handlers.PickerHandler.Mapper.AppendToMapping("Borderless", (handler, view) =>
             {
                 handler.PlatformView.BorderThickness = new Microsoft.UI.Xaml.Thickness(0);
                 handler.PlatformView.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
+                handler.PlatformView.Padding = new Microsoft.UI.Xaml.Thickness(6, 5, 6, 5);
+                handler.PlatformView.MinWidth = 0;
+                handler.PlatformView.HorizontalAlignment = Microsoft.UI.Xaml.HorizontalAlignment.Stretch;
+                handler.PlatformView.Header = null;
+                handler.PlatformView.HeaderTemplate = null;
+                if (!string.IsNullOrEmpty(view.Title))
+                    handler.PlatformView.PlaceholderText = view.Title;
             });
             Microsoft.Maui.Handlers.PickerHandler.Mapper.AppendToMapping(nameof(Microsoft.Maui.IPicker.Title), (handler, view) =>
             {
                 handler.PlatformView.Header = null;
-                handler.PlatformView.PlaceholderText = view.Title;
+                handler.PlatformView.HeaderTemplate = null;
+                handler.PlatformView.PlaceholderText = view.Title ?? string.Empty;
+            });
+            Microsoft.Maui.Handlers.PickerHandler.Mapper.AppendToMapping(nameof(Microsoft.Maui.IPicker.TitleColor), (handler, view) =>
+            {
+                handler.PlatformView.Header = null;
+                handler.PlatformView.HeaderTemplate = null;
+                handler.PlatformView.PlaceholderText = view.Title ?? string.Empty;
             });
 #endif
 

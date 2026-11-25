@@ -34,6 +34,14 @@ public partial class DevolucionesPage : ContentPage
         BindingContext = _vm;
 
         ListaVentas.ItemsSource = _ventas;
+
+        _vm.PropertyChanged += async (_, e) =>
+        {
+            if (e.PropertyName == nameof(DevolucionesViewModel.HayOk) && _vm.HayOk)
+            {
+                await CargarVentasAsync();
+            }
+        };
     }
 
     protected override async void OnAppearing()

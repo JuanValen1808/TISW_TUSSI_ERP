@@ -68,6 +68,7 @@ public class VentasService
                   WHERE l.id_producto = p.id_producto
                     AND l.stock_actual > 0
                     AND l.fecha_vencimiento >= CURDATE()
+                    AND COALESCE(l.estado_cuarentena, 'LIBERADO') = 'LIBERADO'
               )
             ORDER BY p.nombre_comercial
             LIMIT 100;";
@@ -112,6 +113,7 @@ public class VentasService
             WHERE id_producto = @idProducto
               AND stock_actual > 0
               AND fecha_vencimiento >= CURDATE()
+              AND COALESCE(estado_cuarentena, 'LIBERADO') = 'LIBERADO'
             ORDER BY fecha_vencimiento ASC, id_lote ASC;";
 
         var resultado = new List<LotePos>();
@@ -367,10 +369,35 @@ public class VentasService
                     : "FACTURA";
             }
 
-            // Solo las ventas a crédito utilizan
-            // convenio en esta primera implementación.
-            if (formaPago != "CREDITO")
-                idConvenio = null;
+            // Validar que el convenio pertenezca al cliente y esté activo (aplica en cualquier forma de pago).
+            if (idConvenio.HasValue)
+            {
+                const string sqlValidarConvenio = @"
+                    SELECT 1
+                    FROM convenios_salud
+                    WHERE id_convenio = @convenio
+                      AND id_cliente = @cliente
+                      AND activo = 1
+                    LIMIT 1;";
+
+                await using var cmdConvenio =
+                    new MySqlCommand(sqlValidarConvenio, cn, tx);
+
+                cmdConvenio.Parameters.AddWithValue(
+                    "@convenio", idConvenio.Value);
+                cmdConvenio.Parameters.AddWithValue(
+                    "@cliente", idCliente!.Value);
+
+                var convenioValido =
+                    await cmdConvenio.ExecuteScalarAsync();
+
+                if (convenioValido == null ||
+                    convenioValido == DBNull.Value)
+                {
+                    throw new InvalidOperationException(
+                        "El convenio seleccionado no es válido para este cliente.");
+                }
+            }
 
             string folio =
                 $"V-{DateTime.Now:yyyyMMddHHmmss}-" +
@@ -438,7 +465,8 @@ public class VentasService
                     WHERE id_lote = @lote
                       AND id_producto = @producto
                       AND stock_actual >= @cantidad
-                      AND fecha_vencimiento >= CURDATE();";
+                      AND fecha_vencimiento >= CURDATE()
+                      AND COALESCE(estado_cuarentena, 'LIBERADO') = 'LIBERADO';";
 
                 await using (var cmd =
                     new MySqlCommand(sqlStock, cn, tx))
@@ -494,9 +522,58 @@ public class VentasService
                 await cmdDetalle.ExecuteNonQueryAsync();
             }
 
-            // CUENTA POR COBRAR
+            // CUENTA POR COBRAR Y VALIDACIÓN DE LÍMITE DE CRÉDITO
             if (formaPago == "CREDITO")
             {
+                const string sqlCupo = @"
+                    SELECT
+                        cs.limite_credito,
+                        COALESCE((
+                            SELECT SUM(cx.monto_pendiente)
+                            FROM cuentas_por_cobrar cx
+                            INNER JOIN ventas_encabezado ve
+                                ON ve.id_venta = cx.id_venta
+                            WHERE cx.id_convenio = cs.id_convenio
+                              AND cx.estado_cobro <> 'ANULADA'
+                              AND ve.estado_documento <> 'ANULADO'
+                        ), 0) AS deuda_actual
+                    FROM convenios_salud cs
+                    WHERE cs.id_convenio = @convenio
+                      AND cs.id_cliente = @cliente
+                      AND cs.activo = 1
+                    FOR UPDATE;";
+
+                await using (var cmdCupo =
+                    new MySqlCommand(sqlCupo, cn, tx))
+                {
+                    cmdCupo.Parameters.AddWithValue(
+                        "@convenio", idConvenio!.Value);
+                    cmdCupo.Parameters.AddWithValue(
+                        "@cliente", idCliente!.Value);
+
+                    await using var rdCupo =
+                        await cmdCupo.ExecuteReaderAsync();
+
+                    if (!await rdCupo.ReadAsync())
+                    {
+                        throw new InvalidOperationException(
+                            "El convenio no es válido para este cliente.");
+                    }
+
+                    decimal limiteCredito = rdCupo.GetDecimal(0);
+                    decimal deudaActual = rdCupo.GetDecimal(1);
+
+                    if (limiteCredito > 0 &&
+                        deudaActual + total > limiteCredito)
+                    {
+                        decimal disponible =
+                            Math.Max(0, limiteCredito - deudaActual);
+                        throw new InvalidOperationException(
+                            $"La venta supera el cupo disponible del convenio " +
+                            $"(${disponible:N0} disponibles de ${limiteCredito:N0}).");
+                    }
+                }
+
                 const string sqlCxc = @"
                     INSERT INTO cuentas_por_cobrar
                     (

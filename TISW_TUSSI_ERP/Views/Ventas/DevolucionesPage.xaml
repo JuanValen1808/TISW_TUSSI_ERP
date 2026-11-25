@@ -5,47 +5,51 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:vm="clr-namespace:TISW_TUSSI_ERP.ViewModels.Ventas"
     xmlns:models="clr-namespace:TISW_TUSSI_ERP.Models.Ventas"
+    xmlns:ctrl="clr-namespace:TISW_TUSSI_ERP.Views.Shared"
     x:Class="TISW_TUSSI_ERP.Views.Ventas.DevolucionesPage"
     x:DataType="vm:DevolucionesViewModel"
     Title="Devoluciones de Ventas"
-    BackgroundColor="#F5F7FB"
+    BackgroundColor="{StaticResource ErpBg}"
     Shell.NavBarIsVisible="False">
 
-    <ScrollView>
+    <Grid RowDefinitions="Auto,*">
 
-        <VerticalStackLayout
-            Padding="24"
-            Spacing="18">
+        <ctrl:PageHeader
+            Grid.Row="0"
+            Ruta="ERP › Ventas"
+            Titulo="Devoluciones de Ventas" />
 
-            <!-- ENCABEZADO -->
+        <ScrollView Grid.Row="1">
 
-            <VerticalStackLayout Spacing="5">
+            <VerticalStackLayout
+                Padding="24"
+                Spacing="16">
 
-                <Label
-                    Text="ERP / Ventas / Devoluciones"
-                    FontSize="12"
-                    TextColor="#64748B" />
+                <!-- ENCABEZADO -->
 
-                <Label
-                    Text="Devoluciones de Ventas"
-                    FontSize="26"
-                    FontAttributes="Bold"
-                    TextColor="#0F172A" />
+                <VerticalStackLayout Spacing="4">
 
-                <Label
-                    Text="Selecciona una venta y registra los productos devueltos."
-                    FontSize="14"
-                    TextColor="#64748B" />
+                    <Label
+                        Text="Devoluciones de Ventas"
+                        FontSize="22"
+                        FontAttributes="Bold"
+                        TextColor="#0F172A" />
 
-            </VerticalStackLayout>
+                    <Label
+                        Text="Selecciona una venta pagada y registra los productos devueltos a cuarentena."
+                        FontSize="13"
+                        TextColor="#64748B" />
 
-            <!-- NUEVO: SELECTOR DE VENTAS -->
+                </VerticalStackLayout>
 
-            <Border
-                BackgroundColor="White"
-                Stroke="#E2E8F0"
-                StrokeThickness="1"
-                Padding="20">
+                <!-- SELECTOR DE VENTAS -->
+
+                <Border
+                    BackgroundColor="White"
+                    Stroke="#E2E8F0"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 12"
+                    Padding="20">
 
                 <VerticalStackLayout Spacing="14">
 
@@ -486,6 +490,7 @@
 
         </VerticalStackLayout>
 
-    </ScrollView>
+        </ScrollView>
+    </Grid>
 
 </ContentPage>

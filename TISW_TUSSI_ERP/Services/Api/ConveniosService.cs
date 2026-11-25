@@ -13,6 +13,41 @@ public class ConveniosService
         _database = database;
     }
 
+    // Obtener todos los convenios registrados junto con el nombre de su cliente
+    public async Task<List<ConvenioSalud>> ObtenerTodosAsync()
+    {
+        var convenios = new List<ConvenioSalud>();
+
+        await using var conexion = _database.CrearConexion();
+        await conexion.OpenAsync();
+
+        const string sql = """
+            SELECT
+                cs.id_convenio,
+                cs.id_cliente,
+                COALESCE(c.razon_social_nombre, '') AS nombre_cliente,
+                cs.nombre_convenio,
+                cs.porcentaje_descuento,
+                cs.limite_credito,
+                cs.dias_credito_morosidad,
+                cs.activo
+            FROM convenios_salud cs
+            LEFT JOIN clientes c
+                ON c.id_cliente = cs.id_cliente
+            ORDER BY cs.nombre_convenio;
+            """;
+
+        await using var comando = new MySqlCommand(sql, conexion);
+        await using var lector = await comando.ExecuteReaderAsync();
+
+        while (await lector.ReadAsync())
+        {
+            convenios.Add(MapearConvenio(lector));
+        }
+
+        return convenios;
+    }
+
     // Obtener los convenios de un cliente
     public async Task<List<ConvenioSalud>> ObtenerPorClienteAsync(
         int idCliente)
@@ -24,16 +59,19 @@ public class ConveniosService
 
         const string sql = """
             SELECT
-                id_convenio,
-                id_cliente,
-                nombre_convenio,
-                porcentaje_descuento,
-                limite_credito,
-                dias_credito_morosidad,
-                activo
-            FROM convenios_salud
-            WHERE id_cliente = @id_cliente
-            ORDER BY nombre_convenio;
+                cs.id_convenio,
+                cs.id_cliente,
+                COALESCE(c.razon_social_nombre, '') AS nombre_cliente,
+                cs.nombre_convenio,
+                cs.porcentaje_descuento,
+                cs.limite_credito,
+                cs.dias_credito_morosidad,
+                cs.activo
+            FROM convenios_salud cs
+            LEFT JOIN clientes c
+                ON c.id_cliente = cs.id_cliente
+            WHERE cs.id_cliente = @id_cliente
+            ORDER BY cs.nombre_convenio;
             """;
 
         await using var comando = new MySqlCommand(sql, conexion);
@@ -182,6 +220,7 @@ public class ConveniosService
         {
             IdConvenio = lector.GetInt32("id_convenio"),
             IdCliente = lector.GetInt32("id_cliente"),
+            NombreCliente = lector.GetString("nombre_cliente"),
             NombreConvenio = lector.GetString("nombre_convenio"),
             PorcentajeDescuento =
                 lector.GetDecimal("porcentaje_descuento"),

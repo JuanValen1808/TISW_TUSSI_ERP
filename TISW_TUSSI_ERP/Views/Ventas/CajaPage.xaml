@@ -78,13 +78,21 @@
                                 FontAttributes="Bold"
                                 TextColor="#64748B" />
 
-                            <Picker
-                                Title="Seleccionar caja"
-                                ItemsSource="{Binding Cajas}"
-                                ItemDisplayBinding="{Binding NombreCaja}"
-                                SelectedItem="{Binding CajaSeleccionada, Mode=TwoWay}"
-                                TextColor="#172B4D"
-                                BackgroundColor="#F8FAFC" />
+                            <Border
+                                BackgroundColor="#F8FAFC"
+                                Stroke="#E2E8F0"
+                                StrokeShape="RoundRectangle 7"
+                                Padding="8,2"
+                                MinimumHeightRequest="40">
+                                <Picker
+                                    Title="Seleccionar caja"
+                                    ItemsSource="{Binding Cajas}"
+                                    ItemDisplayBinding="{Binding NombreCaja}"
+                                    SelectedItem="{Binding CajaSeleccionada, Mode=TwoWay}"
+                                    TextColor="#172B4D"
+                                    HorizontalOptions="Fill"
+                                    VerticalOptions="Center" />
+                            </Border>
                         </VerticalStackLayout>
                     </Border>
 
@@ -154,12 +162,13 @@
                             TextColor="#64748B" />
 
                         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                            <Entry
-                                Text="{Binding MontoInicialTexto}"
-                                Keyboard="Numeric"
-                                Placeholder="Monto inicial"
-                                TextColor="#172B4D"
-                                BackgroundColor="#F8FAFC" />
+                            <Border Style="{StaticResource ErpInputBox}">
+                                <Entry
+                                    Text="{Binding MontoInicialTexto}"
+                                    Keyboard="Numeric"
+                                    Placeholder="Monto inicial (ej. 50000)"
+                                    Style="{StaticResource ErpEntry}" />
+                            </Border>
 
                             <Button
                                 Grid.Column="1"
@@ -452,34 +461,44 @@
                                     FontSize="11"
                                     TextColor="#64748B" />
 
-                                <Picker
-                                    ItemsSource="{Binding TiposMovimiento}"
-                                    SelectedItem="{Binding TipoMovimiento, Mode=TwoWay}"
-                                    TextColor="#172B4D"
-                                    BackgroundColor="#F8FAFC" />
+                                <Border
+                                    BackgroundColor="#F8FAFC"
+                                    Stroke="#E2E8F0"
+                                    StrokeShape="RoundRectangle 7"
+                                    Padding="8,2"
+                                    MinimumHeightRequest="40">
+                                    <Picker
+                                        ItemsSource="{Binding TiposMovimiento}"
+                                        SelectedItem="{Binding TipoMovimiento, Mode=TwoWay}"
+                                        TextColor="#172B4D"
+                                        HorizontalOptions="Fill"
+                                        VerticalOptions="Center" />
+                                </Border>
 
                                 <Label
                                     Text="Concepto"
                                     FontSize="11"
                                     TextColor="#64748B" />
 
-                                <Entry
-                                    Text="{Binding Concepto}"
-                                    Placeholder="Ej.: retiro para gastos"
-                                    TextColor="#172B4D"
-                                    BackgroundColor="#F8FAFC" />
+                                <Border Style="{StaticResource ErpInputBox}">
+                                    <Entry
+                                        Text="{Binding Concepto}"
+                                        Placeholder="Ej.: retiro para gastos"
+                                        Style="{StaticResource ErpEntry}" />
+                                </Border>
 
                                 <Label
                                     Text="Monto"
                                     FontSize="11"
                                     TextColor="#64748B" />
 
-                                <Entry
-                                    Text="{Binding MontoMovimientoTexto}"
-                                    Keyboard="Numeric"
-                                    Placeholder="Ej.: 10000"
-                                    TextColor="#172B4D"
-                                    BackgroundColor="#F8FAFC" />
+                                <Border Style="{StaticResource ErpInputBox}">
+                                    <Entry
+                                        Text="{Binding MontoMovimientoTexto}"
+                                        Keyboard="Numeric"
+                                        Placeholder="Ej.: 10000"
+                                        Style="{StaticResource ErpEntry}" />
+                                </Border>
 
                                 <Button
                                     Text="Registrar movimiento"
@@ -515,16 +534,17 @@
                                     TextColor="#2563EB" />
 
                                 <Label
-                                    Text="Efectivo contado"
+                                    Text="Efectivo contado (monto numérico)"
                                     FontSize="11"
                                     TextColor="#64748B" />
 
-                                <Entry
-                                    Text="{Binding MontoFinalTexto}"
-                                    Keyboard="Numeric"
-                                    Placeholder="Monto real contado"
-                                    TextColor="#172B4D"
-                                    BackgroundColor="#F8FAFC" />
+                                <Border Style="{StaticResource ErpInputBox}">
+                                    <Entry
+                                        Text="{Binding MontoFinalTexto}"
+                                        Keyboard="Numeric"
+                                        Placeholder="Ej.: 500000 (solo números)"
+                                        Style="{StaticResource ErpEntry}" />
+                                </Border>
 
                                 <Label
                                     Text="Observaciones"
