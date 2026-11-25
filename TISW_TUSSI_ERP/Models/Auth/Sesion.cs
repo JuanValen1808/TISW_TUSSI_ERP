@@ -80,8 +80,8 @@ public static class Sesion
     {
         return seccion switch
         {
-            "CONTABILIDAD" => rol.Contains("Contador", StringComparison.OrdinalIgnoreCase) || rol.Contains("Auditor", StringComparison.OrdinalIgnoreCase),
-            "OPERACIÓN" or "VENTAS" => rol.Contains("Vendedor", StringComparison.OrdinalIgnoreCase) || rol.Contains("Cajero", StringComparison.OrdinalIgnoreCase) || rol.Contains("Gerente", StringComparison.OrdinalIgnoreCase),
+            "CONTABILIDAD" => rol.Contains("Contador", StringComparison.OrdinalIgnoreCase),
+            "OPERACIÓN" or "VENTAS" => rol.Contains("Vendedor", StringComparison.OrdinalIgnoreCase) || rol.Contains("Gerente", StringComparison.OrdinalIgnoreCase),
             "INVENTARIOS" => rol.Contains("Bodega", StringComparison.OrdinalIgnoreCase) || rol.Contains("Inventario", StringComparison.OrdinalIgnoreCase),
             "COMPRAS" => rol.Contains("Comprador", StringComparison.OrdinalIgnoreCase) || rol.Contains("Compras", StringComparison.OrdinalIgnoreCase),
             "ADMINISTRACIÓN" => rol.Contains("Administrador", StringComparison.OrdinalIgnoreCase),

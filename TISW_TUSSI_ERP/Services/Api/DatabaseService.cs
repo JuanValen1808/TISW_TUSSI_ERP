@@ -170,6 +170,24 @@ public class DatabaseService
                 ('COMPRAS_AUTORIZACION_GERENCIAL', 'Compras', 'Aprobación de órdenes sobre límite presupuestario (Solo Admin/Gerencia)'),
                 ('COMPRAS_CUARENTENA_LIBERAR', 'Compras', 'Aprobación técnica y visual de lotes por Químico Farmacéutico (Solo QF/Admin)');",
 
+            @"UPDATE usuarios u
+              INNER JOIN roles rOld ON rOld.id_rol = u.id_rol
+              INNER JOIN roles rNew ON rNew.nombre_rol = 'Contador'
+              SET u.id_rol = rNew.id_rol
+              WHERE rOld.nombre_rol IN ('Auditor Contable', 'Auditor Contador');",
+
+            @"UPDATE usuarios u
+              INNER JOIN roles rOld ON rOld.id_rol = u.id_rol
+              INNER JOIN roles rNew ON rNew.nombre_rol = 'Vendedor'
+              SET u.id_rol = rNew.id_rol
+              WHERE rOld.nombre_rol = 'Cajero';",
+
+            @"DELETE rp FROM rol_permisos rp
+              INNER JOIN roles r ON r.id_rol = rp.id_rol
+              WHERE r.nombre_rol IN ('Auditor Contable', 'Auditor Contador', 'Cajero');",
+
+            @"DELETE FROM roles WHERE nombre_rol IN ('Auditor Contable', 'Auditor Contador', 'Cajero');",
+
             @"DELETE rp FROM rol_permisos rp
               INNER JOIN roles r ON r.id_rol = rp.id_rol
               INNER JOIN permisos p ON p.id_permiso = rp.id_permiso
@@ -182,7 +200,7 @@ public class DatabaseService
               SELECT r.id_rol, p.id_permiso
               FROM roles r
               CROSS JOIN permisos p
-              WHERE r.nombre_rol IN ('Vendedor', 'Cajero')
+              WHERE r.nombre_rol = 'Vendedor'
                 AND p.modulo = 'Ventas';",
 
             @"INSERT IGNORE INTO rol_permisos (id_rol, id_permiso)

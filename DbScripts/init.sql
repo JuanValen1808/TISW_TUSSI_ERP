@@ -609,9 +609,7 @@ INSERT INTO registro_mermas (id_producto, id_lote, cantidad, motivo, costo_total
 -- ==========================================================
 
 INSERT INTO roles (id_rol, nombre_rol, descripcion) VALUES
-    (10, 'Gerente Comercial', 'Supervisión general de ventas y convenios'),
-    (11, 'Auditor Contable', 'Acceso de solo lectura a contabilidad e inventario'),
-    (12, 'Cajero', 'Operación exclusiva del punto de venta');
+    (10, 'Gerente Comercial', 'Supervisión general de ventas y convenios');
 
 INSERT INTO permisos (id_permiso, codigo_permiso, modulo, descripcion) VALUES
     (10, 'PRODUCTOS_CREAR', 'Inventario', 'Crear y editar productos'),
@@ -620,12 +618,12 @@ INSERT INTO permisos (id_permiso, codigo_permiso, modulo, descripcion) VALUES
     (13, 'REPORTES_VER', 'Gerencia', 'Ver reportes financieros y de ventas');
 
 INSERT INTO rol_permisos (id_rol, id_permiso) VALUES
-    (10, 12), (10, 13), (11, 13), (11, 2), (12, 1);
+    (10, 12), (10, 13);
 
 INSERT INTO usuarios (id_usuario, rut_usuario, nombre, email, password_hash, id_rol, activo) VALUES
     (10, '15.555.666-7', 'Carlos Gerente', 'carlos.g@erp.cl', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 10, TRUE),
-    (11, '16.777.888-9', 'Ana Auditora', 'ana.a@erp.cl', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 11, TRUE),
-    (12, '17.888.999-0', 'Luis Cajero', 'luis.c@erp.cl', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 12, TRUE),
+    (11, '16.777.888-9', 'Ana Contadora', 'ana.a@erp.cl', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 4, TRUE),
+    (12, '17.888.999-0', 'Luis Vendedor', 'luis.c@erp.cl', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 2, TRUE),
     (13, '18.123.456-1', 'Sofía Ventas', 'sofia.v@erp.cl', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 2, TRUE),
     (14, '19.333.444-5', 'Roberto Bodega', 'roberto.b@erp.cl', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 3, TRUE);
 
@@ -725,7 +723,7 @@ INSERT IGNORE INTO rol_permisos (id_rol, id_permiso)
 SELECT r.id_rol, p.id_permiso
 FROM roles r
 CROSS JOIN permisos p
-WHERE r.nombre_rol IN ('Vendedor', 'Cajero')
+WHERE r.nombre_rol = 'Vendedor'
   AND p.modulo = 'Ventas';
 
 INSERT IGNORE INTO rol_permisos (id_rol, id_permiso)
