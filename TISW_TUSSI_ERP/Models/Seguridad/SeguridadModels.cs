@@ -15,6 +15,34 @@ public class UsuarioModel : INotifyPropertyChanged
     private string _nombreRol = string.Empty;
     private bool _activo = true;
     private DateTime _createdAt = DateTime.Now;
+    private int _cantidadPermisos;
+    private string _modulosResumen = string.Empty;
+
+    public int CantidadPermisos
+    {
+        get => _cantidadPermisos;
+        set
+        {
+            if (SetField(ref _cantidadPermisos, value))
+                OnPropertyChanged(nameof(PoderesResumenTexto));
+        }
+    }
+
+    public string ModulosResumen
+    {
+        get => _modulosResumen;
+        set
+        {
+            if (SetField(ref _modulosResumen, value))
+                OnPropertyChanged(nameof(PoderesResumenTexto));
+        }
+    }
+
+    public string PoderesResumenTexto => NombreRol.Equals("Administrador", StringComparison.OrdinalIgnoreCase)
+        ? "Acceso Total (Todos los módulos)"
+        : string.IsNullOrWhiteSpace(ModulosResumen)
+            ? $"Sin poderes ({CantidadPermisos} perm.)"
+            : $"{ModulosResumen} ({CantidadPermisos} perm.)";
 
     public int IdUsuario
     {

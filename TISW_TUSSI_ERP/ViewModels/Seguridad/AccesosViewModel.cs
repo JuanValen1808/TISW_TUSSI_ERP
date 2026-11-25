@@ -45,6 +45,13 @@ public class AccesosViewModel : BaseViewModel
 
     public string ResumenPermisosTexto => $"{TotalPermisosHabilitados} de {TotalPermisosSistema} permisos asignados";
 
+    private string _vistasHabilitadasTexto = "Dashboard";
+    public string VistasHabilitadasTexto
+    {
+        get => _vistasHabilitadasTexto;
+        set => SetProperty(ref _vistasHabilitadasTexto, value);
+    }
+
     private bool _hayCambiosPendientes;
     public bool HayCambiosPendientes
     {
@@ -135,6 +142,7 @@ public class AccesosViewModel : BaseViewModel
     public ICommand ComandoAbrirNuevoPermiso { get; }
     public ICommand ComandoCerrarNuevoPermiso { get; }
     public ICommand ComandoGuardarNuevoPermiso { get; }
+    public ICommand ComandoAplicarPresetModulo { get; }
 
     public AccesosViewModel(SeguridadService seguridadService)
     {
@@ -150,6 +158,7 @@ public class AccesosViewModel : BaseViewModel
         ComandoAbrirNuevoPermiso = new Command(AbrirNuevoPermiso);
         ComandoCerrarNuevoPermiso = new Command(() => MostrarModalNuevoPermiso = false);
         ComandoGuardarNuevoPermiso = new Command(async () => await GuardarNuevoPermisoAsync());
+        ComandoAplicarPresetModulo = new Command<string>(AplicarPresetModulo);
     }
 
     public async Task CargarDatosInicialesAsync()
@@ -269,12 +278,53 @@ public class AccesosViewModel : BaseViewModel
         ActualizarTotales();
     }
 
+    private void AplicarPresetModulo(string? moduloPreset)
+    {
+        if (string.IsNullOrWhiteSpace(moduloPreset)) return;
+
+        foreach (var grupo in GruposModulos)
+        {
+            bool habilitar = moduloPreset.Equals("Total", StringComparison.OrdinalIgnoreCase)
+                             || grupo.NombreModulo.Equals(moduloPreset, StringComparison.OrdinalIgnoreCase);
+            foreach (var p in grupo.Permisos)
+            {
+                p.Asignado = habilitar;
+            }
+            grupo.NotificarCambios();
+        }
+        HayCambiosPendientes = true;
+        ActualizarTotales();
+    }
+
     private void ActualizarTotales()
     {
         var todos = GruposModulos.SelectMany(g => g.Permisos).ToList();
         TotalPermisosSistema = todos.Count;
         TotalPermisosHabilitados = todos.Count(p => p.Asignado);
         OnPropertyChanged(nameof(ResumenPermisosTexto));
+
+        var codigosActivos = new HashSet<string>(
+            todos.Where(p => p.Asignado).Select(p => p.CodigoPermiso),
+            StringComparer.OrdinalIgnoreCase);
+
+        bool esAdminRol = RolSeleccionado != null && RolSeleccionado.NombreRol.Equals("Administrador", StringComparison.OrdinalIgnoreCase);
+
+        var vistas = new List<string> { "Dashboard" };
+        foreach (var sec in AppShell.Secciones)
+        {
+            if (sec.Nombre == "PRINCIPAL") continue;
+            foreach (var item in sec.Items)
+            {
+                if (esAdminRol || (!string.IsNullOrEmpty(item.Permiso) && codigosActivos.Contains(item.Permiso)))
+                {
+                    vistas.Add($"[{sec.Nombre}] {item.Titulo}");
+                }
+            }
+        }
+
+        VistasHabilitadasTexto = vistas.Count > 1
+            ? string.Join("  ·  ", vistas)
+            : "Solo Dashboard (Principal)";
     }
 
     private async Task GuardarCambiosAccesosAsync()
@@ -304,6 +354,16 @@ public class AccesosViewModel : BaseViewModel
 
             await _seguridadService.GuardarPermisosRolAsync(RolSeleccionado.IdRol, idsHabilitados);
             RolSeleccionado.CantidadPermisos = idsHabilitados.Count;
+
+            if (Models.Auth.Sesion.UsuarioActual != null && Models.Auth.Sesion.UsuarioActual.IdRol == RolSeleccionado.IdRol)
+            {
+                Models.Auth.Sesion.UsuarioActual.Permisos.Clear();
+                foreach (var cod in GruposModulos.SelectMany(g => g.Permisos).Where(p => p.Asignado).Select(p => p.CodigoPermiso))
+                {
+                    Models.Auth.Sesion.UsuarioActual.Permisos.Add(cod);
+                }
+                AppShell.RecargarMenuActual();
+            }
 
             HayCambiosPendientes = false;
             MensajeGeneral = $"Permisos actualizados correctamente para el perfil '{RolSeleccionado.NombreRol}'.";

@@ -8,8 +8,10 @@ namespace TISW_TUSSI_ERP;
 
 public partial class AppShell : Shell
 {
-    private record ItemMenu(string Icono, string Titulo, string Ruta, string Seccion);
-    private record SeccionMenu(string Nombre, ItemMenu[] Items);
+    public record ItemMenu(string Icono, string Titulo, string Ruta, string Seccion, string Permiso = "");
+    public record SeccionMenu(string Nombre, ItemMenu[] Items);
+
+    public static AppShell? InstanciaActual { get; private set; }
 
     // Rutas implementadas en el portal
     private static readonly HashSet<string> Implementadas = new()
@@ -52,61 +54,61 @@ public partial class AppShell : Shell
         "AccesosPage"
     };
 
-    private static readonly SeccionMenu[] Secciones =
+    public static readonly SeccionMenu[] Secciones =
     {
         new("PRINCIPAL", new[]
         {
-            new ItemMenu("", "Dashboard", "DashboardPage", "PRINCIPAL")
+            new ItemMenu("", "Dashboard", "DashboardPage", "PRINCIPAL", "")
         }),
-        new("OPERACIÓN", new[]
+        new("VENTAS", new[]
         {
-            new ItemMenu("", "Punto de Venta", "PosPage", "OPERACIÓN"),
-            new ItemMenu("", "Historial de Ventas", "HistorialVentasPage", "OPERACIÓN"),
-            new ItemMenu("", "Control de Caja", "CajaPage", "OPERACIÓN"),
-            new ItemMenu("", "Clientes", "ClientesPage", "OPERACIÓN"),
-            new ItemMenu("", "Convenios", "ConveniosPage", "OPERACIÓN"),
-            new ItemMenu("", "Ranking de Ventas", "RankingVentasPage", "OPERACIÓN"),
-            new ItemMenu("", "Ventas por Producto y Categoría", "ReporteProductosPage", "OPERACIÓN"),
-            new ItemMenu("", "Cuentas por Cobrar (Ventas)", "CuentasPorCobrarVentasPage", "OPERACIÓN"),
-            new ItemMenu("", "Devoluciones de Ventas", "DevolucionesPage", "OPERACIÓN"),
+            new ItemMenu("", "Punto de Venta", "PosPage", "VENTAS", "VENTAS_POS"),
+            new ItemMenu("", "Historial de Ventas", "HistorialVentasPage", "VENTAS", "VENTAS_HISTORIAL"),
+            new ItemMenu("", "Control de Caja", "CajaPage", "VENTAS", "VENTAS_CAJA"),
+            new ItemMenu("", "Clientes", "ClientesPage", "VENTAS", "VENTAS_CLIENTES"),
+            new ItemMenu("", "Convenios", "ConveniosPage", "VENTAS", "VENTAS_CLIENTES"),
+            new ItemMenu("", "Ranking de Ventas", "RankingVentasPage", "VENTAS", "VENTAS_REPORTES"),
+            new ItemMenu("", "Ventas por Producto y Categoría", "ReporteProductosPage", "VENTAS", "VENTAS_REPORTES"),
+            new ItemMenu("", "Cuentas por Cobrar (Ventas)", "CuentasPorCobrarVentasPage", "VENTAS", "VENTAS_CXC_DEVOLUCIONES"),
+            new ItemMenu("", "Devoluciones de Ventas", "DevolucionesPage", "VENTAS", "VENTAS_CXC_DEVOLUCIONES"),
         }),
         new("INVENTARIOS", new[]
         {
-            new ItemMenu("", "Catálogo SKUs", "InventarioPage", "INVENTARIOS"),
-            new ItemMenu("", "Kardex y Lotes", "KardexPage", "INVENTARIOS"),
-            new ItemMenu("", "Mermas", "MermasPage", "INVENTARIOS"),
-            new ItemMenu("", "Ubicaciones Bodega", "UbicacionesBodegaPage", "INVENTARIOS"),
-            new ItemMenu("", "Sala de Ventas", "UbicacionesSalaPage", "INVENTARIOS"),
+            new ItemMenu("", "Catálogo SKUs", "InventarioPage", "INVENTARIOS", "INVENTARIO_CATALOGO"),
+            new ItemMenu("", "Kardex y Lotes", "KardexPage", "INVENTARIOS", "INVENTARIO_KARDEX"),
+            new ItemMenu("", "Mermas", "MermasPage", "INVENTARIOS", "INVENTARIO_MERMAS"),
+            new ItemMenu("", "Ubicaciones Bodega", "UbicacionesBodegaPage", "INVENTARIOS", "INVENTARIO_UBICACIONES_BODEGA"),
+            new ItemMenu("", "Sala de Ventas", "UbicacionesSalaPage", "INVENTARIOS", "INVENTARIO_UBICACIONES_SALA"),
         }),
         new("COMPRAS", new[]
         {
-            new ItemMenu("", "Proveedores", "ProveedoresPage", "COMPRAS"),
-            new ItemMenu("", "Órdenes de Compra", "OrdenesCompraPage", "COMPRAS"),
-            new ItemMenu("", "Recepción Facturas", "RecepcionFacturasPage", "COMPRAS"),
-            new ItemMenu("", "Reporte Compras Lab.", "ReporteComprasPage", "COMPRAS"),
-            new ItemMenu("", "Reporte Cumplimiento", "ReporteCumplimientoPage", "COMPRAS"),
-            new ItemMenu("", "Historial de Precios", "ReporteHistorialPreciosPage", "COMPRAS"),
+            new ItemMenu("", "Proveedores", "ProveedoresPage", "COMPRAS", "COMPRAS_PROVEEDORES"),
+            new ItemMenu("", "Órdenes de Compra", "OrdenesCompraPage", "COMPRAS", "COMPRAS_ORDENES"),
+            new ItemMenu("", "Recepción Facturas", "RecepcionFacturasPage", "COMPRAS", "COMPRAS_RECEPCION"),
+            new ItemMenu("", "Reporte Compras Lab.", "ReporteComprasPage", "COMPRAS", "COMPRAS_REPORTES"),
+            new ItemMenu("", "Reporte Cumplimiento", "ReporteCumplimientoPage", "COMPRAS", "COMPRAS_REPORTES"),
+            new ItemMenu("", "Historial de Precios", "ReporteHistorialPreciosPage", "COMPRAS", "COMPRAS_REPORTES"),
         }),
         new("CONTABILIDAD", new[]
         {
-            new ItemMenu("", "Plan de Cuentas (RF-01)", "PlanCuentasPage", "CONTABILIDAD"),
-            new ItemMenu("", "Libro Diario (RF-02)", "LibroDiarioPage", "CONTABILIDAD"),
-            new ItemMenu("", "Libro Mayor (RF-03)", "LibroMayorPage", "CONTABILIDAD"),
-            new ItemMenu("", "Balance General (RF-03)", "BalanceGeneralPage", "CONTABILIDAD"),
-            new ItemMenu("", "Balance 8 Columnas (RF-04)", "BalanceOchoColumnasPage", "CONTABILIDAD"),
-            new ItemMenu("", "Estado de Resultados (RF-05)", "EstadoResultadosPage", "CONTABILIDAD"),
-            new ItemMenu("", "Mayor Centralizado (RF-06)", "MayorCentralizadoPage", "CONTABILIDAD"),
-            new ItemMenu("", "Cuentas por Cobrar (RF-07)", "CuentasPorCobrarPage", "CONTABILIDAD"),
-            new ItemMenu("", "Cuentas por Pagar (RF-07)", "CuentasPorPagarPage", "CONTABILIDAD"),
-            new ItemMenu("", "Antigüedad de Saldos (RF-08)", "AntiguedadSaldosPage", "CONTABILIDAD"),
-            new ItemMenu("", "Impuestos y F29 SII (RF-09)", "CentralizadorImpuestosPage", "CONTABILIDAD"),
-            new ItemMenu("", "Flujo de Caja", "FlujoCajaPage", "CONTABILIDAD"),
+            new ItemMenu("", "Plan de Cuentas (RF-01)", "PlanCuentasPage", "CONTABILIDAD", "CONTAB_PLAN_CUENTAS"),
+            new ItemMenu("", "Libro Diario (RF-02)", "LibroDiarioPage", "CONTABILIDAD", "CONTAB_LIBRO_DIARIO"),
+            new ItemMenu("", "Libro Mayor (RF-03)", "LibroMayorPage", "CONTABILIDAD", "CONTAB_MAYOR_BALANCES"),
+            new ItemMenu("", "Balance General (RF-03)", "BalanceGeneralPage", "CONTABILIDAD", "CONTAB_MAYOR_BALANCES"),
+            new ItemMenu("", "Balance 8 Columnas (RF-04)", "BalanceOchoColumnasPage", "CONTABILIDAD", "CONTAB_MAYOR_BALANCES"),
+            new ItemMenu("", "Estado de Resultados (RF-05)", "EstadoResultadosPage", "CONTABILIDAD", "CONTAB_ESTADO_RESULTADOS"),
+            new ItemMenu("", "Mayor Centralizado (RF-06)", "MayorCentralizadoPage", "CONTABILIDAD", "CONTAB_MAYOR_CENTRALIZADO"),
+            new ItemMenu("", "Cuentas por Cobrar (RF-07)", "CuentasPorCobrarPage", "CONTABILIDAD", "CONTAB_CXC_CXP"),
+            new ItemMenu("", "Cuentas por Pagar (RF-07)", "CuentasPorPagarPage", "CONTABILIDAD", "CONTAB_CXC_CXP"),
+            new ItemMenu("", "Antigüedad de Saldos (RF-08)", "AntiguedadSaldosPage", "CONTABILIDAD", "CONTAB_CXC_CXP"),
+            new ItemMenu("", "Impuestos y F29 SII (RF-09)", "CentralizadorImpuestosPage", "CONTABILIDAD", "CONTAB_IMPUESTOS_SII"),
+            new ItemMenu("", "Flujo de Caja", "FlujoCajaPage", "CONTABILIDAD", "CONTAB_CXC_CXP"),
         }),
         new("ADMINISTRACIÓN", new[]
         {
-            new ItemMenu("", "Usuarios (RF-POR-02)", "UsuariosPage", "ADMINISTRACIÓN"),
-            new ItemMenu("", "Perfiles", "PerfilesPage", "ADMINISTRACIÓN"),
-            new ItemMenu("", "Accesos RBAC (RF-POR-03)", "AccesosPage", "ADMINISTRACIÓN"),
+            new ItemMenu("", "Usuarios (RF-POR-02)", "UsuariosPage", "ADMINISTRACIÓN", "ADMIN_USUARIOS"),
+            new ItemMenu("", "Perfiles", "PerfilesPage", "ADMINISTRACIÓN", "ADMIN_RBAC"),
+            new ItemMenu("", "Accesos RBAC (RF-POR-03)", "AccesosPage", "ADMINISTRACIÓN", "ADMIN_RBAC"),
         }),
     };
 
@@ -115,6 +117,7 @@ public partial class AppShell : Shell
     public AppShell()
     {
         InitializeComponent();
+        InstanciaActual = this;
         Routing.RegisterRoute(nameof(Views.Compras.NuevaOrdenPage), typeof(Views.Compras.NuevaOrdenPage));
         Routing.RegisterRoute(nameof(Views.Compras.RecepcionFacturasPage), typeof(Views.Compras.RecepcionFacturasPage));
         ConstruirMenu();
@@ -135,11 +138,11 @@ public partial class AppShell : Shell
                 return;
 
             var item = Secciones.SelectMany(s => s.Items).FirstOrDefault(i => loc.Contains(i.Ruta, StringComparison.OrdinalIgnoreCase));
-            if (item != null && !Sesion.PuedeAccederSeccion(item.Seccion))
+            if (item != null && !Sesion.PuedeAccederVista(item.Permiso, item.Seccion))
             {
                 args.Cancel();
                 _ = DisplayAlertAsync("Acceso Denegado (RBAC)",
-                    $"Tu perfil actual ({Sesion.UsuarioActual?.NombreRol ?? "Invitado"}) no posee permisos para acceder al módulo '{item.Seccion}'.",
+                    $"Tu perfil actual ({Sesion.UsuarioActual?.NombreRol ?? "Invitado"}) no posee el poder/permiso '{item.Permiso}' para acceder a '{item.Titulo}'.",
                     "Entendido");
             }
         };
@@ -148,12 +151,24 @@ public partial class AppShell : Shell
         Resaltar("DashboardPage");
     }
 
+    public static void RecargarMenuActual()
+    {
+        InstanciaActual?.ConstruirMenu();
+    }
+
     private void ConstruirMenu()
     {
+        Menu.Clear();
+        _items.Clear();
+
         foreach (var seccion in Secciones)
         {
-            // Despliegue dinámico y Control de Accesos RBAC (RF-POR-01 / RF-POR-03)
-            if (!Sesion.PuedeAccederSeccion(seccion.Nombre))
+            // Despliegue dinámico y Control de Accesos RBAC por sección y por vista individual (RF-POR-01 / RF-POR-03)
+            var itemsPermitidos = seccion.Items
+                .Where(item => Sesion.PuedeAccederVista(item.Permiso, item.Seccion))
+                .ToList();
+
+            if (itemsPermitidos.Count == 0)
                 continue;
 
             Menu.Add(new Label
@@ -165,7 +180,7 @@ public partial class AppShell : Shell
                 Margin = new Thickness(12, 14, 0, 4)
             });
 
-            foreach (var item in seccion.Items)
+            foreach (var item in itemsPermitidos)
             {
                 var texto = new Label
                 {
@@ -196,10 +211,10 @@ public partial class AppShell : Shell
     private async Task Navegar(ItemMenu item)
     {
         // Middleware RBAC en navegación (RF-POR-03)
-        if (!Sesion.PuedeAccederSeccion(item.Seccion))
+        if (!Sesion.PuedeAccederVista(item.Permiso, item.Seccion))
         {
             await DisplayAlertAsync("Acceso Restringido (RBAC)",
-                $"Tu perfil actual ({Sesion.UsuarioActual?.NombreRol ?? "Invitado"}) no posee permisos para acceder al módulo '{item.Seccion}'.",
+                $"Tu perfil actual ({Sesion.UsuarioActual?.NombreRol ?? "Invitado"}) no posee el permiso '{item.Permiso}' para acceder a '{item.Titulo}'.",
                 "Entendido");
             return;
         }
