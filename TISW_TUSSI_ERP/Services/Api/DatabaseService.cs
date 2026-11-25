@@ -139,12 +139,23 @@ public class DatabaseService
                 (5, 'Comprador', 'Responsable de gestión de proveedores, órdenes de compra, cotizaciones y abastecimiento');",
 
             @"INSERT IGNORE INTO permisos (codigo_permiso, modulo, descripcion) VALUES
+                ('VENTAS_POS', 'Ventas', 'Punto de Venta (POS) y emisión de boletas y facturas'),
+                ('VENTAS_HISTORIAL', 'Ventas', 'Historial de Ventas y consulta de documentos emitidos'),
+                ('VENTAS_CAJA', 'Ventas', 'Control de Caja: apertura, arqueo, movimientos y cierre de turno'),
+                ('VENTAS_CLIENTES', 'Ventas', 'Mantenedor de Clientes y Convenios de Salud'),
+                ('VENTAS_REPORTES', 'Ventas', 'Reportes de Ranking de Ventas y Ventas por Producto/Categoría'),
+                ('VENTAS_CXC_DEVOLUCIONES', 'Ventas', 'Cuentas por Cobrar de Ventas y Devoluciones / Notas de Crédito'),
+                ('INVENTARIO_CATALOGO', 'Inventario', 'Catálogo de SKUs, creación, edición y valorización de productos'),
+                ('INVENTARIO_KARDEX', 'Inventario', 'Kardex de movimientos y trazabilidad por lotes'),
+                ('INVENTARIO_MERMAS', 'Inventario', 'Control y registro de Mermas, vencimientos y bajas de stock'),
+                ('INVENTARIO_UBICACIONES_BODEGA', 'Inventario', 'CU-INV-07: Gestión y asignación de Ubicaciones en Bodega'),
+                ('INVENTARIO_UBICACIONES_SALA', 'Inventario', 'CU-INV-08: Gestión y traspaso a Ubicaciones en Sala de Ventas'),
                 ('CONTAB_PLAN_CUENTAS', 'Contabilidad', 'RF-CON-01: Gestionar estructura jerárquica del Plan de Cuentas'),
                 ('CONTAB_LIBRO_DIARIO', 'Contabilidad', 'RF-CON-02: Registrar asientos manuales y centralizar movimientos automáticos'),
                 ('CONTAB_MAYOR_BALANCES', 'Contabilidad', 'RF-CON-03/04: Consultar Libro Mayor, Balance General y Balance de 8 Columnas'),
                 ('CONTAB_ESTADO_RESULTADOS', 'Contabilidad', 'RF-CON-05: Consultar Estado de Resultados e Impuesto 1ª Categoría'),
                 ('CONTAB_MAYOR_CENTRALIZADO', 'Contabilidad', 'RF-CON-06: Consultar Libro Mayor Centralizado mensual'),
-                ('CONTAB_CXC_CXP', 'Contabilidad', 'RF-CON-07/08: Gestionar Cuentas por Cobrar, Pagar y Antigüedad de Saldos'),
+                ('CONTAB_CXC_CXP', 'Contabilidad', 'RF-CON-07/08: Gestionar Cuentas por Cobrar, Pagar, Antigüedad de Saldos y Flujo de Caja'),
                 ('CONTAB_IMPUESTOS_SII', 'Contabilidad', 'RF-CON-09: Consultar Centralizador de Impuestos RCV y Formulario 29 SII'),
                 ('ADMIN_USUARIOS', 'Seguridad', 'RF-POR-02: Administración de usuarios y contraseñas encriptadas'),
                 ('ADMIN_RBAC', 'Seguridad', 'RF-POR-03: Administración de perfiles y matriz de control de accesos RBAC'),
@@ -159,8 +170,27 @@ public class DatabaseService
                 ('COMPRAS_AUTORIZACION_GERENCIAL', 'Compras', 'Aprobación de órdenes sobre límite presupuestario (Solo Admin/Gerencia)'),
                 ('COMPRAS_CUARENTENA_LIBERAR', 'Compras', 'Aprobación técnica y visual de lotes por Químico Farmacéutico (Solo QF/Admin)');",
 
+            @"DELETE rp FROM rol_permisos rp
+              INNER JOIN roles r ON r.id_rol = rp.id_rol
+              INNER JOIN permisos p ON p.id_permiso = rp.id_permiso
+              WHERE r.nombre_rol = 'Vendedor' AND p.modulo <> 'Ventas';",
+
             @"INSERT IGNORE INTO rol_permisos (id_rol, id_permiso)
               SELECT 1, id_permiso FROM permisos;",
+
+            @"INSERT IGNORE INTO rol_permisos (id_rol, id_permiso)
+              SELECT r.id_rol, p.id_permiso
+              FROM roles r
+              CROSS JOIN permisos p
+              WHERE r.nombre_rol IN ('Vendedor', 'Cajero')
+                AND p.modulo = 'Ventas';",
+
+            @"INSERT IGNORE INTO rol_permisos (id_rol, id_permiso)
+              SELECT r.id_rol, p.id_permiso
+              FROM roles r
+              CROSS JOIN permisos p
+              WHERE r.nombre_rol = 'Bodega'
+                AND p.modulo = 'Inventario';",
 
             @"INSERT IGNORE INTO rol_permisos (id_rol, id_permiso)
               SELECT r.id_rol, p.id_permiso

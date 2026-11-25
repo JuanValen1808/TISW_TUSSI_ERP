@@ -555,7 +555,6 @@ INSERT INTO usuarios (rut_usuario, nombre, email, password_hash, id_rol, activo)
 
 INSERT INTO rol_permisos (id_rol, id_permiso) VALUES
     (2, 1),
-    (2, 2),
     (3, 2);
 
 INSERT INTO productos (sku, codigo_barras, nombre_comercial, principio_activo, registro_sanitario, formato_presentacion, id_categoria, precio_venta_base, costo_promedio_ponderado, stock_minimo, punto_reorden, activo) VALUES
@@ -688,12 +687,23 @@ INSERT INTO plan_cuentas (id_cuenta, codigo_cuenta, nombre_cuenta, tipo_cuenta, 
     (21, '5.1.03', 'Pérdidas por Mermas y Vencimientos', 'GASTO', 2, 5);
 
 INSERT IGNORE INTO permisos (codigo_permiso, modulo, descripcion) VALUES
+    ('VENTAS_POS', 'Ventas', 'Punto de Venta (POS) y emisión de boletas y facturas'),
+    ('VENTAS_HISTORIAL', 'Ventas', 'Historial de Ventas y consulta de documentos emitidos'),
+    ('VENTAS_CAJA', 'Ventas', 'Control de Caja: apertura, arqueo, movimientos y cierre de turno'),
+    ('VENTAS_CLIENTES', 'Ventas', 'Mantenedor de Clientes y Convenios de Salud'),
+    ('VENTAS_REPORTES', 'Ventas', 'Reportes de Ranking de Ventas y Ventas por Producto/Categoría'),
+    ('VENTAS_CXC_DEVOLUCIONES', 'Ventas', 'Cuentas por Cobrar de Ventas y Devoluciones / Notas de Crédito'),
+    ('INVENTARIO_CATALOGO', 'Inventario', 'Catálogo de SKUs, creación, edición y valorización de productos'),
+    ('INVENTARIO_KARDEX', 'Inventario', 'Kardex de movimientos y trazabilidad por lotes'),
+    ('INVENTARIO_MERMAS', 'Inventario', 'Control y registro de Mermas, vencimientos y bajas de stock'),
+    ('INVENTARIO_UBICACIONES_BODEGA', 'Inventario', 'CU-INV-07: Gestión y asignación de Ubicaciones en Bodega'),
+    ('INVENTARIO_UBICACIONES_SALA', 'Inventario', 'CU-INV-08: Gestión y traspaso a Ubicaciones en Sala de Ventas'),
     ('CONTAB_PLAN_CUENTAS', 'Contabilidad', 'RF-CON-01: Gestionar estructura jerárquica del Plan de Cuentas'),
     ('CONTAB_LIBRO_DIARIO', 'Contabilidad', 'RF-CON-02: Registrar asientos manuales y centralizar movimientos automáticos'),
     ('CONTAB_MAYOR_BALANCES', 'Contabilidad', 'RF-CON-03/04: Consultar Libro Mayor, Balance General y Balance de 8 Columnas'),
     ('CONTAB_ESTADO_RESULTADOS', 'Contabilidad', 'RF-CON-05: Consultar Estado de Resultados e Impuesto 1ª Categoría'),
     ('CONTAB_MAYOR_CENTRALIZADO', 'Contabilidad', 'RF-CON-06: Consultar Libro Mayor Centralizado mensual'),
-    ('CONTAB_CXC_CXP', 'Contabilidad', 'RF-CON-07/08: Gestionar Cuentas por Cobrar, Pagar y Antigüedad de Saldos'),
+    ('CONTAB_CXC_CXP', 'Contabilidad', 'RF-CON-07/08: Gestionar Cuentas por Cobrar, Pagar, Antigüedad de Saldos y Flujo de Caja'),
     ('CONTAB_IMPUESTOS_SII', 'Contabilidad', 'RF-CON-09: Consultar Centralizador de Impuestos RCV y Formulario 29 SII'),
     ('ADMIN_USUARIOS', 'Seguridad', 'RF-POR-02: Administración de usuarios y contraseñas encriptadas'),
     ('ADMIN_RBAC', 'Seguridad', 'RF-POR-03: Administración de perfiles y matriz de control de accesos RBAC'),
@@ -715,8 +725,30 @@ INSERT IGNORE INTO rol_permisos (id_rol, id_permiso)
 SELECT r.id_rol, p.id_permiso
 FROM roles r
 CROSS JOIN permisos p
+WHERE r.nombre_rol IN ('Vendedor', 'Cajero')
+  AND p.modulo = 'Ventas';
+
+INSERT IGNORE INTO rol_permisos (id_rol, id_permiso)
+SELECT r.id_rol, p.id_permiso
+FROM roles r
+CROSS JOIN permisos p
+WHERE r.nombre_rol = 'Bodega'
+  AND p.modulo = 'Inventario';
+
+INSERT IGNORE INTO rol_permisos (id_rol, id_permiso)
+SELECT r.id_rol, p.id_permiso
+FROM roles r
+CROSS JOIN permisos p
 WHERE r.nombre_rol = 'Contador'
   AND (p.modulo = 'Contabilidad' OR p.codigo_permiso LIKE 'CONTAB_%');
+
+INSERT IGNORE INTO rol_permisos (id_rol, id_permiso)
+SELECT r.id_rol, p.id_permiso
+FROM roles r
+CROSS JOIN permisos p
+WHERE r.nombre_rol = 'Comprador'
+  AND p.modulo = 'Compras'
+  AND p.codigo_permiso NOT IN ('COMPRAS_AUTORIZACION_GERENCIAL', 'COMPRAS_CUARENTENA_LIBERAR');
 
 INSERT IGNORE INTO ubicaciones (id_ubicacion, tipo_zona, codigo_ubicacion, sector_pasillo, estante_mueble, repisa_nivel, descripcion, activo) VALUES
     (1, 'BODEGA', 'BOD-P1-E01-R1', 'Pasillo 1 (Analgésicos)', 'Estante 01', 'Repisa 1', 'Almacenamiento general de comprimidos', TRUE),

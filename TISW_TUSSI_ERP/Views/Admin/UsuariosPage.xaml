@@ -71,14 +71,14 @@
                             <VerticalStackLayout MinimumWidthRequest="1040">
 
                                 <!-- Encabezado de tabla -->
-                                <Grid ColumnDefinitions="260,130,220,130,110,190"
+                                <Grid ColumnDefinitions="240,120,200,210,100,290"
                                       BackgroundColor="#F8FAFC"
                                       Padding="16,12"
                                       ColumnSpacing="10">
                                     <Label Text="USUARIO" Style="{StaticResource ErpCaption}" />
                                     <Label Grid.Column="1" Text="RUT" Style="{StaticResource ErpCaption}" />
                                     <Label Grid.Column="2" Text="CORREO ELECTRÓNICO" Style="{StaticResource ErpCaption}" />
-                                    <Label Grid.Column="3" Text="PERFIL" Style="{StaticResource ErpCaption}" />
+                                    <Label Grid.Column="3" Text="PERFIL Y PODERES ASIGNADOS" Style="{StaticResource ErpCaption}" />
                                     <Label Grid.Column="4" Text="ESTADO" Style="{StaticResource ErpCaption}" />
                                     <Label Grid.Column="5" Text="ACCIONES" Style="{StaticResource ErpCaption}" HorizontalTextAlignment="End" />
                                 </Grid>
@@ -95,7 +95,7 @@
                                     <BindableLayout.ItemTemplate>
                                         <DataTemplate x:DataType="m:UsuarioModel">
                                             <VerticalStackLayout>
-                                                <Grid ColumnDefinitions="260,130,220,130,110,190"
+                                                <Grid ColumnDefinitions="240,120,200,210,100,290"
                                                       Padding="16,12"
                                                       ColumnSpacing="10">
 
@@ -143,20 +143,25 @@
                                                            MaxLines="1"
                                                            VerticalOptions="Center" />
 
-                                                    <!-- Rol badge -->
-                                                    <Border Grid.Column="3"
-                                                            BackgroundColor="#F1F5F9"
-                                                            StrokeThickness="0"
-                                                            StrokeShape="RoundRectangle 6"
-                                                            Padding="8,4"
-                                                            HorizontalOptions="Start"
-                                                            VerticalOptions="Center">
-                                                        <Label Text="{Binding NombreRol}"
-                                                               FontSize="11"
-                                                               FontAttributes="Bold"
-                                                               TextColor="{StaticResource ErpNavy}"
-                                                               LineBreakMode="NoWrap" />
-                                                    </Border>
+                                                    <!-- Rol y Poderes badge -->
+                                                    <VerticalStackLayout Grid.Column="3" VerticalOptions="Center" Spacing="3">
+                                                        <Border BackgroundColor="#F1F5F9"
+                                                                StrokeThickness="0"
+                                                                StrokeShape="RoundRectangle 6"
+                                                                Padding="8,4"
+                                                                HorizontalOptions="Start">
+                                                            <Label Text="{Binding NombreRol}"
+                                                                   FontSize="11"
+                                                                   FontAttributes="Bold"
+                                                                   TextColor="{StaticResource ErpNavy}"
+                                                                   LineBreakMode="NoWrap" />
+                                                        </Border>
+                                                        <Label Text="{Binding PoderesResumenTexto}"
+                                                               FontSize="10"
+                                                               TextColor="{StaticResource ErpPrimary}"
+                                                               LineBreakMode="TailTruncation"
+                                                               MaxLines="1" />
+                                                    </VerticalStackLayout>
 
                                                     <!-- Estado badge -->
                                                     <Border Grid.Column="4"
@@ -178,6 +183,20 @@
                                                                            Spacing="6"
                                                                            HorizontalOptions="End"
                                                                            VerticalOptions="Center">
+                                                        <!-- Botón Asignar Poderes -->
+                                                        <Button Text="Asignar Poderes"
+                                                                BackgroundColor="#EFF6FF"
+                                                                BorderColor="#BFDBFE"
+                                                                BorderWidth="1"
+                                                                TextColor="#1D4ED8"
+                                                                FontAttributes="Bold"
+                                                                CornerRadius="8"
+                                                                HeightRequest="32"
+                                                                FontSize="11"
+                                                                Padding="9,0"
+                                                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:UsuariosViewModel}}, Path=ComandoAbrirPoderes}"
+                                                                CommandParameter="{Binding .}" />
+
                                                         <!-- Botón Editar -->
                                                         <Button Text="Editar"
                                                                 Style="{StaticResource ErpGhostButton}"
@@ -381,6 +400,129 @@
                                     Text="{Binding TextoBotonGuardar}"
                                     Style="{StaticResource ErpPrimaryButton}"
                                     Command="{Binding ComandoGuardar}" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+            </Grid>
+
+            <!-- MODAL DE ASIGNACIÓN DE PODERES Y VISTAS POR USUARIO -->
+            <Grid IsVisible="{Binding MostrarModalPoderes}"
+                  BackgroundColor="#66000000"
+                  Padding="20">
+
+                <Border Style="{StaticResource ErpCard}"
+                        WidthRequest="760"
+                        VerticalOptions="Center"
+                        HorizontalOptions="Center"
+                        Padding="24"
+                        Shadow="{Shadow Brush=Black, Offset='0,10', Radius=20, Opacity=0.25}">
+
+                    <VerticalStackLayout Spacing="12">
+                        <!-- Encabezado Modal Poderes -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <VerticalStackLayout Spacing="2">
+                                <Label Text="{Binding TituloModalPoderes}"
+                                       FontSize="17"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource ErpText}" />
+                                <Label Text="Selecciona el perfil y marca los poderes y vistas habilitadas en el portal para este usuario."
+                                       FontSize="12"
+                                       TextColor="{StaticResource ErpMuted}" />
+                            </VerticalStackLayout>
+                            <Button Grid.Column="1"
+                                    Text="Cerrar"
+                                    Style="{StaticResource ErpGhostButton}"
+                                    HeightRequest="32"
+                                    Padding="10,0"
+                                    Command="{Binding ComandoCerrarPoderes}" />
+                        </Grid>
+
+                        <BoxView HeightRequest="1" Color="{StaticResource ErpBorder}" />
+
+                        <!-- Selector de Perfil y Presets Rápidos por Módulo -->
+                        <Grid ColumnDefinitions="240,*" ColumnSpacing="12">
+                            <VerticalStackLayout Spacing="4">
+                                <Label Text="Perfil / Rol del Usuario:" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource ErpText}" />
+                                <Border Style="{StaticResource ErpInputBox}">
+                                    <Picker Title="Seleccionar perfil"
+                                            ItemsSource="{Binding Roles}"
+                                            ItemDisplayBinding="{Binding NombreRol}"
+                                            SelectedItem="{Binding RolPoderesSeleccionado}"
+                                            TextColor="{StaticResource ErpText}"
+                                            FontSize="13" />
+                                </Border>
+                            </VerticalStackLayout>
+
+                            <VerticalStackLayout Grid.Column="1" Spacing="4" VerticalOptions="End">
+                                <Label Text="Asignar vistas exclusivas por módulo (1 clic):" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource ErpMuted}" />
+                                <HorizontalStackLayout Spacing="6">
+                                    <Button Text="Solo Ventas" Style="{StaticResource ErpGhostButton}" HeightRequest="32" FontSize="11" Padding="8,0"
+                                            Command="{Binding ComandoPresetPoderes}" CommandParameter="Ventas" />
+                                    <Button Text="Solo Inventario" Style="{StaticResource ErpGhostButton}" HeightRequest="32" FontSize="11" Padding="8,0"
+                                            Command="{Binding ComandoPresetPoderes}" CommandParameter="Inventario" />
+                                    <Button Text="Solo Compras" Style="{StaticResource ErpGhostButton}" HeightRequest="32" FontSize="11" Padding="8,0"
+                                            Command="{Binding ComandoPresetPoderes}" CommandParameter="Compras" />
+                                    <Button Text="Solo Contabilidad" Style="{StaticResource ErpGhostButton}" HeightRequest="32" FontSize="11" Padding="8,0"
+                                            Command="{Binding ComandoPresetPoderes}" CommandParameter="Contabilidad" />
+                                    <Button Text="Acceso Total" Style="{StaticResource ErpGhostButton}" HeightRequest="32" FontSize="11" Padding="8,0"
+                                            Command="{Binding ComandoPresetPoderes}" CommandParameter="Total" />
+                                </HorizontalStackLayout>
+                            </VerticalStackLayout>
+                        </Grid>
+
+                        <!-- Vista previa de las pantallas habilitadas -->
+                        <Border BackgroundColor="#EFF6FF" Stroke="#BFDBFE" StrokeThickness="1" StrokeShape="RoundRectangle 8" Padding="12,8">
+                            <VerticalStackLayout Spacing="2">
+                                <Label Text="VISTAS QUE VERÁ ESTE USUARIO EN SU MENÚ LATERAL:" FontSize="10" FontAttributes="Bold" TextColor="#1E40AF" />
+                                <Label Text="{Binding VistasPoderesTexto}" FontSize="11" TextColor="#1E3A8A" />
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <!-- Lista con switches de permisos agrupados por módulo -->
+                        <ScrollView MaximumHeightRequest="340">
+                            <VerticalStackLayout BindableLayout.ItemsSource="{Binding GruposPoderesUsuario}" Spacing="10">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="m:ModuloPermisosGrupo">
+                                        <Border Style="{StaticResource ErpCard}" Padding="0">
+                                            <VerticalStackLayout>
+                                                <Grid ColumnDefinitions="*,Auto" BackgroundColor="#F8FAFC" Padding="12,8">
+                                                    <Label Text="{Binding NombreModulo, StringFormat='MÓDULO: {0}'}"
+                                                           FontSize="11" FontAttributes="Bold" TextColor="{StaticResource ErpNavy}" VerticalOptions="Center" />
+                                                    <Label Grid.Column="1" Text="{Binding ResumenHabilitados}"
+                                                           FontSize="10" TextColor="{StaticResource ErpMuted}" VerticalOptions="Center" />
+                                                </Grid>
+                                                <BoxView HeightRequest="1" Color="{StaticResource ErpBorder}" />
+
+                                                <VerticalStackLayout BindableLayout.ItemsSource="{Binding Permisos}">
+                                                    <BindableLayout.ItemTemplate>
+                                                        <DataTemplate x:DataType="m:PermisoModel">
+                                                            <Grid ColumnDefinitions="190,*,Auto" Padding="12,8" ColumnSpacing="10">
+                                                                <Label Text="{Binding CodigoPermiso}" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource ErpNavy}" VerticalOptions="Center" />
+                                                                <Label Grid.Column="1" Text="{Binding Descripcion}" FontSize="11" TextColor="{StaticResource ErpText}" VerticalOptions="Center" />
+                                                                <Switch Grid.Column="2" IsToggled="{Binding Asignado, Mode=TwoWay}"
+                                                                        ThumbColor="{StaticResource ErpPrimary}" OnColor="{StaticResource ErpPrimarySoft}" VerticalOptions="Center" />
+                                                            </Grid>
+                                                        </DataTemplate>
+                                                    </BindableLayout.ItemTemplate>
+                                                </VerticalStackLayout>
+                                            </VerticalStackLayout>
+                                        </Border>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
+                        </ScrollView>
+
+                        <BoxView HeightRequest="1" Color="{StaticResource ErpBorder}" />
+
+                        <!-- Acciones Modal Poderes -->
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                            <Button Text="Cancelar"
+                                    Style="{StaticResource ErpGhostButton}"
+                                    Command="{Binding ComandoCerrarPoderes}" />
+                            <Button Grid.Column="1"
+                                    Text="Guardar Poderes y Vistas"
+                                    Style="{StaticResource ErpPrimaryButton}"
+                                    Command="{Binding ComandoGuardarPoderes}" />
                         </Grid>
                     </VerticalStackLayout>
                 </Border>

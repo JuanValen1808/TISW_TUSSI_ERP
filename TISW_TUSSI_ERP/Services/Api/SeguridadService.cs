@@ -25,7 +25,12 @@ public class SeguridadService
 
         var sql = @"
             SELECT u.id_usuario, u.rut_usuario, u.nombre, u.email, u.password_hash,
-                   u.id_rol, r.nombre_rol, u.activo, u.created_at
+                   u.id_rol, r.nombre_rol, u.activo, u.created_at,
+                   (SELECT COUNT(*) FROM rol_permisos rp WHERE rp.id_rol = u.id_rol) AS cant_permisos,
+                   COALESCE((SELECT GROUP_CONCAT(DISTINCT p.modulo ORDER BY p.modulo SEPARATOR ', ')
+                             FROM rol_permisos rp
+                             INNER JOIN permisos p ON p.id_permiso = rp.id_permiso
+                             WHERE rp.id_rol = u.id_rol), '') AS modulos_resumen
             FROM usuarios u
             INNER JOIN roles r ON r.id_rol = u.id_rol
             WHERE 1=1";
@@ -73,7 +78,9 @@ public class SeguridadService
                 IdRol = rd.GetInt32(5),
                 NombreRol = Formato.SanitizarTexto(rd.GetString(6)),
                 Activo = rd.GetBoolean(7),
-                CreatedAt = Convert.ToDateTime(rd.GetValue(8))
+                CreatedAt = Convert.ToDateTime(rd.GetValue(8)),
+                CantidadPermisos = rd.GetInt32(9),
+                ModulosResumen = Formato.SanitizarTexto(rd.GetString(10))
             });
         }
         return lista;
