@@ -206,6 +206,25 @@ public class VentasService
         return resultado;
     }
 
+    // VERIFICAR SI LA CAJA PRINCIPAL DEL POS ESTÁ ABIERTA
+    public async Task<bool> TieneCajaAbiertaAsync()
+    {
+        const string sql = @"
+            SELECT 1
+            FROM caja_turnos
+            WHERE id_caja = 1
+              AND estado = 'ABIERTA'
+            LIMIT 1;";
+
+        await using var cn = _db.CrearConexion();
+        await cn.OpenAsync();
+
+        await using var cmd = new MySqlCommand(sql, cn);
+        var resultado = await cmd.ExecuteScalarAsync();
+
+        return resultado != null && resultado != DBNull.Value;
+    }
+
     // EMITIR VENTA
     // idCliente NULL = PÚBLICO GENERAL
     public async Task<string> EmitirVentaAsync(
@@ -281,6 +300,36 @@ public class VentasService
 
         try
         {
+            // VALIDAR QUE EXISTA UNA CAJA ABIERTA PARA CUALQUIER FORMA DE PAGO
+            const string sqlTurno = @"
+                SELECT id_turno
+                FROM caja_turnos
+                WHERE id_caja = 1
+                  AND estado = 'ABIERTA'
+                ORDER BY id_turno DESC
+                LIMIT 1
+                FOR UPDATE;";
+
+            long idTurno;
+
+            await using (var cmdTurno =
+                new MySqlCommand(sqlTurno, cn, tx))
+            {
+                var resultadoTurno =
+                    await cmdTurno.ExecuteScalarAsync();
+
+                if (resultadoTurno == null ||
+                    resultadoTurno == DBNull.Value)
+                {
+                    throw new InvalidOperationException(
+                        "No hay una caja abierta. " +
+                        "Abre Control de Caja antes " +
+                        "de realizar una venta.");
+                }
+
+                idTurno = Convert.ToInt64(resultadoTurno);
+            }
+
             string tipoDocumento = "BOLETA";
 
             if (idCliente.HasValue)
@@ -494,38 +543,9 @@ public class VentasService
                 }
             }
 
-            // REGISTRO EN CONTROL DE CAJA
+            // REGISTRO EN CONTROL DE CAJA (SOLO EFECTIVO AFECTA EL SALDO FÍSICO)
             if (formaPago == "EFECTIVO")
             {
-                const string sqlTurno = @"
-                    SELECT id_turno
-                    FROM caja_turnos
-                    WHERE id_caja = 1
-                      AND estado = 'ABIERTA'
-                    ORDER BY id_turno DESC
-                    LIMIT 1
-                    FOR UPDATE;";
-
-                long idTurno;
-
-                await using (var cmdTurno =
-                    new MySqlCommand(sqlTurno, cn, tx))
-                {
-                    var resultado =
-                        await cmdTurno.ExecuteScalarAsync();
-
-                    if (resultado == null ||
-                        resultado == DBNull.Value)
-                    {
-                        throw new InvalidOperationException(
-                            "No hay una caja abierta. " +
-                            "Abre Control de Caja antes " +
-                            "de cobrar en efectivo.");
-                    }
-
-                    idTurno = Convert.ToInt64(resultado);
-                }
-
                 const string sqlMovimiento = @"
                     INSERT INTO caja_movimientos
                     (

@@ -191,6 +191,13 @@ public class PosViewModel : BaseViewModel
 
     public bool HayItems => Carrito.Count > 0;
 
+    private bool _cajaCerrada;
+    public bool CajaCerrada
+    {
+        get => _cajaCerrada;
+        private set => SetProperty(ref _cajaCerrada, value);
+    }
+
     private string _mensajeError = string.Empty;
     public string MensajeError
     {
@@ -297,6 +304,8 @@ public class PosViewModel : BaseViewModel
 
         try
         {
+            CajaCerrada = !await _servicio.TieneCajaAbiertaAsync();
+
             var clientes = await _servicio.ObtenerClientesAsync();
 
             ++_versionCargaConvenios;
@@ -682,6 +691,28 @@ public class PosViewModel : BaseViewModel
         if (Carrito.Count == 0)
         {
             MensajeError = "El carrito está vacío.";
+            return;
+        }
+
+        bool cajaAbierta;
+        try
+        {
+            cajaAbierta = await _servicio.TieneCajaAbiertaAsync();
+        }
+        catch (Exception ex)
+        {
+            MensajeError =
+                "No se pudo verificar el estado de la caja: " + ex.Message;
+            return;
+        }
+
+        CajaCerrada = !cajaAbierta;
+
+        if (!cajaAbierta)
+        {
+            MensajeError =
+                "No hay una caja abierta. " +
+                "Abre Control de Caja antes de realizar una venta.";
             return;
         }
 

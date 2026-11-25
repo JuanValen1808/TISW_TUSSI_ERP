@@ -36,6 +36,20 @@
                 <VerticalStackLayout Spacing="6">
 
                     <Border
+                        IsVisible="{Binding CajaCerrada}"
+                        BackgroundColor="#FEF3C7"
+                        Stroke="#FCD34D"
+                        StrokeShape="RoundRectangle 8"
+                        Padding="10">
+
+                        <Label
+                            Text="Caja cerrada: abre un turno en Control de Caja antes de vender con cualquier forma de pago."
+                            FontSize="12"
+                            FontAttributes="Bold"
+                            TextColor="#92400E" />
+                    </Border>
+
+                    <Border
                         IsVisible="{Binding HayError}"
                         BackgroundColor="#FEE2E2"
                         Stroke="#FCA5A5"
