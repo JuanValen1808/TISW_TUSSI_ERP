@@ -9,7 +9,7 @@
              BackgroundColor="{StaticResource CtbSurfaceAlt}">
 
     <Grid RowDefinitions="Auto, *">
-        <ctrl:PageHeader Grid.Row="0" Ruta="ERP › Contabilidad › Liquidez" Titulo="Estado de Flujo de Efectivo y Proyección a 30 Días (NIC 7)" />
+        <ctrl:PageHeader Grid.Row="0" Ruta="ERP › Contabilidad" Titulo="Estado de Flujo de Efectivo y Proyección a 30 Días" />
 
         <ScrollView Grid.Row="1">
             <VerticalStackLayout Padding="24" Spacing="18">

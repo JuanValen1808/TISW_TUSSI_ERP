@@ -9,7 +9,7 @@
              BackgroundColor="{StaticResource CtbSurfaceAlt}">
 
     <Grid RowDefinitions="Auto, *">
-        <ctrl:PageHeader Grid.Row="0" Ruta="ERP › Contabilidad › RF-CON-07" Titulo="Gestión de Cuentas por Pagar a Proveedores" />
+        <ctrl:PageHeader Grid.Row="0" Ruta="ERP › Contabilidad" Titulo="Gestión de Cuentas por Pagar a Proveedores" />
 
         <ScrollView Grid.Row="1">
             <VerticalStackLayout Padding="24" Spacing="18">
@@ -20,7 +20,7 @@
                         <VerticalStackLayout Spacing="4">
                             <HorizontalStackLayout Spacing="8">
                                 <Border BackgroundColor="#E11D48" StrokeThickness="0" Padding="8,3" StrokeShape="RoundRectangle 6">
-                                    <Label Text="RF-CON-07 · OBLIGACIONES CON PROVEEDORES" TextColor="White" FontSize="10" FontAttributes="Bold" />
+                                    <Label Text="OBLIGACIONES CON PROVEEDORES" TextColor="White" FontSize="10" FontAttributes="Bold" />
                                 </Border>
                                 <Border BackgroundColor="#1E293B" Stroke="#334155" StrokeThickness="1" Padding="8,3" StrokeShape="RoundRectangle 6">
                                     <Label Text="CUENTA 2.1.01 PROVEEDORES NACIONALES" TextColor="#FDA4AF" FontSize="10" FontAttributes="Bold" />

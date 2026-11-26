@@ -91,24 +91,24 @@ public partial class AppShell : Shell
         }),
         new("CONTABILIDAD", new[]
         {
-            new ItemMenu("", "Plan de Cuentas (RF-01)", "PlanCuentasPage", "CONTABILIDAD", "CONTAB_PLAN_CUENTAS"),
-            new ItemMenu("", "Libro Diario (RF-02)", "LibroDiarioPage", "CONTABILIDAD", "CONTAB_LIBRO_DIARIO"),
-            new ItemMenu("", "Libro Mayor (RF-03)", "LibroMayorPage", "CONTABILIDAD", "CONTAB_MAYOR_BALANCES"),
-            new ItemMenu("", "Balance General (RF-03)", "BalanceGeneralPage", "CONTABILIDAD", "CONTAB_MAYOR_BALANCES"),
-            new ItemMenu("", "Balance 8 Columnas (RF-04)", "BalanceOchoColumnasPage", "CONTABILIDAD", "CONTAB_MAYOR_BALANCES"),
-            new ItemMenu("", "Estado de Resultados (RF-05)", "EstadoResultadosPage", "CONTABILIDAD", "CONTAB_ESTADO_RESULTADOS"),
-            new ItemMenu("", "Mayor Centralizado (RF-06)", "MayorCentralizadoPage", "CONTABILIDAD", "CONTAB_MAYOR_CENTRALIZADO"),
-            new ItemMenu("", "Cuentas por Cobrar (RF-07)", "CuentasPorCobrarPage", "CONTABILIDAD", "CONTAB_CXC_CXP"),
-            new ItemMenu("", "Cuentas por Pagar (RF-07)", "CuentasPorPagarPage", "CONTABILIDAD", "CONTAB_CXC_CXP"),
-            new ItemMenu("", "Antigüedad de Saldos (RF-08)", "AntiguedadSaldosPage", "CONTABILIDAD", "CONTAB_CXC_CXP"),
-            new ItemMenu("", "Impuestos y F29 SII (RF-09)", "CentralizadorImpuestosPage", "CONTABILIDAD", "CONTAB_IMPUESTOS_SII"),
-            new ItemMenu("", "Flujo de Caja (NIC 7)", "FlujoCajaPage", "CONTABILIDAD", "CONTAB_FLUJO_CAJA"),
+            new ItemMenu("", "Plan de Cuentas", "PlanCuentasPage", "CONTABILIDAD", "CONTAB_PLAN_CUENTAS"),
+            new ItemMenu("", "Libro Diario", "LibroDiarioPage", "CONTABILIDAD", "CONTAB_LIBRO_DIARIO"),
+            new ItemMenu("", "Libro Mayor", "LibroMayorPage", "CONTABILIDAD", "CONTAB_MAYOR_BALANCES"),
+            new ItemMenu("", "Balance General", "BalanceGeneralPage", "CONTABILIDAD", "CONTAB_MAYOR_BALANCES"),
+            new ItemMenu("", "Balance 8 Columnas", "BalanceOchoColumnasPage", "CONTABILIDAD", "CONTAB_MAYOR_BALANCES"),
+            new ItemMenu("", "Estado de Resultados", "EstadoResultadosPage", "CONTABILIDAD", "CONTAB_ESTADO_RESULTADOS"),
+            new ItemMenu("", "Mayor Centralizado", "MayorCentralizadoPage", "CONTABILIDAD", "CONTAB_MAYOR_CENTRALIZADO"),
+            new ItemMenu("", "Cuentas por Cobrar", "CuentasPorCobrarPage", "CONTABILIDAD", "CONTAB_CXC_CXP"),
+            new ItemMenu("", "Cuentas por Pagar", "CuentasPorPagarPage", "CONTABILIDAD", "CONTAB_CXC_CXP"),
+            new ItemMenu("", "Antigüedad de Saldos", "AntiguedadSaldosPage", "CONTABILIDAD", "CONTAB_CXC_CXP"),
+            new ItemMenu("", "Impuestos y F29 SII", "CentralizadorImpuestosPage", "CONTABILIDAD", "CONTAB_IMPUESTOS_SII"),
+            new ItemMenu("", "Flujo de Caja", "FlujoCajaPage", "CONTABILIDAD", "CONTAB_FLUJO_CAJA"),
         }),
         new("ADMINISTRACIÓN", new[]
         {
-            new ItemMenu("", "Usuarios (RF-POR-02)", "UsuariosPage", "ADMINISTRACIÓN", "ADMIN_USUARIOS"),
+            new ItemMenu("", "Usuarios", "UsuariosPage", "ADMINISTRACIÓN", "ADMIN_USUARIOS"),
             new ItemMenu("", "Perfiles", "PerfilesPage", "ADMINISTRACIÓN", "ADMIN_RBAC"),
-            new ItemMenu("", "Accesos RBAC (RF-POR-03)", "AccesosPage", "ADMINISTRACIÓN", "ADMIN_RBAC"),
+            new ItemMenu("", "Accesos y Permisos", "AccesosPage", "ADMINISTRACIÓN", "ADMIN_RBAC"),
         }),
     };
 

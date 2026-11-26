@@ -9,7 +9,7 @@
              BackgroundColor="{StaticResource CtbSurfaceAlt}">
 
     <Grid RowDefinitions="Auto, *">
-        <ctrl:PageHeader Grid.Row="0" Ruta="ERP › Contabilidad › RF-CON-05" Titulo="Estado de Resultados Integral (IFRS Pyme / LIR Chile)" />
+        <ctrl:PageHeader Grid.Row="0" Ruta="ERP › Contabilidad" Titulo="Estado de Resultados" />
 
         <ScrollView Grid.Row="1">
             <VerticalStackLayout Padding="24" Spacing="18">
@@ -20,7 +20,7 @@
                         <VerticalStackLayout Spacing="4">
                             <HorizontalStackLayout Spacing="8">
                                 <Border BackgroundColor="#2563EB" StrokeThickness="0" Padding="8,3" StrokeShape="RoundRectangle 6">
-                                    <Label Text="RF-CON-05 · ESTADO DE RESULTADOS" TextColor="White" FontSize="10" FontAttributes="Bold" />
+                                    <Label Text="ESTADO DE RESULTADOS" TextColor="White" FontSize="10" FontAttributes="Bold" />
                                 </Border>
                                 <Border BackgroundColor="#1E293B" Stroke="#334155" StrokeThickness="1" Padding="8,3" StrokeShape="RoundRectangle 6">
                                     <Label Text="NIC 1 / Art. 14 D N°3 LIR (25%)" TextColor="#93C5FD" FontSize="10" FontAttributes="Bold" />

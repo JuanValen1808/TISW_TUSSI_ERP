@@ -11,7 +11,7 @@
              BackgroundColor="{StaticResource ErpBg}">
 
     <Grid RowDefinitions="Auto,*">
-        <ctrl:PageHeader Grid.Row="0" Ruta="ERP › Contabilidad › RF-CON-01" Titulo="Plan de Cuentas Contables (SII / IFRS Chile)" />
+        <ctrl:PageHeader Grid.Row="0" Ruta="ERP › Contabilidad" Titulo="Plan de Cuentas Contables" />
 
         <Grid Grid.Row="1">
             <ScrollView>

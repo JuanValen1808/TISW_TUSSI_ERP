@@ -11,7 +11,7 @@
              BackgroundColor="{StaticResource ErpBg}">
 
     <Grid RowDefinitions="Auto,*">
-        <ctrl:PageHeader Grid.Row="0" Ruta="ERP › Contabilidad › RF-CON-03" Titulo="Libro Mayor y Balances Analíticos" />
+        <ctrl:PageHeader Grid.Row="0" Ruta="ERP › Contabilidad" Titulo="Libro Mayor y Balances Analíticos" />
 
         <Grid Grid.Row="1">
             <ScrollView>

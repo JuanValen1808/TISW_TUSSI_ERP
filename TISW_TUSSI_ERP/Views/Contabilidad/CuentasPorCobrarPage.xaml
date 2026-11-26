@@ -9,7 +9,7 @@
              BackgroundColor="{StaticResource CtbSurfaceAlt}">
 
     <Grid RowDefinitions="Auto, *">
-        <ctrl:PageHeader Grid.Row="0" Ruta="ERP › Contabilidad › RF-CON-07" Titulo="Gestión de Cuentas por Cobrar a Clientes" />
+        <ctrl:PageHeader Grid.Row="0" Ruta="ERP › Contabilidad" Titulo="Gestión de Cuentas por Cobrar a Clientes" />
 
         <ScrollView Grid.Row="1">
             <VerticalStackLayout Padding="24" Spacing="18">
@@ -20,7 +20,7 @@
                         <VerticalStackLayout Spacing="4">
                             <HorizontalStackLayout Spacing="8">
                                 <Border BackgroundColor="#2563EB" StrokeThickness="0" Padding="8,3" StrokeShape="RoundRectangle 6">
-                                    <Label Text="RF-CON-07 · CARTERA DE CLIENTES" TextColor="White" FontSize="10" FontAttributes="Bold" />
+                                    <Label Text="CARTERA DE CLIENTES" TextColor="White" FontSize="10" FontAttributes="Bold" />
                                 </Border>
                                 <Border BackgroundColor="#1E293B" Stroke="#334155" StrokeThickness="1" Padding="8,3" StrokeShape="RoundRectangle 6">
                                     <Label Text="CUENTA 1.1.03 CLIENTES NACIONALES" TextColor="#93C5FD" FontSize="10" FontAttributes="Bold" />

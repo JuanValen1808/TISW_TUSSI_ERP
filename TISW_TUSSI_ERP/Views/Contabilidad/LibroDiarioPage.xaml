@@ -11,7 +11,7 @@
              BackgroundColor="{StaticResource ErpBg}">
 
     <Grid RowDefinitions="Auto,*">
-        <ctrl:PageHeader Grid.Row="0" Ruta="ERP › Contabilidad › RF-CON-02" Titulo="Libro Diario General (Asientos Automáticos y Manuales)" />
+        <ctrl:PageHeader Grid.Row="0" Ruta="ERP › Contabilidad" Titulo="Libro Diario General" />
 
         <Grid Grid.Row="1">
             <ScrollView>

@@ -9,7 +9,7 @@
              BackgroundColor="{StaticResource CtbSurfaceAlt}">
 
     <Grid RowDefinitions="Auto, *">
-        <ctrl:PageHeader Grid.Row="0" Ruta="ERP › Contabilidad › RF-CON-09" Titulo="Reporte Centralizador de Impuestos y Formulario 29 SII" />
+        <ctrl:PageHeader Grid.Row="0" Ruta="ERP › Contabilidad" Titulo="Centralizador de Impuestos y Formulario 29 SII" />
 
         <ScrollView Grid.Row="1">
             <VerticalStackLayout Padding="24" Spacing="18">
@@ -20,7 +20,7 @@
                         <VerticalStackLayout Spacing="4">
                             <HorizontalStackLayout Spacing="8">
                                 <Border BackgroundColor="#2563EB" StrokeThickness="0" Padding="8,3" StrokeShape="RoundRectangle 6">
-                                    <Label Text="RF-CON-09 · DECLARACIÓN MENSUAL F29 SII CHILE" TextColor="White" FontSize="10" FontAttributes="Bold" />
+                                    <Label Text="DECLARACIÓN MENSUAL F29 SII CHILE" TextColor="White" FontSize="10" FontAttributes="Bold" />
                                 </Border>
                                 <Border BackgroundColor="#1E293B" Stroke="#334155" StrokeThickness="1" Padding="8,3" StrokeShape="RoundRectangle 6">
                                     <Label Text="D.L. N° 825 IVA 19% + PPM ART. 84 LIR" TextColor="#93C5FD" FontSize="10" FontAttributes="Bold" />
