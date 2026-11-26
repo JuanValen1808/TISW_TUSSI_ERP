@@ -477,7 +477,9 @@ public class ContabilidadService
         int idVentasNetas = cuentas.GetValueOrDefault("4.1.01", 8);
         int idIngresosConvenios = cuentas.GetValueOrDefault("4.1.02", idVentasNetas);
         int idCostoVentas = cuentas.GetValueOrDefault("5.1.01", 9);
-        int idGastoMermas = cuentas.GetValueOrDefault("5.1.03", cuentas.GetValueOrDefault("5.1.02", idCostoVentas));
+        int idGastosAdmin = cuentas.GetValueOrDefault("5.1.02", idCostoVentas);
+        int idGastoMermas = cuentas.GetValueOrDefault("5.1.03", idGastosAdmin);
+        int idCapital = cuentas.GetValueOrDefault("3.1.01", cuentas.GetValueOrDefault("3", 3));
 
         int contVentas = 0, contCompras = 0, contMermas = 0;
 
@@ -727,6 +729,164 @@ public class ContabilidadService
                     string glosaNc = $"Nota de Crédito {d.FolioNc} (Ref. {d.FolioVenta}) · {d.Motivo} [NC #{d.IdDevolucion}]";
                     await InsertarAsientoTransaccionalAsync(conexion, tx, d.Fecha, glosaNc, "VENTA", idUsuario, lineasNc);
                     contVentas++;
+                }
+            }
+            catch { }
+
+            // 5. CENTRALIZAR APERTURAS, INGRESOS/EGRESOS MANUALES Y CIERRES DE TURNO DE CAJA (caja_turnos y caja_movimientos)
+            try
+            {
+                // 5.1 Aperturas de turno con monto inicial > 0
+                var turnosAp = new List<(int IdTurno, DateTime Fecha, decimal MontoInicial, string NombreCaja)>();
+                const string qTurnosAp = @"
+                    SELECT t.id_turno, DATE(t.fecha_apertura) AS fecha, t.monto_inicial, COALESCE(c.nombre_caja, 'Caja POS') AS nombre_caja
+                    FROM caja_turnos t
+                    LEFT JOIN cajas c ON c.id_caja = t.id_caja
+                    WHERE t.monto_inicial > 0
+                      AND NOT EXISTS (
+                          SELECT 1 FROM libro_diario_asientos a
+                          WHERE a.glosa_descripcion LIKE CONCAT('%[TURNO_AP #', t.id_turno, ']%')
+                      )
+                    ORDER BY t.fecha_apertura ASC;";
+
+                using (var cmdTa = new MySqlCommand(qTurnosAp, conexion, tx))
+                using (var rTa = await cmdTa.ExecuteReaderAsync())
+                {
+                    while (await rTa.ReadAsync())
+                    {
+                        turnosAp.Add((
+                            rTa.GetInt32("id_turno"),
+                            rTa.GetDateTime("fecha"),
+                            rTa.GetDecimal("monto_inicial"),
+                            Formato.SanitizarTexto(rTa.GetString("nombre_caja"))
+                        ));
+                    }
+                }
+
+                foreach (var t in turnosAp)
+                {
+                    decimal monto = Math.Round(t.MontoInicial, 2);
+                    if (monto <= 0) continue;
+
+                    var lineasAp = new List<(int IdCuenta, decimal Debe, decimal Haber)>
+                    {
+                        (idCaja, monto, 0),
+                        (idCapital, 0, monto)
+                    };
+                    string glosaAp = $"Apertura de Turno de Caja #{t.IdTurno} ({t.NombreCaja}) [TURNO_AP #{t.IdTurno}]";
+                    await InsertarAsientoTransaccionalAsync(conexion, tx, t.Fecha, glosaAp, "AJUSTE", idUsuario, lineasAp);
+                }
+
+                // 5.2 Movimientos manuales de caja (INGRESO y EGRESO donde id_venta IS NULL e id_abono IS NULL)
+                var movsCaja = new List<(int IdMovimiento, int IdTurno, DateTime Fecha, string Tipo, string Concepto, decimal Monto)>();
+                const string qMovsCaja = @"
+                    SELECT m.id_movimiento, m.id_turno, DATE(m.fecha_movimiento) AS fecha,
+                           m.tipo_movimiento, m.concepto, m.monto
+                    FROM caja_movimientos m
+                    WHERE m.id_venta IS NULL AND m.id_abono IS NULL AND m.monto > 0
+                      AND NOT EXISTS (
+                          SELECT 1 FROM libro_diario_asientos a
+                          WHERE a.glosa_descripcion LIKE CONCAT('%[CAJA_MOV #', m.id_movimiento, ']%')
+                      )
+                    ORDER BY m.fecha_movimiento ASC, m.id_movimiento ASC;";
+
+                using (var cmdMc = new MySqlCommand(qMovsCaja, conexion, tx))
+                using (var rMc = await cmdMc.ExecuteReaderAsync())
+                {
+                    while (await rMc.ReadAsync())
+                    {
+                        movsCaja.Add((
+                            rMc.GetInt32("id_movimiento"),
+                            rMc.GetInt32("id_turno"),
+                            rMc.GetDateTime("fecha"),
+                            rMc.GetString("tipo_movimiento").Trim().ToUpperInvariant(),
+                            Formato.SanitizarTexto(rMc.GetString("concepto")),
+                            rMc.GetDecimal("monto")
+                        ));
+                    }
+                }
+
+                foreach (var m in movsCaja)
+                {
+                    decimal monto = Math.Round(m.Monto, 2);
+                    if (monto <= 0) continue;
+
+                    if (m.Tipo == "INGRESO")
+                    {
+                        var lineasIng = new List<(int IdCuenta, decimal Debe, decimal Haber)>
+                        {
+                            (idCaja, monto, 0),
+                            (idCapital, 0, monto)
+                        };
+                        string glosaIng = $"Ingreso Manual en Caja (Turno #{m.IdTurno}): {m.Concepto} [CAJA_MOV #{m.IdMovimiento}]";
+                        await InsertarAsientoTransaccionalAsync(conexion, tx, m.Fecha, glosaIng, "AJUSTE", idUsuario, lineasIng);
+                    }
+                    else if (m.Tipo == "EGRESO")
+                    {
+                        var lineasEgr = new List<(int IdCuenta, decimal Debe, decimal Haber)>
+                        {
+                            (idGastosAdmin, monto, 0),
+                            (idCaja, 0, monto)
+                        };
+                        string glosaEgr = $"Egreso Manual de Caja (Turno #{m.IdTurno}): {m.Concepto} [CAJA_MOV #{m.IdMovimiento}]";
+                        await InsertarAsientoTransaccionalAsync(conexion, tx, m.Fecha, glosaEgr, "AJUSTE", idUsuario, lineasEgr);
+                    }
+                }
+
+                // 5.3 Cierres de turno con diferencia o retiro al cierre (estado = 'CERRADA' y diferencia != 0)
+                var turnosCierre = new List<(int IdTurno, DateTime Fecha, decimal Diferencia, string NombreCaja)>();
+                const string qTurnosCierre = @"
+                    SELECT t.id_turno, DATE(COALESCE(t.fecha_cierre, t.fecha_apertura)) AS fecha,
+                           COALESCE(t.diferencia, 0) AS diferencia, COALESCE(c.nombre_caja, 'Caja POS') AS nombre_caja
+                    FROM caja_turnos t
+                    LEFT JOIN cajas c ON c.id_caja = t.id_caja
+                    WHERE t.estado = 'CERRADA' AND COALESCE(t.diferencia, 0) <> 0
+                      AND NOT EXISTS (
+                          SELECT 1 FROM libro_diario_asientos a
+                          WHERE a.glosa_descripcion LIKE CONCAT('%[TURNO_CIERRE #', t.id_turno, ']%')
+                      )
+                    ORDER BY t.id_turno ASC;";
+
+                using (var cmdTc = new MySqlCommand(qTurnosCierre, conexion, tx))
+                using (var rTc = await cmdTc.ExecuteReaderAsync())
+                {
+                    while (await rTc.ReadAsync())
+                    {
+                        turnosCierre.Add((
+                            rTc.GetInt32("id_turno"),
+                            rTc.GetDateTime("fecha"),
+                            rTc.GetDecimal("diferencia"),
+                            Formato.SanitizarTexto(rTc.GetString("nombre_caja"))
+                        ));
+                    }
+                }
+
+                foreach (var tc in turnosCierre)
+                {
+                    decimal dif = Math.Round(tc.Diferencia, 2);
+                    if (dif == 0) continue;
+
+                    if (dif < 0)
+                    {
+                        decimal egresoCierre = Math.Abs(dif);
+                        var lineasCierre = new List<(int IdCuenta, decimal Debe, decimal Haber)>
+                        {
+                            (idGastosAdmin, egresoCierre, 0),
+                            (idCaja, 0, egresoCierre)
+                        };
+                        string glosaCierre = $"Retiro / Ajuste de Cierre de Turno #{tc.IdTurno} ({tc.NombreCaja}) [TURNO_CIERRE #{tc.IdTurno}]";
+                        await InsertarAsientoTransaccionalAsync(conexion, tx, tc.Fecha, glosaCierre, "AJUSTE", idUsuario, lineasCierre);
+                    }
+                    else
+                    {
+                        var lineasCierre = new List<(int IdCuenta, decimal Debe, decimal Haber)>
+                        {
+                            (idCaja, dif, 0),
+                            (idCapital, 0, dif)
+                        };
+                        string glosaCierre = $"Sobrante en Arqueo de Cierre de Turno #{tc.IdTurno} ({tc.NombreCaja}) [TURNO_CIERRE #{tc.IdTurno}]";
+                        await InsertarAsientoTransaccionalAsync(conexion, tx, tc.Fecha, glosaCierre, "AJUSTE", idUsuario, lineasCierre);
+                    }
                 }
             }
             catch { }

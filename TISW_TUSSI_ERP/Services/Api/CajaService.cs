@@ -22,10 +22,12 @@ public class ResumenPagosCaja
 public class CajaService
 {
     private readonly DatabaseService _db;
+    private readonly ContabilidadService _contabilidad;
 
-    public CajaService(DatabaseService db)
+    public CajaService(DatabaseService db, ContabilidadService contabilidad)
     {
         _db = db;
+        _contabilidad = contabilidad;
     }
 
     public async Task<List<Caja>> ObtenerCajasAsync()
@@ -146,6 +148,7 @@ public class CajaService
             int idTurno = Convert.ToInt32(insertar.LastInsertedId);
 
             await tx.CommitAsync();
+            try { await _contabilidad.CentralizarMovimientosPendientesAsync(idUsuario); } catch { }
             return idTurno;
         }
         catch
@@ -210,6 +213,7 @@ public class CajaService
 
             await cmdMovimiento.ExecuteNonQueryAsync();
             await tx.CommitAsync();
+            try { await _contabilidad.CentralizarMovimientosPendientesAsync(idUsuario); } catch { }
         }
         catch
         {
@@ -431,6 +435,7 @@ public class CajaService
                 throw new Exception("No se pudo cerrar el turno.");
 
             await tx.CommitAsync();
+            try { await _contabilidad.CentralizarMovimientosPendientesAsync(idUsuario); } catch { }
             return diferencia;
         }
         catch
