@@ -234,7 +234,7 @@
                                                 </Border>
 
                                                 <Border Grid.Column="5" Style="{StaticResource ErpInputBox}" HeightRequest="38" Padding="6,0">
-                                                    <Entry Text="{Binding CostoFacturado}" Keyboard="Numeric" Style="{StaticResource ErpEntry}" HorizontalTextAlignment="End" FontSize="12" />
+                                                    <Entry Text="{Binding CostoFacturadoEditable}" Keyboard="Numeric" Style="{StaticResource ErpEntry}" HorizontalTextAlignment="End" FontSize="12" />
                                                 </Border>
 
                                                 <Label Grid.Column="6" Text="{Binding SubtotalLineaTexto}" Style="{StaticResource ErpBody}"

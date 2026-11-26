@@ -139,15 +139,53 @@ public class LineaRecepcionFacturaItem : BaseViewModel
     }
 
     private decimal _costoFacturado;
+    private string _costoFacturadoEditable = "0";
+
     public decimal CostoFacturado
     {
         get => _costoFacturado;
         set
         {
-            if (SetProperty(ref _costoFacturado, value))
+            // Normalizar escala decimal (8000.00m -> 8000m) para que en cultura es-CL el ".00" no se interprete como separador de miles (* 100)
+            decimal normalizado = value == Math.Truncate(value) ? Math.Truncate(value) : Math.Round(value, 2);
+            if (SetProperty(ref _costoFacturado, normalizado))
             {
+                _costoFacturadoEditable = normalizado.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+                OnPropertyChanged(nameof(CostoFacturadoEditable));
                 OnPropertyChanged(nameof(SubtotalLinea));
                 OnPropertyChanged(nameof(SubtotalLineaTexto));
+            }
+        }
+    }
+
+    public string CostoFacturadoEditable
+    {
+        get => _costoFacturadoEditable;
+        set
+        {
+            if (_costoFacturadoEditable == value) return;
+            _costoFacturadoEditable = value ?? string.Empty;
+            OnPropertyChanged();
+
+            var limpio = _costoFacturadoEditable.Trim().Replace("$", "").Replace(" ", "");
+            if (string.IsNullOrEmpty(limpio))
+            {
+                if (SetProperty(ref _costoFacturado, 0m, nameof(CostoFacturado)))
+                {
+                    OnPropertyChanged(nameof(SubtotalLinea));
+                    OnPropertyChanged(nameof(SubtotalLineaTexto));
+                }
+                return;
+            }
+
+            if (decimal.TryParse(limpio, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var parsed) && parsed >= 0)
+            {
+                decimal normalizado = parsed == Math.Truncate(parsed) ? Math.Truncate(parsed) : Math.Round(parsed, 2);
+                if (SetProperty(ref _costoFacturado, normalizado, nameof(CostoFacturado)))
+                {
+                    OnPropertyChanged(nameof(SubtotalLinea));
+                    OnPropertyChanged(nameof(SubtotalLineaTexto));
+                }
             }
         }
     }

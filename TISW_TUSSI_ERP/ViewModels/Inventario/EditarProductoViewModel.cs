@@ -34,8 +34,8 @@ public class EditarProductoViewModel : BindableObject
         PrincipioActivo = producto.PrincipioActivo;
         RegistroSanitario = producto.RegistroSanitario;
         FormatoPresentacion = producto.FormatoPresentacion;
-        CostoPromedio = producto.CostoPromedio;
-        PrecioVenta = producto.PrecioVenta;
+        CostoPromedio = producto.CostoPromedio == Math.Truncate(producto.CostoPromedio) ? Math.Truncate(producto.CostoPromedio) : producto.CostoPromedio;
+        PrecioVenta = producto.PrecioVenta == Math.Truncate(producto.PrecioVenta) ? Math.Truncate(producto.PrecioVenta) : producto.PrecioVenta;
         StockMinimo = producto.StockMinimo;
         PuntoReorden = producto.PuntoReorden;
 
