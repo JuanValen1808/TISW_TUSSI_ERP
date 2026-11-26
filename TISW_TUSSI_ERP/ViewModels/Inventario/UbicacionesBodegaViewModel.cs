@@ -1,4 +1,5 @@
-﻿using Microsoft.Maui.Controls;
+﻿using Microsoft.Maui.ApplicationModel;
+using Microsoft.Maui.Controls;
 using Microsoft.Maui.Storage;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
@@ -13,6 +14,7 @@ namespace TISW_TUSSI_ERP.ViewModels.Inventario;
 public class UbicacionesBodegaViewModel : BaseViewModel
 {
     private readonly InventarioService _servicio;
+    private readonly ReporteService _reporteService;
     private List<LoteBodegaItemModel> _todosLotes = new();
 
     public ObservableCollection<LoteBodegaItemModel> LotesFiltrados { get; } = new();
@@ -91,16 +93,19 @@ public class UbicacionesBodegaViewModel : BaseViewModel
     public ICommand ComandoAsignar { get; }
     public ICommand ComandoReubicar { get; }
     public ICommand ComandoNuevaUbicacion { get; }
+    public ICommand ComandoGenerarReporteBodega { get; }
 
-    public UbicacionesBodegaViewModel(InventarioService servicio)
+    public UbicacionesBodegaViewModel(InventarioService servicio, ReporteService? reporteService = null)
     {
         _servicio = servicio;
+        _reporteService = reporteService ?? new ReporteService();
         Titulo = "Ubicaciones en Bodega";
 
         ComandoRecargar = new Command(async () => await CargarAsync());
         ComandoAsignar = new Command(async () => await AsignarAsync());
         ComandoReubicar = new Command(async () => await ReubicarAsync());
         ComandoNuevaUbicacion = new Command(async () => await AbrirGestionUbicacionesModalAsync());
+        ComandoGenerarReporteBodega = new Command(async () => await GenerarReporteBodegaPdfAsync());
     }
 
     public async Task CargarAsync()
@@ -221,5 +226,33 @@ public class UbicacionesBodegaViewModel : BaseViewModel
         });
 
         await Shell.Current.Navigation.PushModalAsync(modal);
+    }
+
+    private async Task GenerarReporteBodegaPdfAsync()
+    {
+        try
+        {
+            string filtroTexto = string.IsNullOrWhiteSpace(TextoBusqueda) ? "Todos los lotes" : $"Búsqueda: '{TextoBusqueda.Trim()}'";
+
+            byte[] pdfBytes = _reporteService.GenerarReporteExistenciasBodegaPdf(
+                LotesFiltrados.ToList(),
+                UbicacionesBodega.ToList(),
+                filtroTexto);
+
+            string nombreArchivo = $"Reporte_Existencias_Bodega_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+            string rutaArchivo = Path.Combine(FileSystem.CacheDirectory, nombreArchivo);
+            await File.WriteAllBytesAsync(rutaArchivo, pdfBytes);
+
+            await Shell.Current.DisplayAlert("Reporte Generado (CU-INV-09)", $"El PDF se guardó en:\n{rutaArchivo}", "OK");
+
+            await Launcher.Default.OpenAsync(new OpenFileRequest
+            {
+                File = new ReadOnlyFile(rutaArchivo)
+            });
+        }
+        catch (Exception ex)
+        {
+            await Shell.Current.DisplayAlert("Error al Generar Reporte", ex.Message, "OK");
+        }
     }
 }

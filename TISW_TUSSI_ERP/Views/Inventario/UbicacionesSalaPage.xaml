@@ -15,10 +15,10 @@
 
         <Grid Grid.Row="1" ColumnDefinitions="1.15*,1*" ColumnSpacing="16" Padding="24">
 
-            <!-- COLUMNA IZQUIERDA: Buscador y Lotes con Stock Bodega vs Sala -->
+            <!-- COLUMNA IZQUIERDA: Buscador, Reporte y Lotes con Stock Bodega vs Sala -->
             <Border Grid.Column="0" Style="{StaticResource ErpCard}" Padding="16">
                 <Grid RowDefinitions="Auto,Auto,*" RowSpacing="12">
-                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                    <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="8">
                         <Entry Grid.Column="0"
                                Text="{Binding TextoBusqueda}"
                                Placeholder="Buscar por SKU, código de barras, producto o lote..."
@@ -26,8 +26,9 @@
                                TextColor="Black"
                                PlaceholderColor="#9CA3AF"
                                FontSize="13" />
-                        <Button Grid.Column="1" Text="+ Exhibidor" Style="{StaticResource ErpGhostButton}" Command="{Binding ComandoNuevaUbicacionSala}" HeightRequest="38" />
-                        <Button Grid.Column="2" Text="🔄" Style="{StaticResource ErpGhostButton}" Command="{Binding ComandoRecargar}" HeightRequest="38" WidthRequest="42" />
+                        <Button Grid.Column="1" Text="📄 Reporte" Style="{StaticResource ErpGhostButton}" Command="{Binding ComandoGenerarReporteSala}" HeightRequest="38" />
+                        <Button Grid.Column="2" Text="+ Exhibidor" Style="{StaticResource ErpGhostButton}" Command="{Binding ComandoNuevaUbicacionSala}" HeightRequest="38" />
+                        <Button Grid.Column="3" Text="🔄" Style="{StaticResource ErpGhostButton}" Command="{Binding ComandoRecargar}" HeightRequest="38" WidthRequest="42" />
                     </Grid>
 
                     <Label Grid.Row="1" Text="{Binding LotesFiltrados.Count, StringFormat='Lotes Disponibles para Exhibición ({0})'}" Style="{StaticResource ErpCardTitle}" />
