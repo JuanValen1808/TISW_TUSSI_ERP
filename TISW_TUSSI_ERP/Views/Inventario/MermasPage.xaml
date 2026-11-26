@@ -24,15 +24,20 @@
                 </VerticalStackLayout>
 
                 <HorizontalStackLayout Grid.Column="1" Spacing="8" VerticalOptions="Center">
-                    <Button Text="📄 Exportar PDF" 
-                            Style="{StaticResource ErpPrimaryButton}" 
-                            Command="{Binding ComandoExportarPdf}" 
-                            HeightRequest="38" />
+                    <Button Text="➕ Registrar Merma"
+            Style="{StaticResource ErpPrimaryButton}"
+            Command="{Binding ComandoAbrirRegistrarMerma}"
+            HeightRequest="38" />
 
-                    <Button Text="🔄 Actualizar" 
-                            Style="{StaticResource ErpGhostButton}" 
-                            Command="{Binding ComandoRecargar}" 
-                            HeightRequest="38" />
+                    <Button Text="📄 Exportar PDF"
+            Style="{StaticResource ErpGhostButton}"
+            Command="{Binding ComandoExportarPdf}"
+            HeightRequest="38" />
+
+                    <Button Text="🔄 Actualizar"
+            Style="{StaticResource ErpGhostButton}"
+            Command="{Binding ComandoRecargar}"
+            HeightRequest="38" />
                 </HorizontalStackLayout>
             </Grid>
 

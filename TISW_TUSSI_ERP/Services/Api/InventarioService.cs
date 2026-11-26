@@ -385,6 +385,50 @@ public class InventarioService
 
     public async Task<List<LoteBodegaItemModel>> ObtenerLotesParaUbicacionAsync()
     {
+        await using var cn = _db.CrearConexion();
+        await cn.OpenAsync();
+
+        // 1. Autocorrección preventiva: si algún lote tiene más unidades en ubicaciones que su stock_actual,
+        // se normaliza en transacción antes de consultar el listado.
+        const string sqlInconsistentes = @"
+            SELECT l.id_lote, l.stock_actual
+            FROM lotes l
+            INNER JOIN (
+                SELECT id_lote, COALESCE(SUM(cantidad), 0) AS total_ub
+                FROM lote_ubicaciones
+                GROUP BY id_lote
+            ) ub ON ub.id_lote = l.id_lote
+            WHERE ub.total_ub > l.stock_actual";
+
+        var lotesDescuadrados = new List<(int IdLote, int StockActual)>();
+        await using (var cmdInc = new MySqlCommand(sqlInconsistentes, cn))
+        {
+            await using var rdInc = await cmdInc.ExecuteReaderAsync();
+            while (await rdInc.ReadAsync())
+            {
+                lotesDescuadrados.Add((rdInc.GetInt32(0), rdInc.GetInt32(1)));
+            }
+        }
+
+        if (lotesDescuadrados.Count > 0)
+        {
+            await using var tx = await cn.BeginTransactionAsync();
+            try
+            {
+                foreach (var item in lotesDescuadrados)
+                {
+                    await NormalizarExcesoUbicacionesLoteAsync(cn, tx, item.IdLote, item.StockActual);
+                }
+                await tx.CommitAsync();
+            }
+            catch
+            {
+                await tx.RollbackAsync();
+                throw;
+            }
+        }
+
+        // 2. Consulta principal de lotes con stock en bodega y sala
         const string sql = @"
             SELECT 
                 l.id_lote, p.id_producto, p.sku, COALESCE(p.codigo_barras, ''), p.nombre_comercial,
@@ -399,8 +443,6 @@ public class InventarioService
             GROUP BY l.id_lote
             ORDER BY p.nombre_comercial ASC, l.fecha_vencimiento ASC";
 
-        await using var cn = _db.CrearConexion();
-        await cn.OpenAsync();
         await using var cmd = new MySqlCommand(sql, cn);
         await using var rd = await cmd.ExecuteReaderAsync();
 
@@ -957,4 +999,175 @@ public class InventarioService
 
     private static decimal Dec(DbDataReader r, int i) => r.IsDBNull(i) ? 0m : Convert.ToDecimal(r.GetValue(i));
     private static int Ent(DbDataReader r, int i) => r.IsDBNull(i) ? 0 : Convert.ToInt32(r.GetValue(i));
+
+    private async Task NormalizarExcesoUbicacionesLoteAsync(MySqlConnection cn, MySqlTransaction tx, int idLote, int stockRealLote)
+    {
+        const string sqlTotalUb = @"
+        SELECT COALESCE(SUM(cantidad), 0)
+        FROM lote_ubicaciones
+        WHERE id_lote = @idLote";
+
+        int totalUbicado;
+        await using (var cmdTot = new MySqlCommand(sqlTotalUb, cn, tx))
+        {
+            cmdTot.Parameters.AddWithValue("@idLote", idLote);
+            totalUbicado = Convert.ToInt32(await cmdTot.ExecuteScalarAsync());
+        }
+
+        int exceso = totalUbicado - stockRealLote;
+        if (exceso <= 0)
+            return;
+
+        const string sqlFilas = @"
+        SELECT lu.id_lote_ubicacion, lu.cantidad
+        FROM lote_ubicaciones lu
+        INNER JOIN ubicaciones u ON u.id_ubicacion = lu.id_ubicacion
+        WHERE lu.id_lote = @idLote AND lu.cantidad > 0
+        ORDER BY FIELD(u.tipo_zona, 'SALA_VENTAS', 'BODEGA'), lu.id_lote_ubicacion DESC
+        FOR UPDATE";
+
+        var filas = new List<(long Id, int Cant)>();
+        await using (var cmdFilas = new MySqlCommand(sqlFilas, cn, tx))
+        {
+            cmdFilas.Parameters.AddWithValue("@idLote", idLote);
+            await using var rd = await cmdFilas.ExecuteReaderAsync();
+            while (await rd.ReadAsync())
+            {
+                filas.Add((rd.GetInt64(0), rd.GetInt32(1)));
+            }
+        }
+
+        foreach (var fila in filas)
+        {
+            if (exceso <= 0) break;
+
+            int aQuitar = Math.Min(fila.Cant, exceso);
+            int nuevaCant = fila.Cant - aQuitar;
+            exceso -= aQuitar;
+
+            if (nuevaCant > 0)
+            {
+                const string sqlUpd = "UPDATE lote_ubicaciones SET cantidad = @cant WHERE id_lote_ubicacion = @id";
+                await using var cmdUpd = new MySqlCommand(sqlUpd, cn, tx);
+                cmdUpd.Parameters.AddWithValue("@cant", nuevaCant);
+                cmdUpd.Parameters.AddWithValue("@id", fila.Id);
+                await cmdUpd.ExecuteNonQueryAsync();
+            }
+            else
+            {
+                const string sqlDel = "DELETE FROM lote_ubicaciones WHERE id_lote_ubicacion = @id";
+                await using var cmdDel = new MySqlCommand(sqlDel, cn, tx);
+                cmdDel.Parameters.AddWithValue("@id", fila.Id);
+                await cmdDel.ExecuteNonQueryAsync();
+            }
+        }
+    }
+
+    public async Task<(bool Exito, string Mensaje)> RegistrarMermaAsync(
+        int idProducto,
+        int idLote,
+        int cantidad,
+        string motivoEnum,
+        decimal costoTotalPerdida,
+        int idUsuario,
+        string motivoTextoOriginal)
+    {
+        await using var cn = _db.CrearConexion();
+        await cn.OpenAsync();
+        await using var tx = await cn.BeginTransactionAsync();
+
+        try
+        {
+            // 1. Verificar stock actual del lote con bloqueo de fila
+            const string sqlStock = "SELECT stock_actual FROM lotes WHERE id_lote = @idLote FOR UPDATE";
+            int stockActual;
+            await using (var cmdStock = new MySqlCommand(sqlStock, cn, tx))
+            {
+                cmdStock.Parameters.AddWithValue("@idLote", idLote);
+                var obj = await cmdStock.ExecuteScalarAsync();
+                if (obj == null || obj == DBNull.Value)
+                {
+                    await tx.RollbackAsync();
+                    return (false, "El lote seleccionado no existe.");
+                }
+                stockActual = Convert.ToInt32(obj);
+            }
+
+            if (cantidad <= 0 || cantidad > stockActual)
+            {
+                await tx.RollbackAsync();
+                return (false, $"Cantidad inválida. Stock actual del lote: {stockActual} un.");
+            }
+
+            int nuevoStock = stockActual - cantidad;
+
+            await NormalizarExcesoUbicacionesLoteAsync(cn, tx, idLote, nuevoStock);
+
+            // 2. Descontar stock en lotes
+            const string sqlUpdateLote = "UPDATE lotes SET stock_actual = @nuevoStock WHERE id_lote = @idLote";
+            await using (var cmdLote = new MySqlCommand(sqlUpdateLote, cn, tx))
+            {
+                cmdLote.Parameters.AddWithValue("@nuevoStock", nuevoStock);
+                cmdLote.Parameters.AddWithValue("@idLote", idLote);
+                await cmdLote.ExecuteNonQueryAsync();
+            }
+
+            // 3. Insertar en registro_mermas y capturar el id_merma generado
+            const string sqlMerma = @"
+            INSERT INTO registro_mermas
+                (id_producto, id_lote, cantidad, motivo, costo_total_perdida, fecha_merma, id_usuario)
+            VALUES
+                (@idProducto, @idLote, @cantidad, @motivo, @costoTotal, NOW(), @idUsuario);
+            SELECT LAST_INSERT_ID();";
+
+            long idMermaGenerado;
+            await using (var cmdMerma = new MySqlCommand(sqlMerma, cn, tx))
+            {
+                cmdMerma.Parameters.AddWithValue("@idProducto", idProducto);
+                cmdMerma.Parameters.AddWithValue("@idLote", idLote);
+                cmdMerma.Parameters.AddWithValue("@cantidad", cantidad);
+                cmdMerma.Parameters.AddWithValue("@motivo", motivoEnum);
+                cmdMerma.Parameters.AddWithValue("@costoTotal", costoTotalPerdida);
+                cmdMerma.Parameters.AddWithValue("@idUsuario", idUsuario);
+                var idObj = await cmdMerma.ExecuteScalarAsync();
+                idMermaGenerado = Convert.ToInt64(idObj);
+            }
+
+            // 4. Registrar movimiento en kardex_movimientos con las columnas exactas de la tabla
+            const string sqlKardex = @"
+            INSERT INTO kardex_movimientos
+                (id_producto, id_lote, tipo_movimiento, origen_documento, id_referencia_origen, cantidad, costo_unitario, saldo_stock_producto, fecha_movimiento, id_usuario)
+            SELECT
+                @idProducto,
+                @idLote,
+                'MERMA',
+                'MERMA',
+                @idReferenciaOrigen,
+                @cantidad,
+                COALESCE(p.costo_promedio_ponderado, 0),
+                COALESCE((SELECT SUM(stock_actual) FROM lotes WHERE id_producto = @idProducto), 0),
+                NOW(),
+                @idUsuario
+            FROM productos p
+            WHERE p.id_producto = @idProducto";
+
+            await using (var cmdKardex = new MySqlCommand(sqlKardex, cn, tx))
+            {
+                cmdKardex.Parameters.AddWithValue("@idProducto", idProducto);
+                cmdKardex.Parameters.AddWithValue("@idLote", idLote);
+                cmdKardex.Parameters.AddWithValue("@idReferenciaOrigen", idMermaGenerado);
+                cmdKardex.Parameters.AddWithValue("@cantidad", cantidad);
+                cmdKardex.Parameters.AddWithValue("@idUsuario", idUsuario);
+                await cmdKardex.ExecuteNonQueryAsync();
+            }
+
+            await tx.CommitAsync();
+            return (true, $"Merma #{idMermaGenerado} registrada ({motivoTextoOriginal}). Stock actualizado y reflejado en Kárdex.");
+        }
+        catch (Exception ex)
+        {
+            await tx.RollbackAsync();
+            return (false, "Error al registrar la merma: " + ex.Message);
+        }
+    }
 }

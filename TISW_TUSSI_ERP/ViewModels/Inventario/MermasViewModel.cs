@@ -1,10 +1,11 @@
+using Microsoft.Maui.ApplicationModel;
+using Microsoft.Maui.Controls;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows.Input;
-using Microsoft.Maui.ApplicationModel;
-using Microsoft.Maui.Controls;
 using TISW_TUSSI_ERP.Models.Inventario;
 using TISW_TUSSI_ERP.Services.Api;
+using TISW_TUSSI_ERP.Views.Inventario;
 
 namespace TISW_TUSSI_ERP.ViewModels.Inventario;
 
@@ -17,6 +18,7 @@ public class MermasViewModel : BaseViewModel
 
     public ICommand ComandoRecargar { get; }
     public ICommand ComandoExportarPdf { get; }
+    public ICommand ComandoAbrirRegistrarMerma { get; }
 
     public MermasViewModel(InventarioService servicio, ReporteService reporteService)
     {
@@ -26,6 +28,17 @@ public class MermasViewModel : BaseViewModel
 
         ComandoRecargar = new Command(async () => await CargarMermasAsync());
         ComandoExportarPdf = new Command(async () => await ExportarMermasPdfAsync());
+        ComandoAbrirRegistrarMerma = new Command(async () => await AbrirRegistrarMermaModalAsync());
+    }
+
+    private async Task AbrirRegistrarMermaModalAsync()
+    {
+        var modal = new RegistrarMermaModalPage(_servicio, async () =>
+        {
+            await CargarMermasAsync();
+        });
+
+        await Shell.Current.Navigation.PushModalAsync(modal);
     }
 
     public async Task CargarMermasAsync()
@@ -48,6 +61,8 @@ public class MermasViewModel : BaseViewModel
             EstaOcupado = false;
         }
     }
+
+
 
     private async Task ExportarMermasPdfAsync()
     {
