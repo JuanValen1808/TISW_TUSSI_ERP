@@ -1,5 +1,10 @@
-﻿using System.Collections.ObjectModel;
+﻿
+using System;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Input;
+using Microsoft.Maui.Controls;
 using TISW_TUSSI_ERP.Helpers;
 using TISW_TUSSI_ERP.Models.Auth;
 using TISW_TUSSI_ERP.Models.Ventas;
@@ -7,20 +12,19 @@ using TISW_TUSSI_ERP.Services.Api;
 
 namespace TISW_TUSSI_ERP.ViewModels.Ventas;
 
-// ViewModel del Punto de Venta (RF-VEN-02).
-// Contiene las validaciones de operación:
-// cantidad > 0, stock por lote, lote no vencido
-// y convenio obligatorio para ventas a crédito.
 public class PosViewModel : BaseViewModel
 {
     private readonly VentasService _servicio;
+    private int _versionCargaConvenios;
+
+    public string UltimoComprobante { get; private set; } = string.Empty;
 
     public ObservableCollection<ItemCarrito> Carrito { get; } = new();
     public ObservableCollection<LotePos> Lotes { get; } = new();
     public ObservableCollection<ClientePos> Clientes { get; } = new();
     public ObservableCollection<ConvenioPos> Convenios { get; } = new();
+    public ObservableCollection<ProductoPos> Productos { get; } = new();
 
-    // Coincide con el ENUM forma_pago de ventas_encabezado.
     public string[] FormasPago { get; } =
     {
         "EFECTIVO",
@@ -29,86 +33,97 @@ public class PosViewModel : BaseViewModel
         "CREDITO"
     };
 
-    // ---------------------------------------------------------
-    // BÚSQUEDA DE PRODUCTO
-    // ---------------------------------------------------------
-
     private string _codigoBuscado = string.Empty;
-
     public string CodigoBuscado
     {
         get => _codigoBuscado;
         set => SetProperty(ref _codigoBuscado, value);
     }
 
-    private ProductoPos? _producto;
+    private string _busquedaProducto = string.Empty;
+    public string BusquedaProducto
+    {
+        get => _busquedaProducto;
+        set => SetProperty(ref _busquedaProducto, value);
+    }
 
+    private ProductoPos? _producto;
     public ProductoPos? Producto
     {
         get => _producto;
         private set
         {
             if (SetProperty(ref _producto, value))
+            {
                 OnPropertyChanged(nameof(HayProducto));
+                OnPropertyChanged(nameof(MostrarListaCatalogo));
+            }
         }
     }
 
-    public bool HayProducto => Producto is not null;
+    public bool HayProducto => Producto != null;
 
     private LotePos? _loteSeleccionado;
-
     public LotePos? LoteSeleccionado
     {
         get => _loteSeleccionado;
         set => SetProperty(ref _loteSeleccionado, value);
     }
 
-    private string _cantidadTexto = string.Empty;
-
+    private string _cantidadTexto = "1";
     public string CantidadTexto
     {
         get => _cantidadTexto;
         set => SetProperty(ref _cantidadTexto, value);
     }
 
-    // ---------------------------------------------------------
-    // CLIENTE / CONVENIO / FORMA DE PAGO
-    // ---------------------------------------------------------
-
     private ClientePos? _clienteSeleccionado;
-
     public ClientePos? ClienteSeleccionado
     {
         get => _clienteSeleccionado;
-
         set
         {
             if (!SetProperty(ref _clienteSeleccionado, value))
                 return;
 
             _ = CargarConveniosAsync(value);
+            OnPropertyChanged(nameof(NombreClienteActual));
+            OnPropertyChanged(nameof(EsPublicoGeneral));
+            OnPropertyChanged(nameof(TieneClienteSeleccionado));
+            Recalcular();
         }
     }
 
-    private ConvenioPos? _convenioSeleccionado;
+    public bool EsPublicoGeneral =>
+        ClienteSeleccionado == null;
 
+    public bool TieneClienteSeleccionado =>
+        ClienteSeleccionado != null;
+
+    public string NombreClienteActual =>
+        ClienteSeleccionado?.Nombre ?? "Público general";
+
+    private ConvenioPos? _convenioSeleccionado;
     public ConvenioPos? ConvenioSeleccionado
     {
         get => _convenioSeleccionado;
-
         set
         {
             if (SetProperty(ref _convenioSeleccionado, value))
+            {
+                OnPropertyChanged(nameof(TieneConvenioSeleccionado));
                 Recalcular();
+            }
         }
     }
 
-    private string _formaPago = "EFECTIVO";
+    public bool TieneConvenioSeleccionado =>
+        ConvenioSeleccionado != null;
 
+    private string _formaPago = "EFECTIVO";
     public string FormaPagoSeleccionada
     {
         get => _formaPago;
-
         set
         {
             if (SetProperty(ref _formaPago, value))
@@ -116,58 +131,86 @@ public class PosViewModel : BaseViewModel
         }
     }
 
-    // ---------------------------------------------------------
-    // TOTALES
-    // ---------------------------------------------------------
+    private decimal PorcentajeDescuento =>
+        ConvenioSeleccionado?.PorcentajeDescuento ?? 0m;
 
-    public string SubtotalTexto =>
-        Formato.Moneda(Carrito.Sum(i => i.Subtotal));
+    public string PorcentajeDescuentoTexto =>
+        $"{PorcentajeDescuento:0.##}%";
 
-    public string DescuentoTexto =>
-        Formato.Moneda(Descuento);
+    public string EtiquetaDescuento =>
+        TieneConvenioSeleccionado
+            ? $"Descuento ({PorcentajeDescuentoTexto})"
+            : "Descuento";
 
-    public string NetoTexto =>
-        Formato.Moneda(Neto);
+    public string MotivoDescuento =>
+        ConvenioSeleccionado == null
+            ? "Sin convenio"
+            : $"Convenio: {ConvenioSeleccionado.NombreConvenio} ({PorcentajeDescuentoTexto})";
 
-    public string IvaTexto =>
-        Formato.Moneda(Iva);
-
-    public string TotalTexto =>
-        Formato.Moneda(Total);
-
-    public bool HayItems => Carrito.Count > 0;
-
-    // El descuento del convenio solamente se aplica
-    // cuando la venta se realiza a crédito.
-    private decimal PctDescuento =>
-        FormaPagoSeleccionada == "CREDITO"
-            ? ConvenioSeleccionado?.PorcentajeDescuento ?? 0m
-            : 0m;
+    private decimal Subtotal =>
+        Carrito.Sum(i => i.Subtotal);
 
     private decimal Descuento =>
         Math.Round(
-            Carrito.Sum(i => i.Subtotal) * PctDescuento / 100m
-        );
+            Subtotal * PorcentajeDescuento / 100m,
+            0,
+            MidpointRounding.AwayFromZero);
 
-    private decimal Total =>
-        Carrito.Sum(i => i.Subtotal) - Descuento;
+    private decimal Total => Subtotal - Descuento;
 
     private decimal Neto =>
-        Math.Round(Total / 1.19m);
+        Math.Round(
+            Total / 1.19m,
+            0,
+            MidpointRounding.AwayFromZero);
 
-    private decimal Iva =>
-        Total - Neto;
+    private decimal Iva => Total - Neto;
 
-    // ---------------------------------------------------------
-    // MENSAJES
-    // ---------------------------------------------------------
+    public string SubtotalTexto => Formato.Moneda(Subtotal);
+    public string DescuentoTexto => Formato.Moneda(Descuento);
+    public string NetoTexto => Formato.Moneda(Neto);
+    public string IvaTexto => Formato.Moneda(Iva);
+    public string TotalTexto => Formato.Moneda(Total);
+
+    public bool HayItems => Carrito.Count > 0;
+
+    public int TotalUnidades => Carrito.Sum(i => i.Cantidad);
+
+    public string ResumenCarritoTexto =>
+        Carrito.Count == 1
+            ? $"1 producto · {TotalUnidades} {(TotalUnidades == 1 ? "unidad" : "unidades")}"
+            : $"{Carrito.Count} productos · {TotalUnidades} {(TotalUnidades == 1 ? "unidad" : "unidades")}";
+
+    private bool _mostrarCatalogo = true;
+    public bool MostrarCatalogo
+    {
+        get => _mostrarCatalogo;
+        set
+        {
+            if (SetProperty(ref _mostrarCatalogo, value))
+            {
+                OnPropertyChanged(nameof(TextoBotonCatalogo));
+                OnPropertyChanged(nameof(MostrarListaCatalogo));
+            }
+        }
+    }
+
+    public bool MostrarListaCatalogo => MostrarCatalogo && !HayProducto;
+
+    public string TextoBotonCatalogo =>
+        MostrarCatalogo ? "Catálogo ▲" : "Catálogo ▼";
+
+    private bool _cajaCerrada;
+    public bool CajaCerrada
+    {
+        get => _cajaCerrada;
+        private set => SetProperty(ref _cajaCerrada, value);
+    }
 
     private string _mensajeError = string.Empty;
-
     public string MensajeError
     {
         get => _mensajeError;
-
         private set
         {
             if (SetProperty(ref _mensajeError, value))
@@ -176,14 +219,12 @@ public class PosViewModel : BaseViewModel
     }
 
     public bool HayError =>
-        !string.IsNullOrEmpty(MensajeError);
+        !string.IsNullOrWhiteSpace(MensajeError);
 
     private string _mensajeOk = string.Empty;
-
     public string MensajeOk
     {
         get => _mensajeOk;
-
         private set
         {
             if (SetProperty(ref _mensajeOk, value))
@@ -192,55 +233,104 @@ public class PosViewModel : BaseViewModel
     }
 
     public bool HayOk =>
-        !string.IsNullOrEmpty(MensajeOk);
-
-    // ---------------------------------------------------------
-    // COMANDOS
-    // ---------------------------------------------------------
+        !string.IsNullOrWhiteSpace(MensajeOk);
 
     public ICommand ComandoBuscar { get; }
+    public ICommand ComandoBuscarCatalogo { get; }
+    public ICommand ComandoSeleccionarProducto { get; }
     public ICommand ComandoAgregar { get; }
     public ICommand ComandoQuitar { get; }
+    public ICommand ComandoAumentarCantidad { get; }
+    public ICommand ComandoReducirCantidad { get; }
     public ICommand ComandoEmitir { get; }
     public ICommand ComandoVerRanking { get; }
-
-    // ---------------------------------------------------------
-    // CONSTRUCTOR
-    // ---------------------------------------------------------
+    public ICommand ComandoLimpiar { get; }
+    public ICommand ComandoPublicoGeneral { get; }
+    public ICommand ComandoAlternarCatalogo { get; }
+    public ICommand ComandoCancelarSeleccionProducto { get; }
+    public ICommand ComandoQuitarConvenio { get; }
 
     public PosViewModel(VentasService servicio)
     {
         _servicio = servicio;
-
         Titulo = "Punto de Venta";
 
         ComandoBuscar =
             new Command(async () => await BuscarAsync());
 
+        ComandoBuscarCatalogo =
+            new Command(async () =>
+            {
+                Producto = null;
+                LoteSeleccionado = null;
+                Lotes.Clear();
+                MostrarCatalogo = true;
+                await CargarProductosAsync();
+            });
+
+        ComandoAlternarCatalogo =
+            new Command(() => MostrarCatalogo = !MostrarCatalogo);
+
+        ComandoCancelarSeleccionProducto =
+            new Command(() =>
+            {
+                Producto = null;
+                LoteSeleccionado = null;
+                Lotes.Clear();
+                CantidadTexto = "1";
+            });
+
+        ComandoQuitarConvenio =
+            new Command(() =>
+            {
+                if (!EstaOcupado)
+                    ConvenioSeleccionado = null;
+            });
+
+        ComandoSeleccionarProducto =
+            new Command<ProductoPos>(async producto =>
+            {
+                if (producto != null)
+                    await SeleccionarProductoAsync(producto);
+            });
+
         ComandoAgregar =
             new Command(async () => await AgregarAsync());
 
         ComandoQuitar =
-            new Command<ItemCarrito>(i =>
+            new Command<ItemCarrito>(item =>
             {
-                if (i is not null)
-                {
-                    Carrito.Remove(i);
-                    Recalcular();
-                }
+                if (EstaOcupado || item == null)
+                    return;
+
+                Carrito.Remove(item);
+                Recalcular();
             });
+
+        ComandoAumentarCantidad =
+            new Command<ItemCarrito>(
+                async item => await CambiarCantidadAsync(item, 1));
+
+        ComandoReducirCantidad =
+            new Command<ItemCarrito>(
+                async item => await CambiarCantidadAsync(item, -1));
 
         ComandoEmitir =
             new Command(async () => await EmitirAsync());
 
         ComandoVerRanking =
             new Command(async () =>
-                await Shell.Current.GoToAsync("//RankingVentasPage"));
-    }
+                await Shell.Current.GoToAsync(
+                    "//RankingVentasPage"));
 
-    // ---------------------------------------------------------
-    // CARGAR CLIENTES
-    // ---------------------------------------------------------
+        ComandoLimpiar = new Command(LimpiarVenta);
+
+        ComandoPublicoGeneral = new Command(() =>
+        {
+            if (!EstaOcupado)
+                ClienteSeleccionado = null;
+        });
+    }
 
     public async Task CargarAsync()
     {
@@ -248,27 +338,59 @@ public class PosViewModel : BaseViewModel
             return;
 
         EstaOcupado = true;
-
         MensajeError = string.Empty;
 
         try
         {
-            var clientes =
-                await _servicio.ObtenerClientesAsync();
+            CajaCerrada = !await _servicio.TieneCajaAbiertaAsync();
 
+            var clientes = await _servicio.ObtenerClientesAsync();
+
+            ++_versionCargaConvenios;
             Clientes.Clear();
 
             foreach (var cliente in clientes)
                 Clientes.Add(cliente);
 
-            ClienteSeleccionado ??=
-                Clientes.FirstOrDefault();
+            ClienteSeleccionado = null;
+            Convenios.Clear();
+            ConvenioSeleccionado = null;
         }
         catch (Exception ex)
         {
             MensajeError =
-                "No se pudieron cargar los clientes: " +
-                ex.Message;
+                "No se pudieron cargar los clientes: " + ex.Message;
+        }
+        finally
+        {
+            EstaOcupado = false;
+        }
+
+        await CargarProductosAsync();
+    }
+
+    public async Task CargarProductosAsync()
+    {
+        if (EstaOcupado)
+            return;
+
+        EstaOcupado = true;
+
+        try
+        {
+            var productos =
+                await _servicio.ObtenerProductosAsync(
+                    BusquedaProducto ?? "");
+
+            Productos.Clear();
+
+            foreach (var producto in productos)
+                Productos.Add(producto);
+        }
+        catch (Exception ex)
+        {
+            MensajeError =
+                "No se pudieron cargar los productos: " + ex.Message;
         }
         finally
         {
@@ -276,20 +398,17 @@ public class PosViewModel : BaseViewModel
         }
     }
 
-    // ---------------------------------------------------------
-    // BUSCAR PRODUCTO
-    // ---------------------------------------------------------
-
     private async Task BuscarAsync()
     {
+        if (EstaOcupado)
+            return;
+
         MensajeError = string.Empty;
         MensajeOk = string.Empty;
 
         if (string.IsNullOrWhiteSpace(CodigoBuscado))
         {
-            MensajeError =
-                "Ingrese un código de barras o SKU.";
-
+            MensajeError = "Ingresa un SKU o código de barras.";
             return;
         }
 
@@ -297,49 +416,23 @@ public class PosViewModel : BaseViewModel
 
         try
         {
-            Producto =
-                await _servicio.BuscarProductoAsync(
-                    CodigoBuscado
-                );
+            var producto =
+                await _servicio.BuscarProductoAsync(CodigoBuscado);
 
-            Lotes.Clear();
-
-            if (Producto is null)
-            {
-                MensajeError =
-                    "No existe un producto activo con ese código.";
-
-                return;
-            }
-
-            var lotes =
-                await _servicio.ObtenerLotesAsync(
-                    Producto.IdProducto
-                );
-
-            if (lotes.Count == 0)
+            if (producto == null)
             {
                 Producto = null;
-
+                Lotes.Clear();
                 MensajeError =
-                    "El producto no tiene lotes con stock disponible.";
-
+                    "No se encontró un producto con ese código.";
                 return;
             }
 
-            foreach (var lote in lotes)
-                Lotes.Add(lote);
-
-            // FEFO: primero el lote que vence antes.
-            LoteSeleccionado = Lotes.First();
-
-            CantidadTexto = "1";
+            await CargarLotesProductoAsync(producto);
         }
         catch (Exception ex)
         {
-            MensajeError =
-                "Error en la búsqueda: " +
-                ex.Message;
+            MensajeError = "Error al buscar: " + ex.Message;
         }
         finally
         {
@@ -347,254 +440,435 @@ public class PosViewModel : BaseViewModel
         }
     }
 
-    // ---------------------------------------------------------
-    // AGREGAR PRODUCTO AL CARRITO
-    // ---------------------------------------------------------
+    private async Task SeleccionarProductoAsync(ProductoPos producto)
+    {
+        if (EstaOcupado)
+            return;
+
+        MensajeError = string.Empty;
+        MensajeOk = string.Empty;
+        EstaOcupado = true;
+
+        try
+        {
+            await CargarLotesProductoAsync(producto);
+        }
+        catch (Exception ex)
+        {
+            MensajeError =
+                "Error al seleccionar producto: " + ex.Message;
+        }
+        finally
+        {
+            EstaOcupado = false;
+        }
+    }
+
+    private async Task CargarLotesProductoAsync(ProductoPos producto)
+    {
+        Producto = null;
+        LoteSeleccionado = null;
+        Lotes.Clear();
+
+        var lotes =
+            await _servicio.ObtenerLotesAsync(producto.IdProducto);
+
+        if (lotes.Count == 0)
+        {
+            MensajeError =
+                "El producto no tiene lotes disponibles.";
+            return;
+        }
+
+        Producto = producto;
+
+        foreach (var lote in lotes)
+            Lotes.Add(lote);
+
+        LoteSeleccionado = Lotes.FirstOrDefault();
+        CantidadTexto = "1";
+    }
 
     private async Task AgregarAsync()
     {
+        if (EstaOcupado)
+            return;
+
         MensajeError = string.Empty;
         MensajeOk = string.Empty;
 
-        if (Producto is null ||
-            LoteSeleccionado is null)
+        if (Producto == null || LoteSeleccionado == null)
         {
+            MensajeError = "Selecciona un producto y un lote.";
             return;
         }
 
-        // Validación: cantidad entera mayor a cero.
-        if (!int.TryParse(
-                CantidadTexto,
-                out int cantidad
-            ) ||
-            cantidad <= 0)
+        if (!int.TryParse(CantidadTexto, out int cantidad)
+            || cantidad <= 0)
         {
             MensajeError =
-                "La cantidad debe ser un número entero mayor a cero.";
-
+                "La cantidad debe ser un entero mayor a cero.";
             return;
         }
 
-        // Validación de stock.
-        if (cantidad >
-            LoteSeleccionado.StockActual)
-        {
-            MensajeError =
-                $"El lote {LoteSeleccionado.NumeroLote} " +
-                $"solo tiene {LoteSeleccionado.StockActual} unidades.";
-
-            return;
-        }
-
-        // Validación de vencimiento.
-        if (LoteSeleccionado.FechaVencimiento <
+        if (LoteSeleccionado.FechaVencimiento.Date <
             DateTime.Today)
         {
-            MensajeError =
-                $"El lote {LoteSeleccionado.NumeroLote} " +
-                $"está vencido " +
-                $"({LoteSeleccionado.FechaVencimiento:dd/MM/yyyy}) " +
-                $"y no puede venderse.";
-
+            MensajeError = "No puedes vender un lote vencido.";
             return;
         }
 
-        var existente =
-            Carrito.FirstOrDefault(
-                i => i.IdLote ==
-                     LoteSeleccionado.IdLote
-            );
+        var existente = Carrito.FirstOrDefault(i =>
+            i.IdLote == LoteSeleccionado.IdLote);
 
-        if (existente is not null)
+        int cantidadAcumulada =
+            cantidad + (existente?.Cantidad ?? 0);
+
+        if (cantidadAcumulada > LoteSeleccionado.StockActual)
         {
-            if (existente.Cantidad + cantidad >
-                LoteSeleccionado.StockActual)
+            MensajeError =
+                $"Stock insuficiente. Disponible: " +
+                $"{LoteSeleccionado.StockActual} unidades.";
+            return;
+        }
+
+        if (existente != null)
+        {
+            int indice = Carrito.IndexOf(existente);
+
+            Carrito[indice] = new ItemCarrito
             {
-                MensajeError =
-                    $"Stock máximo del lote alcanzado " +
-                    $"({LoteSeleccionado.StockActual} unidades).";
-
-                return;
-            }
-
-            existente.Cantidad += cantidad;
+                IdProducto = existente.IdProducto,
+                IdLote = existente.IdLote,
+                Sku = existente.Sku,
+                NombreProducto = existente.NombreProducto,
+                NumeroLote = existente.NumeroLote,
+                PrecioUnitario = existente.PrecioUnitario,
+                Cantidad = cantidadAcumulada
+            };
         }
         else
         {
-            Carrito.Add(
-                new ItemCarrito
-                {
-                    IdProducto =
-                        Producto.IdProducto,
-
-                    IdLote =
-                        LoteSeleccionado.IdLote,
-
-                    NombreProducto =
-                        Producto.NombreComercial,
-
-                    NumeroLote =
-                        LoteSeleccionado.NumeroLote,
-
-                    Cantidad =
-                        cantidad,
-
-                    PrecioUnitario =
-                        Producto.PrecioVenta
-                }
-            );
+            Carrito.Add(new ItemCarrito
+            {
+                IdProducto = Producto.IdProducto,
+                IdLote = LoteSeleccionado.IdLote,
+                Sku = Producto.Sku,
+                NombreProducto = Producto.NombreComercial,
+                NumeroLote = LoteSeleccionado.NumeroLote,
+                Cantidad = cantidad,
+                PrecioUnitario = Producto.PrecioVenta
+            });
         }
 
         Producto = null;
-
+        LoteSeleccionado = null;
         Lotes.Clear();
-
         CodigoBuscado = string.Empty;
+        CantidadTexto = "1";
 
         Recalcular();
 
         await Task.CompletedTask;
     }
 
-    // ---------------------------------------------------------
-    // EMITIR VENTA
-    // ---------------------------------------------------------
+    private async Task CambiarCantidadAsync(
+        ItemCarrito? item,
+        int cambio)
+    {
+        if (EstaOcupado || item == null)
+            return;
+
+        MensajeError = string.Empty;
+        MensajeOk = string.Empty;
+
+        int indice = Carrito.IndexOf(item);
+
+        if (indice < 0)
+            return;
+
+        int nuevaCantidad = item.Cantidad + cambio;
+
+        if (nuevaCantidad <= 0)
+        {
+            Carrito.RemoveAt(indice);
+            Recalcular();
+            return;
+        }
+
+        if (cambio > 0)
+        {
+            EstaOcupado = true;
+
+            try
+            {
+                var lotes =
+                    await _servicio.ObtenerLotesAsync(
+                        item.IdProducto);
+
+                var lote = lotes.FirstOrDefault(
+                    l => l.IdLote == item.IdLote);
+
+                if (lote == null)
+                {
+                    MensajeError =
+                        "El lote ya no tiene stock disponible.";
+                    return;
+                }
+
+                if (nuevaCantidad > lote.StockActual)
+                {
+                    MensajeError =
+                        $"Stock máximo disponible: " +
+                        $"{lote.StockActual} unidades.";
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                MensajeError =
+                    "No se pudo verificar el stock: " +
+                    ex.Message;
+                return;
+            }
+            finally
+            {
+                EstaOcupado = false;
+            }
+        }
+
+        // Buscar nuevamente por si el carrito
+        // cambió durante la consulta asíncrona.
+        indice = Carrito.IndexOf(item);
+
+        if (indice < 0)
+            return;
+
+        Carrito[indice] = new ItemCarrito
+        {
+            IdProducto = item.IdProducto,
+            IdLote = item.IdLote,
+            Sku = item.Sku,
+            NombreProducto = item.NombreProducto,
+            NumeroLote = item.NumeroLote,
+            PrecioUnitario = item.PrecioUnitario,
+            Cantidad = nuevaCantidad
+        };
+
+        Recalcular();
+    }
+
+    private async Task CargarConveniosAsync(ClientePos? cliente)
+    {
+        int version = ++_versionCargaConvenios;
+
+        Convenios.Clear();
+        ConvenioSeleccionado = null;
+
+        if (cliente == null)
+        {
+            Recalcular();
+            return;
+        }
+
+        try
+        {
+            var datos =
+                await _servicio.ObtenerConveniosAsync(
+                    cliente.IdCliente);
+
+            if (version != _versionCargaConvenios ||
+                ClienteSeleccionado?.IdCliente != cliente.IdCliente)
+                return;
+
+            foreach (var convenio in datos)
+                Convenios.Add(convenio);
+        }
+        catch (Exception ex)
+        {
+            if (version == _versionCargaConvenios)
+            {
+                MensajeError =
+                    "Error al cargar convenios: " + ex.Message;
+            }
+        }
+
+        Recalcular();
+    }
+
+    private void LimpiarVenta()
+    {
+        if (EstaOcupado)
+            return;
+
+        Carrito.Clear();
+        Producto = null;
+        LoteSeleccionado = null;
+        Lotes.Clear();
+
+        CodigoBuscado = string.Empty;
+        CantidadTexto = "1";
+
+        ClienteSeleccionado = null;
+        ConvenioSeleccionado = null;
+
+        FormaPagoSeleccionada = "EFECTIVO";
+
+        MensajeError = string.Empty;
+        MensajeOk = string.Empty;
+
+        Recalcular();
+    }
 
     private async Task EmitirAsync()
     {
+        if (EstaOcupado)
+            return;
+
         MensajeError = string.Empty;
         MensajeOk = string.Empty;
 
         if (Carrito.Count == 0)
         {
-            MensajeError =
-                "El carrito está vacío.";
-
+            MensajeError = "El carrito está vacío.";
             return;
         }
 
-        if (ClienteSeleccionado is null)
+        bool cajaAbierta;
+        try
+        {
+            cajaAbierta = await _servicio.TieneCajaAbiertaAsync();
+        }
+        catch (Exception ex)
         {
             MensajeError =
-                "Seleccione un cliente.";
-
+                "No se pudo verificar el estado de la caja: " + ex.Message;
             return;
         }
 
-        // El crédito exige convenio.
-        if (FormaPagoSeleccionada == "CREDITO" &&
-            ConvenioSeleccionado is null)
+        CajaCerrada = !cajaAbierta;
+
+        if (!cajaAbierta)
         {
             MensajeError =
-                "Para pago a CRÉDITO debe seleccionar " +
-                "un convenio de salud.";
-
+                "No hay una caja abierta. " +
+                "Abre Control de Caja antes de realizar una venta.";
             return;
         }
 
-        var idCajero =
+        if (FormaPagoSeleccionada == "CREDITO")
+        {
+            if (ClienteSeleccionado == null)
+            {
+                MensajeError =
+                    "Para vender a crédito debes seleccionar " +
+                    "un cliente registrado.";
+                return;
+            }
+
+            if (ConvenioSeleccionado == null)
+            {
+                MensajeError =
+                    "Para vender a crédito debes seleccionar " +
+                    "un convenio.";
+                return;
+            }
+        }
+
+        int idCajero =
             Sesion.UsuarioActual?.IdUsuario ?? 0;
 
-        if (idCajero == 0)
+        if (idCajero <= 0)
         {
             MensajeError =
-                "No hay un usuario con sesión activa.";
-
+                "No existe una sesión activa de cajero.";
             return;
         }
+
+        int? idCliente = ClienteSeleccionado?.IdCliente;
+        int? idConvenio = ConvenioSeleccionado?.IdConvenio;
+
+        string formaPago = FormaPagoSeleccionada;
+
+        var items = Carrito.Select(i => new ItemCarrito
+        {
+            IdProducto = i.IdProducto,
+            IdLote = i.IdLote,
+            Sku = i.Sku,
+            NombreProducto = i.NombreProducto,
+            NumeroLote = i.NumeroLote,
+            Cantidad = i.Cantidad,
+            PrecioUnitario = i.PrecioUnitario
+        }).ToList();
+
+        decimal subtotal = Subtotal;
+        decimal descuento = Descuento;
+        decimal neto = Neto;
+        decimal iva = Iva;
+        decimal total = Total;
+        string nombreCliente = NombreClienteActual;
+        string motivoDescuento = MotivoDescuento;
 
         EstaOcupado = true;
 
         try
         {
-            // Solo asociamos convenio a la venta
-            // cuando la forma de pago es CREDITO.
-            int? idConvenio =
-                FormaPagoSeleccionada == "CREDITO"
-                    ? ConvenioSeleccionado?.IdConvenio
-                    : null;
+            string folio = await _servicio.EmitirVentaAsync(
+                idCliente,
+                idConvenio,
+                formaPago,
+                items,
+                subtotal,
+                descuento,
+                neto,
+                iva,
+                total,
+                idCajero);
 
-            var folio =
-                await _servicio.EmitirVentaAsync(
-                    ClienteSeleccionado.IdCliente,
-                    idConvenio,
-                    FormaPagoSeleccionada,
-                    Carrito.ToList(),
-                    Carrito.Sum(i => i.Subtotal),
-                    Descuento,
-                    Neto,
-                    Iva,
-                    Total,
-                    idCajero
-                );
-
-            MensajeOk =
-                $"Venta {folio} registrada por " +
-                $"{Formato.Moneda(Total)}.";
+            // Generar el comprobante solo después de confirmar la venta.
+            UltimoComprobante = ComprobantePos.Generar(
+                folio, DateTime.Now, nombreCliente, formaPago, items,
+                subtotal, descuento, neto, iva, total, motivoDescuento);
 
             Carrito.Clear();
+            Producto = null;
+            LoteSeleccionado = null;
+            Lotes.Clear();
 
+            CodigoBuscado = string.Empty;
+            CantidadTexto = "1";
+
+            ClienteSeleccionado = null;
             ConvenioSeleccionado = null;
 
+            FormaPagoSeleccionada = "EFECTIVO";
+
             Recalcular();
+
+            MensajeOk =
+                $"Venta {folio} registrada correctamente " +
+                $"por {Formato.Moneda(total)}.";
+
+            try
+            {
+                await Shell.Current.DisplayAlertAsync(
+                    "Comprobante de venta", UltimoComprobante, "Cerrar");
+            }
+            catch
+            {
+                // El comprobante es secundario: no invalidar una venta guardada.
+            }
         }
         catch (Exception ex)
         {
-            MensajeError = ex.Message;
+            MensajeError =
+                "No se pudo registrar la venta: " + ex.Message;
         }
         finally
         {
             EstaOcupado = false;
         }
     }
-
-    // ---------------------------------------------------------
-    // CARGAR CONVENIOS DEL CLIENTE
-    // ---------------------------------------------------------
-
-    private async Task CargarConveniosAsync(
-        ClientePos? cliente
-    )
-    {
-        Convenios.Clear();
-
-        ConvenioSeleccionado = null;
-
-        if (cliente is null)
-        {
-            Recalcular();
-            return;
-        }
-
-        try
-        {
-            var convenios =
-                await _servicio.ObtenerConveniosAsync(
-                    cliente.IdCliente
-                );
-
-            foreach (var convenio in convenios)
-                Convenios.Add(convenio);
-
-            // No seleccionamos automáticamente.
-            // El cajero debe elegirlo para una venta a crédito.
-            ConvenioSeleccionado = null;
-        }
-        catch (Exception ex)
-        {
-            MensajeError =
-                "No se pudieron cargar los convenios: " +
-                ex.Message;
-        }
-
-        Recalcular();
-
-        await Task.CompletedTask;
-    }
-
-    // ---------------------------------------------------------
-    // RECALCULAR TOTALES
-    // ---------------------------------------------------------
 
     private void Recalcular()
     {
@@ -604,5 +878,10 @@ public class PosViewModel : BaseViewModel
         OnPropertyChanged(nameof(IvaTexto));
         OnPropertyChanged(nameof(TotalTexto));
         OnPropertyChanged(nameof(HayItems));
+        OnPropertyChanged(nameof(TotalUnidades));
+        OnPropertyChanged(nameof(ResumenCarritoTexto));
+        OnPropertyChanged(nameof(PorcentajeDescuentoTexto));
+        OnPropertyChanged(nameof(EtiquetaDescuento));
+        OnPropertyChanged(nameof(MotivoDescuento));
     }
 }

@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:TISW_TUSSI_ERP.ViewModels.Inventario"
+             xmlns:m="clr-namespace:TISW_TUSSI_ERP.Models.Inventario"
+             xmlns:ctrl="clr-namespace:TISW_TUSSI_ERP.Views.Shared"
+             x:Class="TISW_TUSSI_ERP.Views.Inventario.InventarioPage"
+             x:DataType="vm:InventarioViewModel"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource ErpBg}"
+             Title="Inventario y Catálogo">
+
+    <Grid RowDefinitions="Auto,*">
+        <!-- Encabezado superior unificado -->
+        <ctrl:PageHeader Grid.Row="0" Ruta="ERP › Inventario" Titulo="Catálogo de Productos" />
+
+        <Grid Grid.Row="1" RowDefinitions="Auto,*" Padding="24" RowSpacing="16">
+
+            <!-- Sección superior: Alertas, Título y KPIs -->
+            <VerticalStackLayout Grid.Row="0" Spacing="16">
+
+                <!-- Alerta de Error -->
+                <Border IsVisible="{Binding HayError}" BackgroundColor="#FEE2E2" Stroke="#FCA5A5" StrokeShape="RoundRectangle 8" Padding="12">
+                    <Label Text="{Binding MensajeError}" TextColor="#B91C1C" FontSize="12" />
+                </Border>
+
+                <!-- Título + Acciones principales -->
+                <Grid ColumnDefinitions="*,Auto">
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="Catálogo de Medicamentos (SKUs)" Style="{StaticResource ErpTitle}" />
+                        <Label Text="{Binding ValorizacionTotalTexto, StringFormat='Gestión de catálogo y valorización · Total en bodega {0}'}"
+                               Style="{StaticResource ErpSubtitle}" />
+                    </VerticalStackLayout>
+
+                    <HorizontalStackLayout Grid.Column="1" Spacing="8" VerticalOptions="Center">
+                        <Button Text="📄 Exportar Reporte" 
+                                Style="{StaticResource ErpGhostButton}" 
+                                HeightRequest="38" 
+                                Command="{Binding ComandoExportarDocumento}" />
+                        <Button Text="+ Nuevo producto" 
+                                Style="{StaticResource ErpPrimaryButton}"
+                                HeightRequest="38" 
+                                Command="{Binding ComandoNuevoProducto}" />
+                    </HorizontalStackLayout>
+                </Grid>
+
+                <!-- Tarjetas de Resumen KPI -->
+                <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="16">
+                    <Border Grid.Column="0" Style="{StaticResource ErpCard}">
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="TOTAL PRODUCTOS" Style="{StaticResource ErpCaption}" />
+                            <Label Text="{Binding Resumen.TotalProductos}" Style="{StaticResource ErpKpi}" />
+                        </VerticalStackLayout>
+                    </Border>
+                    <Border Grid.Column="1" Style="{StaticResource ErpCard}">
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="STOCK CRÍTICO / BAJO" Style="{StaticResource ErpCaption}" />
+                            <Label Text="{Binding Resumen.ProductosStockBajo}" Style="{StaticResource ErpKpi}" TextColor="#DC2626" />
+                        </VerticalStackLayout>
+                    </Border>
+                    <Border Grid.Column="2" Style="{StaticResource ErpCard}">
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="POR VENCER (30 DÍAS)" Style="{StaticResource ErpCaption}" />
+                            <Label Text="{Binding Resumen.ProductosPorVencer}" Style="{StaticResource ErpKpi}" TextColor="#D97706" />
+                        </VerticalStackLayout>
+                    </Border>
+                    <Border Grid.Column="3" Style="{StaticResource ErpCard}">
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="VALORIZACIÓN TOTAL" Style="{StaticResource ErpCaption}" />
+                            <Label Text="{Binding Resumen.ValorizacionTotalTexto}" Style="{StaticResource ErpKpi}" />
+                        </VerticalStackLayout>
+                    </Border>
+                </Grid>
+
+                <!-- Buscador y Pestañas de Filtro -->
+                <Grid ColumnDefinitions="300,*" ColumnSpacing="16">
+                    <Border Style="{StaticResource ErpCard}" Padding="8,4" VerticalOptions="Center">
+                        <Entry Placeholder="Buscar por SKU, nombre o principio activo..."
+                               Text="{Binding TextoBusqueda, Mode=TwoWay}"
+                               FontSize="12"
+                               BackgroundColor="Transparent" />
+                    </Border>
+
+                    <HorizontalStackLayout Grid.Column="1" Spacing="6" VerticalOptions="Center">
+                        <Button Text="Todos" Style="{StaticResource ErpTab}" Command="{Binding ComandoFiltrar}" CommandParameter="TODOS">
+                            <Button.Triggers>
+                                <DataTrigger TargetType="Button" Binding="{Binding FiltroActual}" Value="TODOS">
+                                    <Setter Property="BackgroundColor" Value="{StaticResource ErpPrimary}" />
+                                    <Setter Property="TextColor" Value="White" />
+                                </DataTrigger>
+                            </Button.Triggers>
+                        </Button>
+                        <Button Text="Stock Normal" Style="{StaticResource ErpTab}" Command="{Binding ComandoFiltrar}" CommandParameter="NORMAL">
+                            <Button.Triggers>
+                                <DataTrigger TargetType="Button" Binding="{Binding FiltroActual}" Value="NORMAL">
+                                    <Setter Property="BackgroundColor" Value="{StaticResource ErpPrimary}" />
+                                    <Setter Property="TextColor" Value="White" />
+                                </DataTrigger>
+                            </Button.Triggers>
+                        </Button>
+                        <Button Text="Stock Bajo" Style="{StaticResource ErpTab}" Command="{Binding ComandoFiltrar}" CommandParameter="BAJO">
+                            <Button.Triggers>
+                                <DataTrigger TargetType="Button" Binding="{Binding FiltroActual}" Value="BAJO">
+                                    <Setter Property="BackgroundColor" Value="{StaticResource ErpPrimary}" />
+                                    <Setter Property="TextColor" Value="White" />
+                                </DataTrigger>
+                            </Button.Triggers>
+                        </Button>
+                        <Button Text="Sin Stock" Style="{StaticResource ErpTab}" Command="{Binding ComandoFiltrar}" CommandParameter="AGOTADO">
+                            <Button.Triggers>
+                                <DataTrigger TargetType="Button" Binding="{Binding FiltroActual}" Value="AGOTADO">
+                                    <Setter Property="BackgroundColor" Value="{StaticResource ErpPrimary}" />
+                                    <Setter Property="TextColor" Value="White" />
+                                </DataTrigger>
+                            </Button.Triggers>
+                        </Button>
+                    </HorizontalStackLayout>
+                </Grid>
+            </VerticalStackLayout>
+
+            <!-- Sección Inferior: Lista Maestro + Panel Detalle -->
+            <Grid Grid.Row="1" ColumnDefinitions="360,*" ColumnSpacing="16">
+
+                <!-- Panel Izquierdo: Lista de Productos -->
+                <Grid RowDefinitions="Auto,*" RowSpacing="8">
+                    <Label Text="{Binding CantidadTexto}" Style="{StaticResource ErpCardTitle}" />
+                    <CollectionView Grid.Row="1" ItemsSource="{Binding Productos}"
+                                    SelectionMode="Single" SelectedItem="{Binding ProductoSeleccionado, Mode=TwoWay}">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="m:ProductoModel">
+                                <Border Style="{StaticResource ErpCard}" Padding="12" Margin="0,0,0,8">
+                                    <VisualStateManager.VisualStateGroups>
+                                        <VisualStateGroupList>
+                                            <VisualStateGroup x:Name="CommonStates">
+                                                <VisualState x:Name="Normal" />
+                                                <VisualState x:Name="Selected">
+                                                    <VisualState.Setters>
+                                                        <Setter Property="BackgroundColor" Value="{StaticResource ErpPrimarySoft}" />
+                                                        <Setter Property="Stroke" Value="{StaticResource ErpPrimary}" />
+                                                    </VisualState.Setters>
+                                                </VisualState>
+                                            </VisualStateGroup>
+                                        </VisualStateGroupList>
+                                    </VisualStateManager.VisualStateGroups>
+                                    <VerticalStackLayout Spacing="4">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <Label Text="{Binding Sku}" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource ErpMuted}" />
+                                            <Border Grid.Column="1" BackgroundColor="{Binding EstadoFondo}" StrokeThickness="0" StrokeShape="RoundRectangle 9" Padding="8,2">
+                                                <Label Text="{Binding EstadoTexto}" FontSize="10" FontAttributes="Bold" TextColor="{Binding EstadoColor}" />
+                                            </Border>
+                                        </Grid>
+                                        <Label Text="{Binding NombreComercial}" FontSize="14" FontAttributes="Bold" TextColor="{StaticResource ErpText}" />
+                                        <Label Text="{Binding PrincipioActivo}" FontSize="11" TextColor="{StaticResource ErpMuted}" />
+                                        <Grid ColumnDefinitions="*,Auto" Margin="0,4,0,0">
+                                            <Label Text="{Binding StockActualTexto, StringFormat='Stock: {0}'}" FontSize="12" FontAttributes="Bold" TextColor="{StaticResource ErpText}" />
+                                            <Label Grid.Column="1" Text="{Binding PrecioVentaTexto}" FontSize="12" FontAttributes="Bold" TextColor="{StaticResource ErpPrimary}" />
+                                        </Grid>
+                                    </VerticalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </Grid>
+
+                <!-- Panel Derecho: Detalle del Producto y Control de Lotes -->
+                <Border Grid.Column="1" Style="{StaticResource ErpCard}" Padding="20">
+                    <Grid>
+                        <Label Text="Selecciona un producto para ver su detalle e inventario de lotes" 
+                               IsVisible="{Binding NoHayProducto}"
+                               Style="{StaticResource ErpSubtitle}" HorizontalOptions="Center" VerticalOptions="Center" />
+
+                        <ScrollView IsVisible="{Binding HayProducto}">
+                            <VerticalStackLayout Spacing="18">
+
+                                <!-- Encabezado de la Ficha del Producto -->
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <VerticalStackLayout Spacing="3">
+                                        <HorizontalStackLayout Spacing="8">
+                                            <Label Text="{Binding ProductoSeleccionado.Sku}" FontSize="12" FontAttributes="Bold" TextColor="{StaticResource ErpMuted}" VerticalOptions="Center" />
+                                            <Border BackgroundColor="{Binding ProductoSeleccionado.EstadoFondo}" StrokeThickness="0" StrokeShape="RoundRectangle 9" Padding="8,2">
+                                                <Label Text="{Binding ProductoSeleccionado.EstadoTexto}" FontSize="10" FontAttributes="Bold" TextColor="{Binding ProductoSeleccionado.EstadoColor}" />
+                                            </Border>
+                                        </HorizontalStackLayout>
+                                        <Label Text="{Binding ProductoSeleccionado.NombreComercial}" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource ErpText}" />
+                                        <Label Text="{Binding ProductoSeleccionado.PrincipioActivo, StringFormat='Principio Activo: {0}'}" FontSize="12" TextColor="{StaticResource ErpMuted}" />
+                                    </VerticalStackLayout>
+
+                                    <!-- Acciones rápidas -->
+                                    <HorizontalStackLayout Grid.Column="1" Spacing="8" VerticalOptions="Start">
+                                        <Button Text="Ajuste / Merma" Style="{StaticResource ErpPrimaryButton}" HeightRequest="38" Command="{Binding ComandoRegistrarAjuste}" />
+                                        <Button Text="Editar Ficha" Style="{StaticResource ErpGhostButton}" HeightRequest="38" Command="{Binding ComandoEditarProducto}" />
+                                    </HorizontalStackLayout>
+                                </Grid>
+
+                                <!-- Información Técnica y Sanitaria -->
+                                <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="10">
+                                    <Border Grid.Column="0" Style="{StaticResource ErpCard}" BackgroundColor="#F8FAFC" Padding="12">
+                                        <VerticalStackLayout Spacing="2">
+                                            <Label Text="REG. SANITARIO" Style="{StaticResource ErpCaption}" />
+                                            <Label Text="{Binding ProductoSeleccionado.RegistroSanitario}" Style="{StaticResource ErpBody}" FontAttributes="Bold" />
+                                        </VerticalStackLayout>
+                                    </Border>
+                                    <Border Grid.Column="1" Style="{StaticResource ErpCard}" BackgroundColor="#F8FAFC" Padding="12">
+                                        <VerticalStackLayout Spacing="2">
+                                            <Label Text="CATEGORÍA" Style="{StaticResource ErpCaption}" />
+                                            <Label Text="{Binding ProductoSeleccionado.CategoriaNombre}" Style="{StaticResource ErpBody}" FontAttributes="Bold" />
+                                        </VerticalStackLayout>
+                                    </Border>
+                                    <Border Grid.Column="2" Style="{StaticResource ErpCard}" BackgroundColor="#F8FAFC" Padding="12">
+                                        <VerticalStackLayout Spacing="2">
+                                            <Label Text="FORMATO" Style="{StaticResource ErpCaption}" />
+                                            <Label Text="{Binding ProductoSeleccionado.FormatoPresentacion}" Style="{StaticResource ErpBody}" FontAttributes="Bold" />
+                                        </VerticalStackLayout>
+                                    </Border>
+                                    <Border Grid.Column="3" Style="{StaticResource ErpCard}" BackgroundColor="#F8FAFC" Padding="12">
+                                        <VerticalStackLayout Spacing="2">
+                                            <Label Text="PUNTO REORDEN" Style="{StaticResource ErpCaption}" />
+                                            <Label Text="{Binding ProductoSeleccionado.PuntoReordenTexto}" Style="{StaticResource ErpBody}" FontAttributes="Bold" />
+                                        </VerticalStackLayout>
+                                    </Border>
+                                </Grid>
+
+                                <!-- Tabla de Lotes y Trazabilidad -->
+                                <VerticalStackLayout Spacing="8">
+                                    <Label Text="Trazabilidad y Control de Lotes Activos" Style="{StaticResource ErpCardTitle}" />
+
+                                    <Grid ColumnDefinitions="110,*,100,100,110" ColumnSpacing="8">
+                                        <Label Text="N° LOTE" Style="{StaticResource ErpCaption}" />
+                                        <Label Grid.Column="1" Text="FECHA VENCIMIENTO" Style="{StaticResource ErpCaption}" />
+                                        <Label Grid.Column="2" Text="STOCK" Style="{StaticResource ErpCaption}" HorizontalTextAlignment="End" />
+                                        <Label Grid.Column="3" Text="COSTO U." Style="{StaticResource ErpCaption}" HorizontalTextAlignment="End" />
+                                        <Label Grid.Column="4" Text="ESTADO LOTE" Style="{StaticResource ErpCaption}" HorizontalTextAlignment="Center" />
+                                    </Grid>
+                                    <BoxView HeightRequest="1" Color="{StaticResource ErpBorder}" />
+
+                                    <VerticalStackLayout Spacing="10" BindableLayout.ItemsSource="{Binding LotesProducto}">
+                                        <BindableLayout.ItemTemplate>
+                                            <DataTemplate x:DataType="m:LoteModel">
+                                                <Grid ColumnDefinitions="110,*,100,100,110" ColumnSpacing="8">
+                                                    <Label Text="{Binding NumeroLote}" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource ErpMuted}" VerticalOptions="Center" />
+                                                    <Label Grid.Column="1" Text="{Binding FechaVencimientoTexto}" Style="{StaticResource ErpBody}" VerticalOptions="Center" />
+                                                    <Label Grid.Column="2" Text="{Binding StockActual}" Style="{StaticResource ErpBody}" FontAttributes="Bold" HorizontalTextAlignment="End" VerticalOptions="Center" />
+                                                    <Label Grid.Column="3" Text="{Binding CostoTexto}" Style="{StaticResource ErpBody}" HorizontalTextAlignment="End" VerticalOptions="Center" />
+                                                    <Border Grid.Column="4" BackgroundColor="{Binding EstadoFondo}" StrokeThickness="0" StrokeShape="RoundRectangle 9" Padding="6,2" HorizontalOptions="Center" VerticalOptions="Center">
+                                                        <Label Text="{Binding EstadoTexto}" FontSize="10" FontAttributes="Bold" TextColor="{Binding EstadoColor}" />
+                                                    </Border>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </BindableLayout.ItemTemplate>
+                                    </VerticalStackLayout>
+                                </VerticalStackLayout>
+
+                                <!-- Cuadro Resumen de Valorización del Producto -->
+                                <VerticalStackLayout Spacing="6" HorizontalOptions="End" WidthRequest="300">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <Label Text="Costo Prom. Ponderado" Style="{StaticResource ErpBody}" TextColor="{StaticResource ErpMuted}" />
+                                        <Label Grid.Column="1" Text="{Binding ProductoSeleccionado.CostoPromedioTexto}" Style="{StaticResource ErpBody}" />
+                                    </Grid>
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <Label Text="Precio de Venta (PVP)" Style="{StaticResource ErpBody}" TextColor="{StaticResource ErpMuted}" />
+                                        <Label Grid.Column="1" Text="{Binding ProductoSeleccionado.PrecioVentaTexto}" Style="{StaticResource ErpBody}" />
+                                    </Grid>
+                                    <BoxView HeightRequest="1" Color="{StaticResource ErpBorder}" />
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <Label Text="Valorización Stock" Style="{StaticResource ErpBody}" FontAttributes="Bold" />
+                                        <Label Grid.Column="1" Text="{Binding ProductoSeleccionado.ValorizacionTotalTexto}" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource ErpText}" />
+                                    </Grid>
+                                </VerticalStackLayout>
+
+                            </VerticalStackLayout>
+                        </ScrollView>
+                    </Grid>
+                </Border>
+
+            </Grid>
+        </Grid>
+    </Grid>
+</ContentPage>

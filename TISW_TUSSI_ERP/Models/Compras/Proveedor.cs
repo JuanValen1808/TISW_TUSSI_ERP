@@ -12,10 +12,12 @@ public class Proveedor
     public string Telefono { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string CondicionesComerciales { get; set; } = string.Empty;
+    public int PlazoEntregaDias { get; set; } = 7; // RF-COM-08: Tiempos de entrega pactados con cada laboratorio
 
     // Datos calculados desde ordenes_compra, solo para la lista (no se guardan)
     public int OrdenesEmitidas { get; set; }
     public decimal MontoComprado { get; set; }
     public string MontoCompradoTexto => Formato.Moneda(MontoComprado);
     public string Iniciales => Formato.Iniciales(RazonSocial);
+    public string PlazoEntregaTexto => $"{PlazoEntregaDias} días entrega";
 }

@@ -19,11 +19,13 @@
                 <!-- Botones superiores -->
                 <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="12">
                     <Button Text="Volver a Órdenes" Style="{StaticResource ErpGhostButton}"
-                            HorizontalOptions="Start" Command="{Binding ComandoVolver}" />
-                    <Button Grid.Column="1" Text="Cargar Sugerencias de Reabastecimiento" 
+                            HorizontalOptions="Start" Command="{Binding ComandoVolver}" IsEnabled="{Binding NoEstaOcupado}" />
+                    <ActivityIndicator Grid.Column="1" IsRunning="{Binding EstaOcupado}" IsVisible="{Binding EstaOcupado}"
+                                       Color="{StaticResource ErpPrimary}" VerticalOptions="Center" />
+                    <Button Grid.Column="2" Text="Cargar Sugerencias de Reabastecimiento" 
                             Style="{StaticResource ErpGhostButton}" TextColor="{StaticResource ErpPrimary}"
                             BorderColor="{StaticResource ErpPrimary}"
-                            Command="{Binding ComandoCargarSugerencias}" />
+                            Command="{Binding ComandoCargarSugerencias}" IsEnabled="{Binding NoEstaOcupado}" />
                 </Grid>
 
                 <!-- 1. Cabecera y Proveedor -->
@@ -36,6 +38,7 @@
                             <Picker ItemsSource="{Binding Proveedores}" 
                                     ItemDisplayBinding="{Binding RazonSocial}"
                                     SelectedItem="{Binding ProveedorSeleccionado}" 
+                                    IsEnabled="{Binding NoEstaOcupado}"
                                     TextColor="{StaticResource ErpText}" 
                                     BackgroundColor="Transparent"
                                     VerticalOptions="Center" />
@@ -56,6 +59,7 @@
                                     <Picker ItemsSource="{Binding Productos}" 
                                             ItemDisplayBinding="{Binding DescripcionCompleta}"
                                             SelectedItem="{Binding ProductoSeleccionado}" 
+                                            IsEnabled="{Binding NoEstaOcupado}"
                                             TextColor="{StaticResource ErpText}" 
                                             BackgroundColor="Transparent"
                                             VerticalOptions="Center" />
@@ -66,6 +70,7 @@
                                 <Label Text="Cantidad" Style="{StaticResource ErpCaption}" />
                                 <Border Style="{StaticResource ErpInputBox}">
                                     <Entry Text="{Binding CantidadFiltro}" Keyboard="Numeric" Placeholder="10" 
+                                           IsEnabled="{Binding NoEstaOcupado}"
                                            Style="{StaticResource ErpEntry}" HorizontalTextAlignment="Center" />
                                 </Border>
                             </VerticalStackLayout>
@@ -74,12 +79,14 @@
                                 <Label Text="Costo Pactado ($)" Style="{StaticResource ErpCaption}" />
                                 <Border Style="{StaticResource ErpInputBox}">
                                     <Entry Text="{Binding CostoPactadoTexto}" Keyboard="Numeric" Placeholder="Costo" 
+                                           IsEnabled="{Binding NoEstaOcupado}"
                                            Style="{StaticResource ErpEntry}" HorizontalTextAlignment="End" />
                                 </Border>
                             </VerticalStackLayout>
 
                             <Button Grid.Column="3" Text="Agregar" Style="{StaticResource ErpPrimaryButton}" 
-                                    Command="{Binding ComandoAgregarProducto}" HeightRequest="46" VerticalOptions="End" />
+                                    Command="{Binding ComandoAgregarProducto}" IsEnabled="{Binding NoEstaOcupado}"
+                                    HeightRequest="46" VerticalOptions="End" />
                         </Grid>
                     </VerticalStackLayout>
                 </Border>
@@ -112,7 +119,9 @@
                                             <Label Grid.Column="3" Text="{Binding Subtotal, StringFormat='${0:N0}'}" FontAttributes="Bold" HorizontalOptions="End" VerticalOptions="Center" TextColor="{StaticResource ErpText}"/>
 
                                             <Button Grid.Column="4" Text="Quitar" Command="{Binding Source={RelativeSource AncestorType={x:Type vm:NuevaOrdenViewModel}}, Path=ComandoEliminarProducto}" 
-                                                    CommandParameter="{Binding .}" Style="{StaticResource ErpGhostButton}" TextColor="{StaticResource ErpDanger}"
+                                                    CommandParameter="{Binding .}"
+                                                    IsEnabled="{Binding Source={RelativeSource AncestorType={x:Type vm:NuevaOrdenViewModel}}, Path=NoEstaOcupado}"
+                                                    Style="{StaticResource ErpGhostButton}" TextColor="{StaticResource ErpDanger}"
                                                     Padding="0" HeightRequest="30" WidthRequest="56" FontSize="11" HorizontalOptions="Center" />
                                         </Grid>
                                     </Border>
@@ -152,7 +161,8 @@
                             </Grid>
 
                             <Button Text="Emitir Orden de Compra" Style="{StaticResource ErpPrimaryButton}" 
-                                    Command="{Binding ComandoGuardarOrden}" Margin="0,15,0,0" HeightRequest="48"/>
+                                    Command="{Binding ComandoGuardarOrden}" IsEnabled="{Binding NoEstaOcupado}"
+                                    Margin="0,15,0,0" HeightRequest="48"/>
                         </VerticalStackLayout>
                     </Grid>
                 </Border>

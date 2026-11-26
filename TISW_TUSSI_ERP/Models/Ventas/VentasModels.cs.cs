@@ -28,10 +28,12 @@ public class ItemCarrito
 {
     public int IdProducto { get; set; }
     public int IdLote { get; set; }
+    public string Sku { get; set; } = "";
     public string NombreProducto { get; set; } = "";
     public string NumeroLote { get; set; } = "";
     public int Cantidad { get; set; }
     public decimal PrecioUnitario { get; set; }
+    public string PrecioUnitarioTexto => Formato.Moneda(PrecioUnitario);
     public decimal Subtotal => Cantidad * PrecioUnitario;
     public string SubtotalTexto => Formato.Moneda(Subtotal);
 }

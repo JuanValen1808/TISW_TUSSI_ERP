@@ -1,4 +1,4 @@
-﻿using TISW_TUSSI_ERP.ViewModels.Compras;
+using TISW_TUSSI_ERP.ViewModels.Compras;
 
 namespace TISW_TUSSI_ERP.Views.Compras;
 
@@ -15,6 +15,13 @@ public partial class ProveedoresPage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        await _vm.CargarAsync();
+        try
+        {
+            await _vm.CargarAsync();
+        }
+        catch
+        {
+            // Evita excepciones no controladas en ciclo de vida de la vista
+        }
     }
 }

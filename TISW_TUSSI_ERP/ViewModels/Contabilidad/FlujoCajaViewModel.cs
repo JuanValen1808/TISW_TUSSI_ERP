@@ -17,7 +17,7 @@ public class FlujoCajaViewModel : ReporteBaseViewModel
     private DateTime _fechaDesde = new(DateTime.Today.Year, 1, 1);
     public DateTime FechaDesde { get => _fechaDesde; set => SetProperty(ref _fechaDesde, value); }
 
-    private DateTime _fechaHasta = DateTime.Today;
+    private DateTime _fechaHasta = DateTime.Today.AddDays(1);
     public DateTime FechaHasta { get => _fechaHasta; set => SetProperty(ref _fechaHasta, value); }
 
     private decimal _saldoInicial, _entradas, _salidas, _cobros30, _pagos30;

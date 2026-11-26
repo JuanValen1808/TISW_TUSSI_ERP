@@ -11,7 +11,7 @@
              BackgroundColor="{StaticResource ErpBg}">
 
     <Grid RowDefinitions="Auto,*">
-        <ctrl:PageHeader Grid.Row="0" Ruta="ERP › Contabilidad › RF-CON-04" Titulo="Balance Tributario de 8 Columnas (Formato SII Chile)" />
+        <ctrl:PageHeader Grid.Row="0" Ruta="ERP › Contabilidad" Titulo="Balance Tributario de 8 Columnas" />
 
         <ScrollView Grid.Row="1">
             <VerticalStackLayout Padding="24" Spacing="18">

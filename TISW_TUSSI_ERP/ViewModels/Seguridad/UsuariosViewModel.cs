@@ -201,6 +201,51 @@ public class UsuariosViewModel : BaseViewModel
     public Color ColorMensajeGeneral => EsMensajeExito ? Paleta.Exito : Paleta.Peligro;
     public Color FondoMensajeGeneral => EsMensajeExito ? Color.FromArgb("#DCFCE7") : Color.FromArgb("#FEE2E2");
 
+    // Modal de Asignación de Poderes y Vistas por Usuario/Perfil
+    private bool _mostrarModalPoderes;
+    public bool MostrarModalPoderes
+    {
+        get => _mostrarModalPoderes;
+        set => SetProperty(ref _mostrarModalPoderes, value);
+    }
+
+    private UsuarioModel? _usuarioPoderesSeleccionado;
+    public UsuarioModel? UsuarioPoderesSeleccionado
+    {
+        get => _usuarioPoderesSeleccionado;
+        set
+        {
+            if (SetProperty(ref _usuarioPoderesSeleccionado, value))
+                OnPropertyChanged(nameof(TituloModalPoderes));
+        }
+    }
+
+    public string TituloModalPoderes => UsuarioPoderesSeleccionado != null
+        ? $"Asignar Poderes y Vistas — {UsuarioPoderesSeleccionado.Nombre}"
+        : "Asignar Poderes y Vistas";
+
+    private RolModel? _rolPoderesSeleccionado;
+    public RolModel? RolPoderesSeleccionado
+    {
+        get => _rolPoderesSeleccionado;
+        set
+        {
+            if (SetProperty(ref _rolPoderesSeleccionado, value) && value != null)
+            {
+                _ = CargarPermisosParaModalPoderesAsync(value.IdRol);
+            }
+        }
+    }
+
+    public ObservableCollection<ModuloPermisosGrupo> GruposPoderesUsuario { get; } = new();
+
+    private string _vistasPoderesTexto = "Dashboard";
+    public string VistasPoderesTexto
+    {
+        get => _vistasPoderesTexto;
+        set => SetProperty(ref _vistasPoderesTexto, value);
+    }
+
     // Comandos
     public ICommand ComandoCargar { get; }
     public ICommand ComandoNuevo { get; }
@@ -210,6 +255,10 @@ public class UsuariosViewModel : BaseViewModel
     public ICommand ComandoCambiarEstado { get; }
     public ICommand ComandoEliminar { get; }
     public ICommand ComandoLimpiarFiltros { get; }
+    public ICommand ComandoAbrirPoderes { get; }
+    public ICommand ComandoCerrarPoderes { get; }
+    public ICommand ComandoGuardarPoderes { get; }
+    public ICommand ComandoPresetPoderes { get; }
 
     public UsuariosViewModel(SeguridadService seguridadService)
     {
@@ -229,6 +278,10 @@ public class UsuariosViewModel : BaseViewModel
             RolFiltroSeleccionado = RolesFiltro.FirstOrDefault();
             await CargarUsuariosAsync();
         });
+        ComandoAbrirPoderes = new Command<UsuarioModel>(async u => await AbrirModalPoderesAsync(u));
+        ComandoCerrarPoderes = new Command(() => MostrarModalPoderes = false);
+        ComandoGuardarPoderes = new Command(async () => await GuardarPoderesUsuarioAsync());
+        ComandoPresetPoderes = new Command<string>(AplicarPresetPoderes);
     }
 
     public async Task CargarDatosInicialesAsync()
@@ -252,7 +305,16 @@ public class UsuariosViewModel : BaseViewModel
                 RolesFiltro.Add(r);
             }
 
-            RolFiltroSeleccionado = RolesFiltro[0];
+            int idPre = Preferences.Get("filtro_rol_usuarios", 0);
+            if (idPre > 0)
+            {
+                Preferences.Remove("filtro_rol_usuarios");
+                RolFiltroSeleccionado = RolesFiltro.FirstOrDefault(r => r.IdRol == idPre) ?? RolesFiltro[0];
+            }
+            else
+            {
+                RolFiltroSeleccionado = RolesFiltro[0];
+            }
             await CargarUsuariosAsync();
         }
         catch (Exception ex)
@@ -503,6 +565,149 @@ public class UsuariosViewModel : BaseViewModel
         catch (Exception ex)
         {
             MensajeGeneral = $"Error al eliminar usuario: {ex.Message}";
+            EsMensajeExito = false;
+        }
+        finally
+        {
+            EstaOcupado = false;
+        }
+    }
+
+    private async Task AbrirModalPoderesAsync(UsuarioModel? usuario)
+    {
+        if (usuario is null) return;
+        UsuarioPoderesSeleccionado = usuario;
+        var rol = Roles.FirstOrDefault(r => r.IdRol == usuario.IdRol) ?? Roles.FirstOrDefault();
+        _rolPoderesSeleccionado = rol;
+        OnPropertyChanged(nameof(RolPoderesSeleccionado));
+        if (rol != null)
+        {
+            await CargarPermisosParaModalPoderesAsync(rol.IdRol);
+        }
+        MostrarModalPoderes = true;
+    }
+
+    private async Task CargarPermisosParaModalPoderesAsync(int idRol)
+    {
+        try
+        {
+            var lista = await _seguridadService.ObtenerPermisosPorRolAsync(idRol);
+            foreach (var p in lista)
+            {
+                p.OnAsignadoCambiado = ActualizarVistaPreviaPoderes;
+            }
+
+            var agrupados = lista
+                .GroupBy(p => p.Modulo)
+                .OrderBy(g => g.Key)
+                .Select(g => new ModuloPermisosGrupo
+                {
+                    NombreModulo = g.Key,
+                    Permisos = g.ToList()
+                })
+                .ToList();
+
+            GruposPoderesUsuario.Clear();
+            foreach (var g in agrupados)
+                GruposPoderesUsuario.Add(g);
+
+            ActualizarVistaPreviaPoderes();
+        }
+        catch (Exception ex)
+        {
+            MensajeGeneral = $"Error al cargar poderes: {ex.Message}";
+            EsMensajeExito = false;
+        }
+    }
+
+    private void AplicarPresetPoderes(string? moduloPreset)
+    {
+        if (string.IsNullOrWhiteSpace(moduloPreset)) return;
+
+        foreach (var grupo in GruposPoderesUsuario)
+        {
+            bool habilitar = moduloPreset.Equals("Total", StringComparison.OrdinalIgnoreCase)
+                             || grupo.NombreModulo.Equals(moduloPreset, StringComparison.OrdinalIgnoreCase);
+            foreach (var p in grupo.Permisos)
+            {
+                p.Asignado = habilitar;
+            }
+            grupo.NotificarCambios();
+        }
+        ActualizarVistaPreviaPoderes();
+    }
+
+    private void ActualizarVistaPreviaPoderes()
+    {
+        var todos = GruposPoderesUsuario.SelectMany(g => g.Permisos).ToList();
+        var codigosActivos = new HashSet<string>(
+            todos.Where(p => p.Asignado).Select(p => p.CodigoPermiso),
+            StringComparer.OrdinalIgnoreCase);
+
+        bool esAdmin = RolPoderesSeleccionado != null && RolPoderesSeleccionado.NombreRol.Equals("Administrador", StringComparison.OrdinalIgnoreCase);
+
+        var vistas = new List<string> { "Dashboard" };
+        foreach (var sec in AppShell.Secciones)
+        {
+            if (sec.Nombre == "PRINCIPAL") continue;
+            foreach (var item in sec.Items)
+            {
+                if (esAdmin || (!string.IsNullOrEmpty(item.Permiso) && codigosActivos.Contains(item.Permiso)))
+                {
+                    vistas.Add($"[{sec.Nombre}] {item.Titulo}");
+                }
+            }
+        }
+
+        VistasPoderesTexto = vistas.Count > 1
+            ? string.Join("  ·  ", vistas)
+            : "Solo Dashboard (Principal)";
+    }
+
+    private async Task GuardarPoderesUsuarioAsync()
+    {
+        if (UsuarioPoderesSeleccionado is null || RolPoderesSeleccionado is null || EstaOcupado)
+            return;
+
+        EstaOcupado = true;
+        try
+        {
+            // 1. Si el administrador cambió el rol/perfil del usuario, actualizamos el usuario
+            if (UsuarioPoderesSeleccionado.IdRol != RolPoderesSeleccionado.IdRol)
+            {
+                UsuarioPoderesSeleccionado.IdRol = RolPoderesSeleccionado.IdRol;
+                UsuarioPoderesSeleccionado.NombreRol = RolPoderesSeleccionado.NombreRol;
+                await _seguridadService.GuardarUsuarioAsync(UsuarioPoderesSeleccionado, null);
+            }
+
+            // 2. Guardamos los permisos/poderes marcados para ese rol
+            var idsHabilitados = GruposPoderesUsuario
+                .SelectMany(g => g.Permisos)
+                .Where(p => p.Asignado)
+                .Select(p => p.IdPermiso)
+                .ToList();
+
+            await _seguridadService.GuardarPermisosRolAsync(RolPoderesSeleccionado.IdRol, idsHabilitados);
+
+            if (Models.Auth.Sesion.UsuarioActual != null && Models.Auth.Sesion.UsuarioActual.IdRol == RolPoderesSeleccionado.IdRol)
+            {
+                Models.Auth.Sesion.UsuarioActual.Permisos.Clear();
+                foreach (var cod in GruposPoderesUsuario.SelectMany(g => g.Permisos).Where(p => p.Asignado).Select(p => p.CodigoPermiso))
+                {
+                    Models.Auth.Sesion.UsuarioActual.Permisos.Add(cod);
+                }
+                AppShell.RecargarMenuActual();
+            }
+
+            MostrarModalPoderes = false;
+            MensajeGeneral = $"Poderes y vistas actualizados correctamente para '{UsuarioPoderesSeleccionado.Nombre}' (Perfil: {RolPoderesSeleccionado.NombreRol}).";
+            EsMensajeExito = true;
+
+            await CargarUsuariosAsync();
+        }
+        catch (Exception ex)
+        {
+            MensajeGeneral = $"Error al guardar poderes: {ex.Message}";
             EsMensajeExito = false;
         }
         finally

@@ -43,6 +43,13 @@ public class ConvenioSalud : INotifyPropertyChanged
         set => Cambiar(ref _idCliente, value);
     }
 
+    private string _nombreCliente = string.Empty;
+    public string NombreCliente
+    {
+        get => _nombreCliente;
+        set => Cambiar(ref _nombreCliente, value);
+    }
+
     private string _nombreConvenio = string.Empty;
     public string NombreConvenio
     {

@@ -1,0 +1,419 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:TISW_TUSSI_ERP.ViewModels.Ventas"
+    xmlns:m="clr-namespace:TISW_TUSSI_ERP.Models.Ventas"
+    xmlns:ctrl="clr-namespace:TISW_TUSSI_ERP.Views.Shared"
+    x:Class="TISW_TUSSI_ERP.Views.Ventas.CuentasPorCobrarVentasPage"
+    x:DataType="vm:CuentasPorCobrarVentasViewModel"
+    Shell.NavBarIsVisible="False"
+    BackgroundColor="{StaticResource ErpBg}"
+    Title="Cobros y Notas de Crédito">
+
+    <Grid RowDefinitions="Auto,*">
+
+        <!-- ENCABEZADO -->
+        <ctrl:PageHeader
+            Grid.Row="0"
+            Ruta="ERP › Ventas"
+            Titulo="Cobros y Notas de Crédito" />
+
+        <ScrollView Grid.Row="1">
+
+            <VerticalStackLayout
+                Padding="24"
+                Spacing="16">
+
+                <!-- PESTAÑAS -->
+                <Grid
+                    ColumnDefinitions="*,*"
+                    ColumnSpacing="12">
+
+                    <Button
+                        x:Name="BotonCobros"
+                        Grid.Column="0"
+                        Text="Cuentas por Cobrar"
+                        Clicked="OnCobrosClicked"
+                        BackgroundColor="#2563EB"
+                        TextColor="White"
+                        CornerRadius="8"
+                        HeightRequest="48" />
+
+                    <Button
+                        x:Name="BotonNotas"
+                        Grid.Column="1"
+                        Text="Notas de Crédito"
+                        Clicked="OnNotasClicked"
+                        BackgroundColor="#E2E8F0"
+                        TextColor="#334155"
+                        CornerRadius="8"
+                        HeightRequest="48" />
+
+                </Grid>
+
+                <!-- ================================= -->
+                <!-- CUENTAS POR COBRAR -->
+                <!-- ================================= -->
+
+                <VerticalStackLayout
+                    x:Name="PanelCobros"
+                    IsVisible="True"
+                    Spacing="16">
+
+                    <!-- BUSCADOR -->
+                    <Border Style="{StaticResource ErpCard}">
+
+                        <VerticalStackLayout Spacing="12">
+
+                            <Label
+                                Text="Cobros de ventas a crédito"
+                                Style="{StaticResource ErpCardTitle}" />
+
+                            <Label
+                                Text="Consulta de saldos registrados en MySQL. No modifica Contabilidad."
+                                Style="{StaticResource ErpSubtitle}" />
+
+                            <Grid
+                                ColumnDefinitions="*,Auto"
+                                ColumnSpacing="12">
+
+                                <Entry
+                                    Grid.Column="0"
+                                    Text="{Binding Busqueda}"
+                                    Placeholder="Buscar folio, cliente, RUT o estado"
+                                    TextColor="#172033"
+                                    PlaceholderColor="#64748B"
+                                    BackgroundColor="#F5F7FA"
+                                    FontSize="14"
+                                    HeightRequest="48"
+                                    HorizontalOptions="Fill"
+                                    VerticalOptions="Center" />
+
+                                <Button
+                                    Grid.Column="1"
+                                    Text="Actualizar"
+                                    Command="{Binding ComandoActualizar}"
+                                    Style="{StaticResource ErpPrimaryButton}" />
+
+                            </Grid>
+
+                            <Label
+                                Text="{Binding MensajeError}"
+                                IsVisible="{Binding HayError}"
+                                TextColor="Red" />
+
+                            <ActivityIndicator
+                                IsRunning="{Binding EstaOcupado}"
+                                IsVisible="{Binding EstaOcupado}" />
+
+                            <Grid ColumnDefinitions="*,Auto">
+
+                                <Label
+                                    Grid.Column="0"
+                                    Text="{Binding CantidadTexto}"
+                                    Style="{StaticResource ErpBody}" />
+
+                                <Label
+                                    Grid.Column="1"
+                                    Text="{Binding TotalPendienteTexto}"
+                                    FontAttributes="Bold"
+                                    FontSize="20"
+                                    TextColor="{StaticResource ErpText}" />
+
+                            </Grid>
+
+                        </VerticalStackLayout>
+
+                    </Border>
+
+                    <!-- ================================= -->
+                    <!-- LISTADO DE CUENTAS -->
+                    <!-- ================================= -->
+
+                    <Border Style="{StaticResource ErpCard}">
+
+                        <VerticalStackLayout Spacing="12">
+
+                            <Label
+                                Text="Documentos por cobrar"
+                                Style="{StaticResource ErpCardTitle}" />
+
+                            <CollectionView
+                                ItemsSource="{Binding Cuentas}"
+                                SelectionMode="None"
+                                EmptyView="No se encontraron cuentas por cobrar.">
+
+                                <CollectionView.ItemTemplate>
+
+                                    <DataTemplate
+                                        x:DataType="m:CuentaPorCobrarVenta">
+
+                                        <Border
+                                            Stroke="{StaticResource ErpBorder}"
+                                            StrokeThickness="1"
+                                            StrokeShape="RoundRectangle 8"
+                                            Padding="12"
+                                            Margin="0,0,0,8">
+
+                                            <VerticalStackLayout Spacing="10">
+
+                                                <!-- DATOS DE LA CUENTA -->
+                                                <Grid
+                                                    ColumnDefinitions="*,Auto"
+                                                    RowDefinitions="Auto,Auto,Auto,Auto"
+                                                    RowSpacing="5"
+                                                    ColumnSpacing="12">
+
+                                                    <Label
+                                                        Grid.Row="0"
+                                                        Grid.Column="0"
+                                                        Text="{Binding Folio}"
+                                                        FontAttributes="Bold"
+                                                        Style="{StaticResource ErpBody}" />
+
+                                                    <Label
+                                                        Grid.Row="1"
+                                                        Grid.Column="0"
+                                                        Text="{Binding Cliente}"
+                                                        Style="{StaticResource ErpBody}" />
+
+                                                    <Label
+                                                        Grid.Row="2"
+                                                        Grid.Column="0"
+                                                        Text="{Binding Rut}"
+                                                        Style="{StaticResource ErpSubtitle}" />
+
+                                                    <Label
+                                                        Grid.Row="3"
+                                                        Grid.Column="0"
+                                                        Text="{Binding Convenio}"
+                                                        Style="{StaticResource ErpSubtitle}" />
+
+                                                    <Label
+                                                        Grid.Row="0"
+                                                        Grid.Column="1"
+                                                        Text="{Binding SaldoTexto}"
+                                                        FontAttributes="Bold"
+                                                        HorizontalTextAlignment="End"
+                                                        Style="{StaticResource ErpBody}" />
+
+                                                    <Label
+                                                        Grid.Row="1"
+                                                        Grid.Column="1"
+                                                        Text="{Binding Estado}"
+                                                        HorizontalTextAlignment="End"
+                                                        Style="{StaticResource ErpSubtitle}" />
+
+                                                    <Label
+                                                        Grid.Row="2"
+                                                        Grid.Column="1"
+                                                        Text="{Binding VencimientoTexto, StringFormat='Vence: {0}'}"
+                                                        HorizontalTextAlignment="End"
+                                                        Style="{StaticResource ErpSubtitle}" />
+
+                                                </Grid>
+
+                                                <!-- BOTÓN REGISTRAR ABONO -->
+                                                <Button
+                                                    Text="Registrar abono"
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:CuentasPorCobrarVentasViewModel}}, Path=ComandoRegistrarAbono}"
+                                                    CommandParameter="{Binding .}"
+                                                    BackgroundColor="#2563EB"
+                                                    TextColor="White"
+                                                    CornerRadius="8"
+                                                    HeightRequest="42"
+                                                    Margin="0,4,0,0">
+
+                                                    <Button.Triggers>
+                                                        <DataTrigger
+                                                            TargetType="Button"
+                                                            Binding="{Binding Saldo}"
+                                                            Value="0">
+                                                            <Setter
+                                                                Property="IsEnabled"
+                                                                Value="False" />
+                                                        </DataTrigger>
+                                                    </Button.Triggers>
+
+                                                </Button>
+
+                                            </VerticalStackLayout>
+
+                                        </Border>
+
+                                    </DataTemplate>
+
+                                </CollectionView.ItemTemplate>
+
+                            </CollectionView>
+
+                        </VerticalStackLayout>
+
+                    </Border>
+
+                </VerticalStackLayout>
+
+                <!-- ================================= -->
+                <!-- NOTAS DE CRÉDITO INTERNAS -->
+                <!-- ================================= -->
+
+                <VerticalStackLayout
+                    x:Name="PanelNotas"
+                    IsVisible="False"
+                    Spacing="16">
+
+                    <!-- BUSCADOR DE NOTAS -->
+                    <Border Style="{StaticResource ErpCard}">
+
+                        <VerticalStackLayout Spacing="12">
+
+                            <Label
+                                Text="Notas de Crédito Internas"
+                                Style="{StaticResource ErpCardTitle}" />
+
+                            <Label
+                                Text="Consulta las notas internas generadas a partir de devoluciones registradas."
+                                Style="{StaticResource ErpSubtitle}" />
+
+                            <Grid
+                                ColumnDefinitions="*,Auto"
+                                ColumnSpacing="12">
+
+                                <Entry
+                                    x:Name="BusquedaNotas"
+                                    Grid.Column="0"
+                                    Placeholder="Buscar folio de nota, venta o motivo"
+                                    Completed="OnBuscarNotasCompleted"
+                                    TextColor="#172033"
+                                    PlaceholderColor="#64748B"
+                                    BackgroundColor="#F5F7FA"
+                                    FontSize="14"
+                                    HeightRequest="48"
+                                    HorizontalOptions="Fill"
+                                    VerticalOptions="Center" />
+
+                                <Button
+                                    Grid.Column="1"
+                                    Text="Actualizar"
+                                    Clicked="OnActualizarNotasClicked"
+                                    Style="{StaticResource ErpPrimaryButton}" />
+
+                            </Grid>
+
+                            <ActivityIndicator
+                                x:Name="CargandoNotas"
+                                IsVisible="False"
+                                IsRunning="False" />
+
+                            <Label
+                                x:Name="MensajeNotas"
+                                TextColor="{StaticResource ErpMuted}" />
+
+                        </VerticalStackLayout>
+
+                    </Border>
+
+                    <!-- ================================= -->
+                    <!-- LISTADO DE NOTAS -->
+                    <!-- ================================= -->
+
+                    <Border Style="{StaticResource ErpCard}">
+
+                        <VerticalStackLayout Spacing="12">
+
+                            <Label
+                                Text="Notas registradas"
+                                Style="{StaticResource ErpCardTitle}" />
+
+                            <CollectionView
+                                x:Name="ListaNotas"
+                                SelectionMode="None"
+                                EmptyView="No se encontraron notas de crédito internas.">
+
+                                <CollectionView.ItemTemplate>
+
+                                    <DataTemplate x:DataType="{x:Null}">
+
+                                        <Border
+                                            Stroke="{StaticResource ErpBorder}"
+                                            StrokeThickness="1"
+                                            StrokeShape="RoundRectangle 8"
+                                            Padding="12"
+                                            Margin="0,0,0,8">
+
+                                            <Grid
+                                                ColumnDefinitions="*,Auto"
+                                                RowDefinitions="Auto,Auto,Auto"
+                                                RowSpacing="5"
+                                                ColumnSpacing="12">
+
+                                                <Label
+                                                    Grid.Row="0"
+                                                    Grid.Column="0"
+                                                    Text="{Binding Folio}"
+                                                    FontAttributes="Bold"
+                                                    TextColor="#2563EB" />
+
+                                                <Label
+                                                    Grid.Row="1"
+                                                    Grid.Column="0"
+                                                    Text="{Binding FolioVenta}"
+                                                    FontSize="12"
+                                                    TextColor="#64748B" />
+
+                                                <Label
+                                                    Grid.Row="2"
+                                                    Grid.Column="0"
+                                                    Text="{Binding FechaTexto}"
+                                                    FontSize="12"
+                                                    TextColor="#64748B" />
+
+                                                <Label
+                                                    Grid.Row="0"
+                                                    Grid.Column="1"
+                                                    Text="{Binding TotalTexto}"
+                                                    FontAttributes="Bold"
+                                                    HorizontalTextAlignment="End"
+                                                    TextColor="#0F172A" />
+
+                                                <Button
+                                                    Grid.Row="1"
+                                                    Grid.Column="1"
+                                                    Text="Ver detalle"
+                                                    CommandParameter="{Binding .}"
+                                                    Clicked="OnVerNotaClicked"
+                                                    BackgroundColor="#E8F1FD"
+                                                    TextColor="#2563EB"
+                                                    CornerRadius="8" />
+
+                                            </Grid>
+
+                                        </Border>
+
+                                    </DataTemplate>
+
+                                </CollectionView.ItemTemplate>
+
+                            </CollectionView>
+
+                        </VerticalStackLayout>
+
+                    </Border>
+
+                    <!-- ADVERTENCIA -->
+                    <Label
+                        Text="Los documentos mostrados son comprobantes internos y no reemplazan una nota de crédito electrónica válida ante el SII."
+                        FontSize="12"
+                        TextColor="#64748B" />
+
+                </VerticalStackLayout>
+
+            </VerticalStackLayout>
+
+        </ScrollView>
+
+    </Grid>
+
+</ContentPage>

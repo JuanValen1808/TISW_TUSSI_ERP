@@ -33,10 +33,11 @@ public class LoginViewModel : BaseViewModel
     // Perfiles del "Acceso rápido de demostración" (coinciden con los usuarios de init.sql)
     public List<PerfilDemo> Perfiles { get; } = new()
     {
-        new() { Iniciales = "AD", Rol = "Administrador",     Email = "admin@erp.cl",    Clave = "admin123" },
-        new() { Iniciales = "CA", Rol = "Cajero / Vendedor", Email = "ventas@erp.cl",   Clave = "ventas123" },
-        new() { Iniciales = "BO", Rol = "Bodega",            Email = "bodega@erp.cl",   Clave = "bodega123" },
-        new() { Iniciales = "CO", Rol = "Contador",          Email = "contador@erp.cl", Clave = "contador123" },
+        new() { Iniciales = "AD", Rol = "Administrador", Email = "admin@erp.cl",    Clave = "admin123" },
+        new() { Iniciales = "CP", Rol = "Comprador",     Email = "compras@erp.cl",  Clave = "compras123" },
+        new() { Iniciales = "VE", Rol = "Vendedor",      Email = "ventas@erp.cl",   Clave = "ventas123" },
+        new() { Iniciales = "BO", Rol = "Bodega",        Email = "bodega@erp.cl",   Clave = "bodega123" },
+        new() { Iniciales = "CO", Rol = "Contador",      Email = "contador@erp.cl", Clave = "contador123" },
     };
 
     public ICommand ComandoIniciarSesion { get; }

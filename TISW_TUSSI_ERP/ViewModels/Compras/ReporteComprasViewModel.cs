@@ -35,27 +35,42 @@ public class ReporteComprasViewModel : BaseViewModel
 
     private bool _sinResultados;
     public bool SinResultados { get => _sinResultados; private set => SetProperty(ref _sinResultados, value); }
+    public bool NoEstaOcupado => !EstaOcupado;
 
     public ICommand ComandoGenerar { get; }
     public ICommand ComandoLimpiarFiltro { get; }
     public ICommand ComandoExportarCsv { get; }
+    public ICommand ComandoExportarPdf { get; }
 
     public ReporteComprasViewModel(ComprasService servicio)
     {
         _servicio = servicio;
         Titulo = "Reporte de Compras por Laboratorio";
 
-        ComandoGenerar = new Command(async () => await GenerarAsync());
+        ComandoGenerar = new Command(async () => await GenerarAsync(), () => NoEstaOcupado);
 
         ComandoLimpiarFiltro = new Command(async () =>
         {
+            if (EstaOcupado) return;
             RutFiltro = string.Empty;
             FechaDesde = DateTime.Today.AddDays(-60);
             FechaHasta = DateTime.Today;
             await GenerarAsync();
-        });
+        }, () => NoEstaOcupado);
 
-        ComandoExportarCsv = new Command(async () => await ExportarCsvAsync());
+        ComandoExportarCsv = new Command(async () => await ExportarCsvAsync(false), () => NoEstaOcupado);
+        ComandoExportarPdf = new Command(async () => await ExportarCsvAsync(true), () => NoEstaOcupado);
+
+        PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(EstaOcupado))
+            {
+                OnPropertyChanged(nameof(NoEstaOcupado));
+                (ComandoGenerar as Command)?.ChangeCanExecute();
+                (ComandoLimpiarFiltro as Command)?.ChangeCanExecute();
+                (ComandoExportarCsv as Command)?.ChangeCanExecute();
+            }
+        };
     }
 
     public async Task GenerarAsync()
@@ -96,16 +111,19 @@ public class ReporteComprasViewModel : BaseViewModel
         }
     }
 
-    private async Task ExportarCsvAsync()
+    private async Task ExportarCsvAsync(bool pdf = false)
     {
-        if (Filas.Count == 0)
-        {
-            await Shell.Current.DisplayAlert("Aviso", "No hay datos para exportar en el período seleccionado.", "OK");
-            return;
-        }
+        if (EstaOcupado) return;
+        EstaOcupado = true;
 
         try
         {
+            if (Filas.Count == 0)
+            {
+                await Shell.Current.DisplayAlert("Aviso", "No hay datos para exportar en el período seleccionado.", "OK");
+                return;
+            }
+
             var headers = new[] { "Proveedor / Laboratorio", "RUT", "Total Órdenes", "Órdenes Pendientes", "Órdenes Liquidadas", "Monto Total Comprado", "Monto por Recibir", "Última Compra" };
             var rows = Filas.Select(f => new[]
             {
@@ -119,11 +137,18 @@ public class ReporteComprasViewModel : BaseViewModel
                 f.UltimaCompraTexto
             });
 
-            await CsvExportHelper.ExportarYCompartirAsync("Reporte_Compras_Por_Laboratorio", headers, rows);
+            if (pdf)
+                await CsvExportHelper.ExportarPdfAsync("Reporte_Compras_Por_Laboratorio", headers, rows);
+            else
+                await CsvExportHelper.ExportarYCompartirAsync("Reporte_Compras_Por_Laboratorio", headers, rows);
         }
         catch (Exception ex)
         {
             await Shell.Current.DisplayAlert("Error", "No se pudo exportar a CSV: " + ex.Message, "OK");
+        }
+        finally
+        {
+            EstaOcupado = false;
         }
     }
 }

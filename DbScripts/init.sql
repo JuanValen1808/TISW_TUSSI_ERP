@@ -267,7 +267,7 @@ CREATE TABLE ventas_encabezado (
     folio_documento VARCHAR(50) NOT NULL,
     tipo_documento ENUM('BOLETA', 'FACTURA', 'NOTA_CREDITO', 'OTRO') NOT NULL,
     fecha_hora_emision TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    id_cliente INT NOT NULL,
+    id_cliente INT NULL,
     id_convenio INT NULL,
     estado_documento ENUM('EMITIDO', 'PAGADO', 'ANULADO', 'PENDIENTE') NOT NULL,
     forma_pago ENUM('EFECTIVO', 'TARJETA', 'TRANSFERENCIA', 'CREDITO', 'OTRO') NOT NULL,
@@ -322,6 +322,88 @@ CREATE TABLE cuentas_por_cobrar (
     UNIQUE KEY uk_cxc_venta (id_venta)
 ) ENGINE=InnoDB;
 
+CREATE TABLE cajas (
+    id_caja INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_caja VARCHAR(100) NOT NULL,
+    descripcion VARCHAR(255) NULL,
+    activa BOOLEAN NOT NULL DEFAULT TRUE
+) ENGINE=InnoDB;
+
+CREATE TABLE caja_turnos (
+    id_turno INT AUTO_INCREMENT PRIMARY KEY,
+    id_caja INT NOT NULL,
+    id_usuario_apertura INT NOT NULL,
+    id_usuario_cierre INT NULL,
+    fecha_apertura DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    fecha_cierre DATETIME NULL,
+    monto_inicial DECIMAL(15,2) NOT NULL DEFAULT 0,
+    monto_final_esperado DECIMAL(15,2) NULL,
+    monto_final_real DECIMAL(15,2) NULL,
+    diferencia DECIMAL(15,2) NULL,
+    observaciones VARCHAR(500) NULL,
+    estado VARCHAR(30) NOT NULL DEFAULT 'ABIERTA',
+    CONSTRAINT fk_caja_turnos_caja
+        FOREIGN KEY (id_caja) REFERENCES cajas(id_caja),
+    CONSTRAINT fk_caja_turnos_usr_ap
+        FOREIGN KEY (id_usuario_apertura) REFERENCES usuarios(id_usuario)
+) ENGINE=InnoDB;
+
+CREATE TABLE abonos_cuentas_por_cobrar (
+    id_abono INT AUTO_INCREMENT PRIMARY KEY,
+    id_cuenta_cobrar INT NOT NULL,
+    monto_abono DECIMAL(15,2) NOT NULL,
+    forma_pago VARCHAR(50) NOT NULL,
+    observacion VARCHAR(255) NULL,
+    fecha_abono DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_abonos_cxc
+        FOREIGN KEY (id_cuenta_cobrar) REFERENCES cuentas_por_cobrar(id_cuenta_cobrar)
+) ENGINE=InnoDB;
+
+CREATE TABLE caja_movimientos (
+    id_movimiento INT AUTO_INCREMENT PRIMARY KEY,
+    id_turno INT NOT NULL,
+    id_usuario INT NOT NULL,
+    tipo_movimiento VARCHAR(30) NOT NULL,
+    concepto VARCHAR(255) NOT NULL,
+    monto DECIMAL(15,2) NOT NULL,
+    fecha_movimiento DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id_venta INT NULL,
+    id_abono INT NULL,
+    CONSTRAINT fk_caja_mov_turno
+        FOREIGN KEY (id_turno) REFERENCES caja_turnos(id_turno),
+    CONSTRAINT fk_caja_mov_usuario
+        FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
+) ENGINE=InnoDB;
+
+CREATE TABLE devoluciones_ventas (
+    id_devolucion INT AUTO_INCREMENT PRIMARY KEY,
+    id_venta_original INT NOT NULL,
+    id_usuario INT NOT NULL,
+    fecha_devolucion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    motivo VARCHAR(255) NOT NULL,
+    monto_total DECIMAL(15,2) NOT NULL DEFAULT 0,
+    folio_nota_credito VARCHAR(100) NOT NULL,
+    estado VARCHAR(30) NOT NULL DEFAULT 'REGISTRADA',
+    CONSTRAINT fk_dev_venta_orig
+        FOREIGN KEY (id_venta_original) REFERENCES ventas_encabezado(id_venta),
+    CONSTRAINT fk_dev_venta_usr
+        FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
+) ENGINE=InnoDB;
+
+CREATE TABLE devoluciones_detalle (
+    id_detalle_devolucion INT AUTO_INCREMENT PRIMARY KEY,
+    id_devolucion INT NOT NULL,
+    id_detalle_venta INT NOT NULL,
+    cantidad_devuelta INT NOT NULL,
+    precio_unitario DECIMAL(15,2) NOT NULL,
+    subtotal DECIMAL(15,2) NOT NULL,
+    condicion_producto VARCHAR(50) NOT NULL DEFAULT 'CUARENTENA',
+    CONSTRAINT fk_dev_det_cab
+        FOREIGN KEY (id_devolucion) REFERENCES devoluciones_ventas(id_devolucion),
+    CONSTRAINT fk_dev_det_vdet
+        FOREIGN KEY (id_detalle_venta) REFERENCES ventas_detalle(id_detalle_venta)
+) ENGINE=InnoDB;
+
 -- =========================
 -- MOVIMIENTOS DE INVENTARIO
 -- =========================
@@ -362,6 +444,31 @@ CREATE TABLE registro_mermas (
     CONSTRAINT fk_mermas_usuario
         FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario),
     CHECK (cantidad > 0)
+) ENGINE=InnoDB;
+
+CREATE TABLE ubicaciones (
+    id_ubicacion INT AUTO_INCREMENT PRIMARY KEY,
+    tipo_zona VARCHAR(30) NOT NULL DEFAULT 'BODEGA',
+    codigo_ubicacion VARCHAR(50) NOT NULL UNIQUE,
+    sector_pasillo VARCHAR(100) NOT NULL,
+    estante_mueble VARCHAR(100) NOT NULL,
+    repisa_nivel VARCHAR(100) NULL,
+    descripcion VARCHAR(255) NULL,
+    activo BOOLEAN NOT NULL DEFAULT TRUE
+) ENGINE=InnoDB;
+
+CREATE TABLE lote_ubicaciones (
+    id_lote_ubicacion INT AUTO_INCREMENT PRIMARY KEY,
+    id_lote INT NOT NULL,
+    id_ubicacion INT NOT NULL,
+    cantidad INT NOT NULL DEFAULT 0,
+    fecha_asignacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id_usuario INT NULL,
+    UNIQUE KEY uk_lote_ubicacion (id_lote, id_ubicacion),
+    CONSTRAINT fk_lote_ubic_lote
+        FOREIGN KEY (id_lote) REFERENCES lotes(id_lote),
+    CONSTRAINT fk_lote_ubic_ubicacion
+        FOREIGN KEY (id_ubicacion) REFERENCES ubicaciones(id_ubicacion)
 ) ENGINE=InnoDB;
 
 -- =========================
@@ -432,6 +539,11 @@ INSERT INTO plan_cuentas (codigo_cuenta, nombre_cuenta, tipo_cuenta, nivel, cuen
 INSERT INTO proveedores (rut_proveedor, razon_social, nombre_contacto, telefono, email, condiciones_comerciales) VALUES
     ('77.888.999-0', 'Distribuidora Farmacéutica Demo Ltda.', 'Juan Pérez', '+56221112233', 'ventas@distribuidorademo.cl', 'Pago a 30 días');
 
+INSERT INTO cajas (id_caja, nombre_caja, descripcion, activa) VALUES
+    (1, 'Caja 1 - Principal POS', 'Terminal principal de sala de ventas', TRUE),
+    (2, 'Caja 2 - Convenios y Recetas', 'Atención preferencial e instituciones', TRUE),
+    (3, 'Caja 3 - Dermocosmética', 'Módulo secundario de atención rápida', TRUE);
+
 -- ==========================================================
 -- BLOQUE 2: PRIMER SET DE REGISTROS ADICIONALES
 -- ==========================================================
@@ -443,7 +555,6 @@ INSERT INTO usuarios (rut_usuario, nombre, email, password_hash, id_rol, activo)
 
 INSERT INTO rol_permisos (id_rol, id_permiso) VALUES
     (2, 1),
-    (2, 2),
     (3, 2);
 
 INSERT INTO productos (sku, codigo_barras, nombre_comercial, principio_activo, registro_sanitario, formato_presentacion, id_categoria, precio_venta_base, costo_promedio_ponderado, stock_minimo, punto_reorden, activo) VALUES
@@ -452,7 +563,8 @@ INSERT INTO productos (sku, codigo_barras, nombre_comercial, principio_activo, r
 
 INSERT INTO lotes (id_producto, numero_lote, fecha_vencimiento, stock_actual, estado_cuarentena) VALUES
     (2, 'LOTE-2026-002', '2027-12-31', 300, 'LIBERADO'),
-    (3, 'LOTE-2026-003', '2029-01-01', 1500, 'LIBERADO');
+    (3, 'LOTE-2026-003', '2029-01-01', 1500, 'LIBERADO'),
+    (2, 'LOTE-2026-004', '2028-10-10', 100, 'LIBERADO');
 
 INSERT INTO libro_diario_asientos (numero_asiento, fecha_asiento, glosa_descripcion, origen, id_usuario) VALUES
     (1, '2026-10-15', 'Apertura de caja inicial', 'AJUSTE', 1);
@@ -490,16 +602,14 @@ INSERT INTO kardex_movimientos (id_producto, id_lote, tipo_movimiento, origen_do
     (1, 1, 'SALIDA', 'VENTA', 1, 1, 1200.00, 149, 2);
 
 INSERT INTO registro_mermas (id_producto, id_lote, cantidad, motivo, costo_total_perdida, id_usuario) VALUES
-    (3, 2, 5, 'DANO', 500.00, 3);
+    (3, 3, 5, 'DANO', 500.00, 3);
 
 -- ==========================================================
 -- BLOQUE 3: CARGA MASIVA DE DATOS DE PRUEBA (IDs 10+)
 -- ==========================================================
 
 INSERT INTO roles (id_rol, nombre_rol, descripcion) VALUES
-    (10, 'Gerente Comercial', 'Supervisión general de ventas y convenios'),
-    (11, 'Auditor Contable', 'Acceso de solo lectura a contabilidad e inventario'),
-    (12, 'Cajero', 'Operación exclusiva del punto de venta');
+    (10, 'Gerente Comercial', 'Supervisión general de ventas y convenios');
 
 INSERT INTO permisos (id_permiso, codigo_permiso, modulo, descripcion) VALUES
     (10, 'PRODUCTOS_CREAR', 'Inventario', 'Crear y editar productos'),
@@ -508,12 +618,12 @@ INSERT INTO permisos (id_permiso, codigo_permiso, modulo, descripcion) VALUES
     (13, 'REPORTES_VER', 'Gerencia', 'Ver reportes financieros y de ventas');
 
 INSERT INTO rol_permisos (id_rol, id_permiso) VALUES
-    (10, 12), (10, 13), (11, 13), (11, 2), (12, 1);
+    (10, 12), (10, 13);
 
 INSERT INTO usuarios (id_usuario, rut_usuario, nombre, email, password_hash, id_rol, activo) VALUES
     (10, '15.555.666-7', 'Carlos Gerente', 'carlos.g@erp.cl', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 10, TRUE),
-    (11, '16.777.888-9', 'Ana Auditora', 'ana.a@erp.cl', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 11, TRUE),
-    (12, '17.888.999-0', 'Luis Cajero', 'luis.c@erp.cl', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 12, TRUE),
+    (11, '16.777.888-9', 'Ana Contadora', 'ana.a@erp.cl', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 4, TRUE),
+    (12, '17.888.999-0', 'Luis Vendedor', 'luis.c@erp.cl', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 2, TRUE),
     (13, '18.123.456-1', 'Sofía Ventas', 'sofia.v@erp.cl', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 2, TRUE),
     (14, '19.333.444-5', 'Roberto Bodega', 'roberto.b@erp.cl', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 3, TRUE);
 
@@ -565,8 +675,94 @@ INSERT INTO plan_cuentas (id_cuenta, codigo_cuenta, nombre_cuenta, tipo_cuenta, 
     (11, '2.1.01', 'Cuentas por Pagar Proveedores', 'PASIVO', 2, 2),
     (12, '2.1.02', 'IVA Débito Fiscal', 'PASIVO', 2, 2),
     (13, '1.1.04', 'IVA Crédito Fiscal', 'ACTIVO', 2, 1),
-    (14, '5.1.02', 'Gastos de Administración', 'GASTO', 2, 5),
-    (15, '4.1.02', 'Ingresos por Convenios', 'INGRESO', 2, 4);
+    (14, '5.1.02', 'Gastos de Administración y Ventas', 'GASTO', 2, 5),
+    (15, '4.1.02', 'Ingresos por Convenios de Salud', 'INGRESO', 2, 4),
+    (16, '1.1.05', 'Banco Cuenta Corriente', 'ACTIVO', 2, 1),
+    (17, '1.1.06', 'PPM por Recuperar (Art. 84 LIR)', 'ACTIVO', 2, 1),
+    (18, '2.1.03', 'Impuestos por Pagar F29 (SII)', 'PASIVO', 2, 2),
+    (19, '3.1.01', 'Capital Social', 'PATRIMONIO', 2, 3),
+    (20, '3.1.02', 'Resultados Acumulados', 'PATRIMONIO', 2, 3),
+    (21, '5.1.03', 'Pérdidas por Mermas y Vencimientos', 'GASTO', 2, 5);
+
+INSERT IGNORE INTO permisos (codigo_permiso, modulo, descripcion) VALUES
+    ('VENTAS_POS', 'Ventas', 'Punto de Venta (POS) y emisión de boletas y facturas'),
+    ('VENTAS_HISTORIAL', 'Ventas', 'Historial de Ventas y consulta de documentos emitidos'),
+    ('VENTAS_CAJA', 'Ventas', 'Control de Caja: apertura, arqueo, movimientos y cierre de turno'),
+    ('VENTAS_CLIENTES', 'Ventas', 'Mantenedor de Clientes y Convenios de Salud'),
+    ('VENTAS_REPORTES', 'Ventas', 'Reportes de Ranking de Ventas y Ventas por Producto/Categoría'),
+    ('VENTAS_CXC_DEVOLUCIONES', 'Ventas', 'Cuentas por Cobrar de Ventas y Devoluciones / Notas de Crédito'),
+    ('INVENTARIO_CATALOGO', 'Inventario', 'Catálogo de SKUs, creación, edición y valorización de productos'),
+    ('INVENTARIO_KARDEX', 'Inventario', 'Kardex de movimientos y trazabilidad por lotes'),
+    ('INVENTARIO_MERMAS', 'Inventario', 'Control y registro de Mermas, vencimientos y bajas de stock'),
+    ('INVENTARIO_UBICACIONES_BODEGA', 'Inventario', 'Gestión y asignación de Ubicaciones en Bodega'),
+    ('INVENTARIO_UBICACIONES_SALA', 'Inventario', 'Gestión y traspaso a Ubicaciones en Sala de Ventas'),
+    ('CONTAB_PLAN_CUENTAS', 'Contabilidad', 'Gestionar estructura jerárquica del Plan de Cuentas'),
+    ('CONTAB_LIBRO_DIARIO', 'Contabilidad', 'Registrar asientos manuales y centralizar movimientos automáticos'),
+    ('CONTAB_MAYOR_BALANCES', 'Contabilidad', 'Consultar Libro Mayor, Balance General y Balance de 8 Columnas'),
+    ('CONTAB_ESTADO_RESULTADOS', 'Contabilidad', 'Consultar Estado de Resultados e Impuesto 1ª Categoría'),
+    ('CONTAB_MAYOR_CENTRALIZADO', 'Contabilidad', 'Consultar Libro Mayor Centralizado mensual'),
+    ('CONTAB_CXC_CXP', 'Contabilidad', 'Gestionar Cuentas por Cobrar, Pagar y Antigüedad de Saldos'),
+    ('CONTAB_IMPUESTOS_SII', 'Contabilidad', 'Consultar Centralizador de Impuestos RCV y Formulario 29 SII'),
+    ('CONTAB_FLUJO_CAJA', 'Contabilidad', 'Estado de Flujo de Caja y Liquidez Proyectada a 30 días'),
+    ('ADMIN_USUARIOS', 'Seguridad', 'Administración de usuarios y contraseñas encriptadas'),
+    ('ADMIN_RBAC', 'Seguridad', 'Administración de perfiles y matriz de control de accesos'),
+    ('COMPRAS_PROVEEDORES', 'Compras', 'Mantenedor CRUD de proveedores y laboratorios'),
+    ('COMPRAS_ORDENES', 'Compras', 'Creación, seguimiento y emisión de órdenes de compra'),
+    ('COMPRAS_RECEPCION', 'Compras', 'Recepción y liquidación de facturas con ingreso de stock'),
+    ('COMPRAS_REPORTES', 'Compras', 'Reportes de compras por laboratorio, cumplimiento y precios'),
+    ('COMPRAS_DEVOLUCIONES', 'Compras', 'Gestión de devoluciones y notas de crédito a proveedores'),
+    ('COMPRAS_REABASTECIMIENTO', 'Compras', 'Sugerencia automatizada de reabastecimiento'),
+    ('COMPRAS_EQUIVALENCIAS', 'Compras', 'Gestión de equivalencias de presentación y conversión'),
+    ('COMPRAS_NIVEL_SERVICIO', 'Compras', 'Evaluación del nivel de servicio del proveedor'),
+    ('COMPRAS_AUTORIZACION_GERENCIAL', 'Compras', 'Aprobación de órdenes sobre límite presupuestario (Solo Admin/Gerencia)'),
+    ('COMPRAS_CUARENTENA_LIBERAR', 'Compras', 'Aprobación técnica y visual de lotes por Químico Farmacéutico (Solo QF/Admin)');
+
+INSERT IGNORE INTO rol_permisos (id_rol, id_permiso)
+SELECT 1, id_permiso FROM permisos;
+
+INSERT IGNORE INTO rol_permisos (id_rol, id_permiso)
+SELECT r.id_rol, p.id_permiso
+FROM roles r
+CROSS JOIN permisos p
+WHERE r.nombre_rol = 'Vendedor'
+  AND p.modulo = 'Ventas';
+
+INSERT IGNORE INTO rol_permisos (id_rol, id_permiso)
+SELECT r.id_rol, p.id_permiso
+FROM roles r
+CROSS JOIN permisos p
+WHERE r.nombre_rol = 'Bodega'
+  AND p.modulo = 'Inventario';
+
+INSERT IGNORE INTO rol_permisos (id_rol, id_permiso)
+SELECT r.id_rol, p.id_permiso
+FROM roles r
+CROSS JOIN permisos p
+WHERE r.nombre_rol = 'Contador'
+  AND (p.modulo = 'Contabilidad' OR p.codigo_permiso LIKE 'CONTAB_%');
+
+INSERT IGNORE INTO rol_permisos (id_rol, id_permiso)
+SELECT r.id_rol, p.id_permiso
+FROM roles r
+CROSS JOIN permisos p
+WHERE r.nombre_rol = 'Comprador'
+  AND p.modulo = 'Compras'
+  AND p.codigo_permiso NOT IN ('COMPRAS_AUTORIZACION_GERENCIAL', 'COMPRAS_CUARENTENA_LIBERAR');
+
+INSERT IGNORE INTO ubicaciones (id_ubicacion, tipo_zona, codigo_ubicacion, sector_pasillo, estante_mueble, repisa_nivel, descripcion, activo) VALUES
+    (1, 'BODEGA', 'BOD-P1-E01-R1', 'Pasillo 1 (Analgésicos)', 'Estante 01', 'Repisa 1', 'Almacenamiento general de comprimidos', TRUE),
+    (2, 'BODEGA', 'BOD-P1-E02-R2', 'Pasillo 1 (Analgésicos)', 'Estante 02', 'Repisa 2', 'Insumos médicos y jeringas', TRUE),
+    (3, 'BODEGA', 'BOD-P2-E01-R1', 'Pasillo 2 (Vitaminas y Crónicos)', 'Estante 01', 'Repisa 1', 'Vitaminas y suplementos', TRUE),
+    (4, 'SALA_VENTAS', 'SAL-GON-01-N1', 'Góndola 1 (OTC y Vitaminas)', 'Cuerpo A', 'Nivel 1', 'Exhibición principal público general', TRUE),
+    (5, 'SALA_VENTAS', 'SAL-VIT-01-N2', 'Vitrina Mostrador Principal', 'Sección Central', 'Bandeja 2', 'Dispensación rápida de mostrador', TRUE);
+
+INSERT IGNORE INTO lote_ubicaciones (id_lote, id_ubicacion, cantidad, id_usuario) VALUES
+    (1, 1, 100, 1),
+    (1, 5, 49, 1),
+    (2, 1, 200, 1),
+    (2, 5, 100, 1),
+    (10, 3, 150, 1),
+    (10, 4, 49, 1);
 
 INSERT INTO proveedores (id_proveedor, rut_proveedor, razon_social, nombre_contacto, telefono, email, condiciones_comerciales) VALUES
     (10, '76.555.444-3', 'Laboratorios Andinos S.A.', 'Marta López', '+56227778888', 'ventas@labandinos.cl', 'Pago a 60 días'),
@@ -676,8 +872,8 @@ BEGIN
     LEFT JOIN lotes l ON l.id_producto = p.id_producto
     WHERE p.activo = 1
     GROUP BY p.id_producto, p.sku, p.nombre_comercial, p.punto_reorden, p.stock_minimo, p.costo_promedio_ponderado
-    HAVING stock_actual <= p.punto_reorden
-    ORDER BY (stock_actual - p.punto_reorden) ASC;
+    HAVING COALESCE(SUM(l.stock_actual), 0) <= p.punto_reorden
+    ORDER BY (COALESCE(SUM(l.stock_actual), 0) - p.punto_reorden) ASC;
 END //
 DELIMITER ;
 
@@ -708,8 +904,8 @@ BEGIN
     UPDATE cuentas_por_pagar
     SET monto_pagado = LEAST(monto_pagado + p_monto_abono, monto_total),
         estado_pago = CASE 
-            WHEN (monto_pagado + p_monto_abono) >= monto_total THEN 'PAGADO'
-            WHEN (monto_pagado + p_monto_abono) > 0 THEN 'PARCIAL'
+            WHEN monto_pagado >= monto_total THEN 'PAGADO'
+            WHEN monto_pagado > 0 THEN 'PARCIAL'
             ELSE estado_pago 
         END
     WHERE id_cuenta_pagar = p_id_cuenta_pagar;
@@ -740,3 +936,35 @@ BEGIN
     COMMIT;
 END //
 DELIMITER ;
+
+-- ------------------- codigo del juan :D
+
+CREATE TABLE IF NOT EXISTS ubicaciones (
+    id_ubicacion INT AUTO_INCREMENT PRIMARY KEY,
+    tipo_zona ENUM('BODEGA', 'SALA_VENTAS') NOT NULL DEFAULT 'BODEGA',
+    codigo_ubicacion VARCHAR(50) NOT NULL UNIQUE, -- Ej: BOD-A-E1-R1
+    sector_pasillo VARCHAR(60) NOT NULL,          -- Pasillo o Zona (Ej: Pasillo A)
+    estante_mueble VARCHAR(60) NOT NULL,          -- Estante o Vitrina (Ej: Estante 1)
+    repisa_nivel VARCHAR(60) NULL,                -- Repisa o Nivel (Ej: Repisa 1)
+    descripcion VARCHAR(150) NULL,
+    activo TINYINT(1) NOT NULL DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS lote_ubicaciones (
+    id_lote_ubicacion INT AUTO_INCREMENT PRIMARY KEY,
+    id_lote INT NOT NULL,                        -- Tipo INT coincidente con la tabla lotes (id_lote)
+    id_ubicacion INT NOT NULL,
+    cantidad INT NOT NULL CHECK (cantidad >= 0),
+    fecha_asignacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id_usuario INT NULL,                         -- Tipo INT coincidente con la tabla usuarios (id_usuario)
+    UNIQUE KEY uk_lote_ubicacion (id_lote, id_ubicacion),
+    CONSTRAINT fk_lu_lote FOREIGN KEY (id_lote) REFERENCES lotes(id_lote),
+    CONSTRAINT fk_lu_ubicacion FOREIGN KEY (id_ubicacion) REFERENCES ubicaciones(id_ubicacion),
+    CONSTRAINT fk_lu_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
+);
+
+INSERT IGNORE INTO ubicaciones (tipo_zona, codigo_ubicacion, sector_pasillo, estante_mueble, repisa_nivel, descripcion, activo) VALUES
+('BODEGA', 'BOD-A-E1-R1', 'Pasillo A', 'Estante 1', 'Repisa 1', 'Analgésicos y Antiinflamatorios', 1),
+('BODEGA', 'BOD-A-E1-R2', 'Pasillo A', 'Estante 1', 'Repisa 2', 'Antibióticos Uso General', 1),
+('BODEGA', 'BOD-B-E2-R1', 'Pasillo B', 'Estante 2', 'Repisa 1', 'Insumos Médicos y Jeringas', 1),
+('BODEGA', 'BOD-C-REF-01', 'Pasillo C', 'Refrigerador 1', 'Bandeja Superior', 'Cadena de Frío (2°C - 8°C)', 1);

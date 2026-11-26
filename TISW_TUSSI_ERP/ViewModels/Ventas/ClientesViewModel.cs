@@ -13,14 +13,15 @@ public class ClientesViewModel : BaseViewModel
     public ObservableCollection<Cliente> Clientes { get; } = new();
 
     private string _busqueda = string.Empty;
+
     public string Busqueda
     {
         get => _busqueda;
         set => SetProperty(ref _busqueda, value);
     }
 
-    // Cliente seleccionado en la tabla.
     private Cliente? _clienteSeleccionado;
+
     public Cliente? ClienteSeleccionado
     {
         get => _clienteSeleccionado;
@@ -30,16 +31,19 @@ public class ClientesViewModel : BaseViewModel
             {
                 if (value != null)
                 {
-                    // Copia independiente para editar sin alterar la lista.
                     ClienteFormulario = CopiarCliente(value);
                     EsNuevoCliente = false;
+                }
+                else if (!EsNuevoCliente)
+                {
+                    ClienteFormulario = null;
                 }
             }
         }
     }
 
-    // Cliente que se edita en el formulario.
     private Cliente? _clienteFormulario;
+
     public Cliente? ClienteFormulario
     {
         get => _clienteFormulario;
@@ -47,6 +51,7 @@ public class ClientesViewModel : BaseViewModel
     }
 
     private bool _esNuevoCliente;
+
     public bool EsNuevoCliente
     {
         get => _esNuevoCliente;
@@ -54,6 +59,7 @@ public class ClientesViewModel : BaseViewModel
     }
 
     private bool _cargando;
+
     public bool Cargando
     {
         get => _cargando;
@@ -61,6 +67,7 @@ public class ClientesViewModel : BaseViewModel
     }
 
     private string _mensaje = string.Empty;
+
     public string Mensaje
     {
         get => _mensaje;
@@ -76,17 +83,17 @@ public class ClientesViewModel : BaseViewModel
     {
         _service = service;
 
-        CargarCommand = new Command(async () =>
-            await CargarClientesAsync());
+        CargarCommand =
+            new Command(async () => await CargarClientesAsync());
 
-        BuscarCommand = new Command(async () =>
-            await BuscarClientesAsync());
+        BuscarCommand =
+            new Command(async () => await BuscarClientesAsync());
 
-        GuardarCommand = new Command(async () =>
-            await GuardarClienteAsync());
+        GuardarCommand =
+            new Command(async () => await GuardarClienteAsync());
 
-        EliminarCommand = new Command(async () =>
-            await EliminarClienteAsync());
+        EliminarCommand =
+            new Command(async () => await EliminarClienteAsync());
     }
 
     private static Cliente CopiarCliente(Cliente origen)
@@ -102,9 +109,29 @@ public class ClientesViewModel : BaseViewModel
         };
     }
 
+    private void ActualizarListado(
+        IEnumerable<Cliente> datos)
+    {
+        int? idAnterior = ClienteSeleccionado?.IdCliente;
+
+        ClienteSeleccionado = null;
+
+        Clientes.Clear();
+
+        foreach (var cliente in datos)
+            Clientes.Add(cliente);
+
+        if (idAnterior.HasValue && !EsNuevoCliente)
+        {
+            ClienteSeleccionado = Clientes.FirstOrDefault(
+                c => c.IdCliente == idAnterior.Value);
+        }
+    }
+
     public async Task CargarClientesAsync()
     {
-        if (Cargando) return;
+        if (Cargando)
+            return;
 
         try
         {
@@ -112,10 +139,7 @@ public class ClientesViewModel : BaseViewModel
 
             var datos = await _service.ObtenerClientesAsync();
 
-            Clientes.Clear();
-
-            foreach (var cliente in datos)
-                Clientes.Add(cliente);
+            ActualizarListado(datos);
 
             Mensaje = $"Clientes registrados: {Clientes.Count}";
         }
@@ -131,7 +155,8 @@ public class ClientesViewModel : BaseViewModel
 
     public async Task BuscarClientesAsync()
     {
-        if (Cargando) return;
+        if (Cargando)
+            return;
 
         try
         {
@@ -143,10 +168,7 @@ public class ClientesViewModel : BaseViewModel
                 ? await _service.ObtenerClientesAsync()
                 : await _service.BuscarClientesAsync(texto);
 
-            Clientes.Clear();
-
-            foreach (var cliente in datos)
-                Clientes.Add(cliente);
+            ActualizarListado(datos);
 
             Mensaje = Clientes.Count == 0
                 ? "No se encontraron clientes."
@@ -164,10 +186,8 @@ public class ClientesViewModel : BaseViewModel
 
     public void NuevoCliente()
     {
-        // Quitar selección anterior.
         ClienteSeleccionado = null;
 
-        // Crear formulario independiente.
         ClienteFormulario = new Cliente
         {
             TipoCliente = "PERSONA"
@@ -187,7 +207,6 @@ public class ClientesViewModel : BaseViewModel
 
         var cliente = ClienteFormulario;
 
-        // Validaciones básicas.
         if (string.IsNullOrWhiteSpace(cliente.RutCliente))
         {
             Mensaje = "Debes ingresar el RUT del cliente.";
@@ -243,12 +262,14 @@ public class ClientesViewModel : BaseViewModel
             Cargando = false;
         }
 
-        // Recargar únicamente si se guardó correctamente.
-        await BuscarClientesAsync();
-
         ClienteSeleccionado = null;
         ClienteFormulario = null;
         EsNuevoCliente = false;
+
+        if (esNuevo)
+            Busqueda = string.Empty;
+
+        await BuscarClientesAsync();
 
         Mensaje = esNuevo
             ? "Cliente registrado correctamente."
@@ -257,7 +278,8 @@ public class ClientesViewModel : BaseViewModel
 
     public async Task EliminarClienteAsync()
     {
-        if (Cargando || ClienteSeleccionado == null ||
+        if (Cargando ||
+            ClienteSeleccionado == null ||
             ClienteSeleccionado.IdCliente <= 0)
         {
             Mensaje = "Selecciona un cliente registrado para eliminar.";
@@ -274,8 +296,8 @@ public class ClientesViewModel : BaseViewModel
         catch (MySqlConnector.MySqlException ex)
             when (ex.Number == 1451)
         {
-            Mensaje = "No se puede eliminar el cliente porque " +
-                      "tiene ventas o convenios asociados.";
+            Mensaje =
+                "No se puede eliminar el cliente porque tiene ventas o convenios asociados.";
             return;
         }
         catch (Exception ex)

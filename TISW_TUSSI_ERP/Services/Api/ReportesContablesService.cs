@@ -9,14 +9,16 @@ namespace TISW_TUSSI_ERP.Services.Api;
 public class ReportesContablesService
 {
     private readonly DatabaseService _dbService;
+    private readonly ContabilidadService _contabilidadService;
 
     // Cuentas de efectivo: activos cuyo nombre contiene "caja" o "banco".
     private const string FiltroCuentasEfectivo =
         "p.tipo_cuenta = 'ACTIVO' AND (LOWER(p.nombre_cuenta) LIKE '%caja%' OR LOWER(p.nombre_cuenta) LIKE '%banco%')";
 
-    public ReportesContablesService(DatabaseService dbService)
+    public ReportesContablesService(DatabaseService dbService, ContabilidadService contabilidadService)
     {
         _dbService = dbService;
+        _contabilidadService = contabilidadService;
     }
 
     private static DateTime FinDelDia(DateTime fecha) => fecha.Date.AddDays(1).AddTicks(-1);
@@ -27,6 +29,12 @@ public class ReportesContablesService
     // ------------------------------------------------------------------
     public async Task<List<AsientoDetallado>> ObtenerLibroDiarioDetalladoAsync(DateTime desde, DateTime hasta, string? origen)
     {
+        try
+        {
+            await _contabilidadService.CentralizarMovimientosPendientesAsync(Models.Auth.Sesion.UsuarioActual?.IdUsuario ?? 1);
+        }
+        catch { }
+
         var asientos = new List<AsientoDetallado>();
         using var conexion = _dbService.CrearConexion();
         await conexion.OpenAsync();
@@ -88,6 +96,12 @@ public class ReportesContablesService
     // ------------------------------------------------------------------
     public async Task<List<SaldoCuenta>> ObtenerSaldosAFechaAsync(DateTime fechaCorte)
     {
+        try
+        {
+            await _contabilidadService.CentralizarMovimientosPendientesAsync(Models.Auth.Sesion.UsuarioActual?.IdUsuario ?? 1);
+        }
+        catch { }
+
         var lista = new List<SaldoCuenta>();
         using var conexion = _dbService.CrearConexion();
         await conexion.OpenAsync();
@@ -127,6 +141,12 @@ public class ReportesContablesService
     // ------------------------------------------------------------------
     public async Task<(decimal SaldoInicial, List<MovimientoCaja> Movimientos)> ObtenerFlujoCajaAsync(DateTime desde, DateTime hasta)
     {
+        try
+        {
+            await _contabilidadService.CentralizarMovimientosPendientesAsync(Models.Auth.Sesion.UsuarioActual?.IdUsuario ?? 1);
+        }
+        catch { }
+
         var movimientos = new List<MovimientoCaja>();
         using var conexion = _dbService.CrearConexion();
         await conexion.OpenAsync();

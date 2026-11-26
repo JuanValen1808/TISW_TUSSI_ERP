@@ -98,6 +98,12 @@ public class ContabilidadService
 
     public async Task<List<PlanCuentas>> ObtenerPlanCuentasAsync()
     {
+        try
+        {
+            await CentralizarMovimientosPendientesAsync(Models.Auth.Sesion.UsuarioActual?.IdUsuario ?? 1);
+        }
+        catch { }
+
         var lista = new List<PlanCuentas>();
         using var conexion = _dbService.CrearConexion();
         await conexion.OpenAsync();
@@ -209,6 +215,12 @@ public class ContabilidadService
 
     public async Task<List<LibroDiarioAsiento>> ObtenerLibroDiarioAsync(DateTime? desde = null, DateTime? hasta = null, string? origen = null)
     {
+        try
+        {
+            await CentralizarMovimientosPendientesAsync(Models.Auth.Sesion.UsuarioActual?.IdUsuario ?? 1);
+        }
+        catch { }
+
         var lista = new List<LibroDiarioAsiento>();
         var mapa = new Dictionary<int, LibroDiarioAsiento>();
 
@@ -465,25 +477,27 @@ public class ContabilidadService
         int idVentasNetas = cuentas.GetValueOrDefault("4.1.01", 8);
         int idIngresosConvenios = cuentas.GetValueOrDefault("4.1.02", idVentasNetas);
         int idCostoVentas = cuentas.GetValueOrDefault("5.1.01", 9);
-        int idGastoMermas = cuentas.GetValueOrDefault("5.1.03", cuentas.GetValueOrDefault("5.1.02", idCostoVentas));
+        int idGastosAdmin = cuentas.GetValueOrDefault("5.1.02", idCostoVentas);
+        int idGastoMermas = cuentas.GetValueOrDefault("5.1.03", idGastosAdmin);
+        int idCapital = cuentas.GetValueOrDefault("3.1.01", cuentas.GetValueOrDefault("3", 3));
 
         int contVentas = 0, contCompras = 0, contMermas = 0;
 
         using var tx = await conexion.BeginTransactionAsync();
         try
         {
-            // 1. CENTRALIZAR VENTAS PENDIENTES (Con IVA Débito Fiscal y Costo de Ventas)
+            // 1. CENTRALIZAR VENTAS PENDIENTES (Con IVA Débito Fiscal y Costo de Ventas, incluyendo ventas a Público General)
             var ventasPend = new List<(int IdVenta, string Folio, string TipoDoc, DateTime Fecha, string FormaPago, int? IdConvenio, decimal Neto, decimal Iva, decimal Total, string Cliente, decimal CostoVenta)>();
             const string qVentas = @"
                 SELECT v.id_venta, v.folio_documento, v.tipo_documento, DATE(v.fecha_hora_emision) AS fecha,
                        v.forma_pago, v.id_convenio, v.monto_neto, v.monto_iva, v.monto_total,
-                       cl.razon_social_nombre,
+                       COALESCE(cl.razon_social_nombre, 'Público General') AS razon_social_nombre,
                        IFNULL((SELECT SUM(vd.cantidad * pr.costo_promedio_ponderado)
                                FROM ventas_detalle vd
                                INNER JOIN productos pr ON pr.id_producto = vd.id_producto
                                WHERE vd.id_venta = v.id_venta), 0) AS costo_total
                 FROM ventas_encabezado v
-                INNER JOIN clientes cl ON cl.id_cliente = v.id_cliente
+                LEFT JOIN clientes cl ON cl.id_cliente = v.id_cliente
                 WHERE v.id_asiento_contable IS NULL AND v.estado_documento <> 'ANULADO'
                 ORDER BY v.fecha_hora_emision ASC;";
 
@@ -664,6 +678,219 @@ public class ContabilidadService
                 contMermas++;
             }
 
+            // 4. CENTRALIZAR DEVOLUCIONES / NOTAS DE CRÉDITO DE VENTAS (devoluciones_ventas)
+            try
+            {
+                var devPend = new List<(int IdDevolucion, string FolioNc, string FolioVenta, DateTime Fecha, decimal MontoTotal, string Motivo, string FormaPago)>();
+                const string qDev = @"
+                    SELECT dv.id_devolucion, dv.folio_nota_credito, v.folio_documento,
+                           DATE(dv.fecha_devolucion) AS fecha, dv.monto_total, dv.motivo, v.forma_pago
+                    FROM devoluciones_ventas dv
+                    INNER JOIN ventas_encabezado v ON v.id_venta = dv.id_venta_original
+                    WHERE dv.estado = 'REGISTRADA'
+                      AND NOT EXISTS (
+                          SELECT 1 FROM libro_diario_asientos a
+                          WHERE a.glosa_descripcion LIKE CONCAT('%[NC #', dv.id_devolucion, ']%')
+                      )
+                    ORDER BY dv.fecha_devolucion ASC;";
+
+                using (var cmdD = new MySqlCommand(qDev, conexion, tx))
+                using (var rD = await cmdD.ExecuteReaderAsync())
+                {
+                    while (await rD.ReadAsync())
+                    {
+                        devPend.Add((
+                            rD.GetInt32("id_devolucion"),
+                            rD.GetString("folio_nota_credito"),
+                            rD.GetString("folio_documento"),
+                            rD.GetDateTime("fecha"),
+                            rD.GetDecimal("monto_total"),
+                            Formato.SanitizarTexto(rD.GetString("motivo")),
+                            rD.GetString("forma_pago")
+                        ));
+                    }
+                }
+
+                foreach (var d in devPend)
+                {
+                    decimal total = Math.Round(d.MontoTotal, 2);
+                    if (total <= 0) continue;
+                    decimal neto = Math.Round(total / (1m + TasaIvaChile), 2);
+                    decimal iva = Math.Round(total - neto, 2);
+                    int cuentaAbono = d.FormaPago == "CREDITO" ? idClientes : (d.FormaPago is "TARJETA" or "TRANSFERENCIA" ? idBanco : idCaja);
+
+                    var lineasNc = new List<(int IdCuenta, decimal Debe, decimal Haber)>
+                    {
+                        (idVentasNetas, neto, 0),
+                        (idIvaDebito, iva, 0),
+                        (cuentaAbono, 0, total)
+                    };
+
+                    string glosaNc = $"Nota de Crédito {d.FolioNc} (Ref. {d.FolioVenta}) · {d.Motivo} [NC #{d.IdDevolucion}]";
+                    await InsertarAsientoTransaccionalAsync(conexion, tx, d.Fecha, glosaNc, "VENTA", idUsuario, lineasNc);
+                    contVentas++;
+                }
+            }
+            catch { }
+
+            // 5. CENTRALIZAR APERTURAS, INGRESOS/EGRESOS MANUALES Y CIERRES DE TURNO DE CAJA (caja_turnos y caja_movimientos)
+            try
+            {
+                // 5.1 Aperturas de turno con monto inicial > 0
+                var turnosAp = new List<(int IdTurno, DateTime Fecha, decimal MontoInicial, string NombreCaja)>();
+                const string qTurnosAp = @"
+                    SELECT t.id_turno, DATE(t.fecha_apertura) AS fecha, t.monto_inicial, COALESCE(c.nombre_caja, 'Caja POS') AS nombre_caja
+                    FROM caja_turnos t
+                    LEFT JOIN cajas c ON c.id_caja = t.id_caja
+                    WHERE t.monto_inicial > 0
+                      AND NOT EXISTS (
+                          SELECT 1 FROM libro_diario_asientos a
+                          WHERE a.glosa_descripcion LIKE CONCAT('%[TURNO_AP #', t.id_turno, ']%')
+                      )
+                    ORDER BY t.fecha_apertura ASC;";
+
+                using (var cmdTa = new MySqlCommand(qTurnosAp, conexion, tx))
+                using (var rTa = await cmdTa.ExecuteReaderAsync())
+                {
+                    while (await rTa.ReadAsync())
+                    {
+                        turnosAp.Add((
+                            rTa.GetInt32("id_turno"),
+                            rTa.GetDateTime("fecha"),
+                            rTa.GetDecimal("monto_inicial"),
+                            Formato.SanitizarTexto(rTa.GetString("nombre_caja"))
+                        ));
+                    }
+                }
+
+                foreach (var t in turnosAp)
+                {
+                    decimal monto = Math.Round(t.MontoInicial, 2);
+                    if (monto <= 0) continue;
+
+                    var lineasAp = new List<(int IdCuenta, decimal Debe, decimal Haber)>
+                    {
+                        (idCaja, monto, 0),
+                        (idCapital, 0, monto)
+                    };
+                    string glosaAp = $"Apertura de Turno de Caja #{t.IdTurno} ({t.NombreCaja}) [TURNO_AP #{t.IdTurno}]";
+                    await InsertarAsientoTransaccionalAsync(conexion, tx, t.Fecha, glosaAp, "AJUSTE", idUsuario, lineasAp);
+                }
+
+                // 5.2 Movimientos manuales de caja (INGRESO y EGRESO donde id_venta IS NULL e id_abono IS NULL)
+                var movsCaja = new List<(int IdMovimiento, int IdTurno, DateTime Fecha, string Tipo, string Concepto, decimal Monto)>();
+                const string qMovsCaja = @"
+                    SELECT m.id_movimiento, m.id_turno, DATE(m.fecha_movimiento) AS fecha,
+                           m.tipo_movimiento, m.concepto, m.monto
+                    FROM caja_movimientos m
+                    WHERE m.id_venta IS NULL AND m.id_abono IS NULL AND m.monto > 0
+                      AND NOT EXISTS (
+                          SELECT 1 FROM libro_diario_asientos a
+                          WHERE a.glosa_descripcion LIKE CONCAT('%[CAJA_MOV #', m.id_movimiento, ']%')
+                      )
+                    ORDER BY m.fecha_movimiento ASC, m.id_movimiento ASC;";
+
+                using (var cmdMc = new MySqlCommand(qMovsCaja, conexion, tx))
+                using (var rMc = await cmdMc.ExecuteReaderAsync())
+                {
+                    while (await rMc.ReadAsync())
+                    {
+                        movsCaja.Add((
+                            rMc.GetInt32("id_movimiento"),
+                            rMc.GetInt32("id_turno"),
+                            rMc.GetDateTime("fecha"),
+                            rMc.GetString("tipo_movimiento").Trim().ToUpperInvariant(),
+                            Formato.SanitizarTexto(rMc.GetString("concepto")),
+                            rMc.GetDecimal("monto")
+                        ));
+                    }
+                }
+
+                foreach (var m in movsCaja)
+                {
+                    decimal monto = Math.Round(m.Monto, 2);
+                    if (monto <= 0) continue;
+
+                    if (m.Tipo == "INGRESO")
+                    {
+                        var lineasIng = new List<(int IdCuenta, decimal Debe, decimal Haber)>
+                        {
+                            (idCaja, monto, 0),
+                            (idCapital, 0, monto)
+                        };
+                        string glosaIng = $"Ingreso Manual en Caja (Turno #{m.IdTurno}): {m.Concepto} [CAJA_MOV #{m.IdMovimiento}]";
+                        await InsertarAsientoTransaccionalAsync(conexion, tx, m.Fecha, glosaIng, "AJUSTE", idUsuario, lineasIng);
+                    }
+                    else if (m.Tipo == "EGRESO")
+                    {
+                        var lineasEgr = new List<(int IdCuenta, decimal Debe, decimal Haber)>
+                        {
+                            (idGastosAdmin, monto, 0),
+                            (idCaja, 0, monto)
+                        };
+                        string glosaEgr = $"Egreso Manual de Caja (Turno #{m.IdTurno}): {m.Concepto} [CAJA_MOV #{m.IdMovimiento}]";
+                        await InsertarAsientoTransaccionalAsync(conexion, tx, m.Fecha, glosaEgr, "AJUSTE", idUsuario, lineasEgr);
+                    }
+                }
+
+                // 5.3 Cierres de turno con diferencia o retiro al cierre (estado = 'CERRADA' y diferencia != 0)
+                var turnosCierre = new List<(int IdTurno, DateTime Fecha, decimal Diferencia, string NombreCaja)>();
+                const string qTurnosCierre = @"
+                    SELECT t.id_turno, DATE(COALESCE(t.fecha_cierre, t.fecha_apertura)) AS fecha,
+                           COALESCE(t.diferencia, 0) AS diferencia, COALESCE(c.nombre_caja, 'Caja POS') AS nombre_caja
+                    FROM caja_turnos t
+                    LEFT JOIN cajas c ON c.id_caja = t.id_caja
+                    WHERE t.estado = 'CERRADA' AND COALESCE(t.diferencia, 0) <> 0
+                      AND NOT EXISTS (
+                          SELECT 1 FROM libro_diario_asientos a
+                          WHERE a.glosa_descripcion LIKE CONCAT('%[TURNO_CIERRE #', t.id_turno, ']%')
+                      )
+                    ORDER BY t.id_turno ASC;";
+
+                using (var cmdTc = new MySqlCommand(qTurnosCierre, conexion, tx))
+                using (var rTc = await cmdTc.ExecuteReaderAsync())
+                {
+                    while (await rTc.ReadAsync())
+                    {
+                        turnosCierre.Add((
+                            rTc.GetInt32("id_turno"),
+                            rTc.GetDateTime("fecha"),
+                            rTc.GetDecimal("diferencia"),
+                            Formato.SanitizarTexto(rTc.GetString("nombre_caja"))
+                        ));
+                    }
+                }
+
+                foreach (var tc in turnosCierre)
+                {
+                    decimal dif = Math.Round(tc.Diferencia, 2);
+                    if (dif == 0) continue;
+
+                    if (dif < 0)
+                    {
+                        decimal egresoCierre = Math.Abs(dif);
+                        var lineasCierre = new List<(int IdCuenta, decimal Debe, decimal Haber)>
+                        {
+                            (idGastosAdmin, egresoCierre, 0),
+                            (idCaja, 0, egresoCierre)
+                        };
+                        string glosaCierre = $"Retiro / Ajuste de Cierre de Turno #{tc.IdTurno} ({tc.NombreCaja}) [TURNO_CIERRE #{tc.IdTurno}]";
+                        await InsertarAsientoTransaccionalAsync(conexion, tx, tc.Fecha, glosaCierre, "AJUSTE", idUsuario, lineasCierre);
+                    }
+                    else
+                    {
+                        var lineasCierre = new List<(int IdCuenta, decimal Debe, decimal Haber)>
+                        {
+                            (idCaja, dif, 0),
+                            (idCapital, 0, dif)
+                        };
+                        string glosaCierre = $"Sobrante en Arqueo de Cierre de Turno #{tc.IdTurno} ({tc.NombreCaja}) [TURNO_CIERRE #{tc.IdTurno}]";
+                        await InsertarAsientoTransaccionalAsync(conexion, tx, tc.Fecha, glosaCierre, "AJUSTE", idUsuario, lineasCierre);
+                    }
+                }
+            }
+            catch { }
+
             await tx.CommitAsync();
             return (contVentas, contCompras, contMermas);
         }
@@ -680,20 +907,27 @@ public class ContabilidadService
 
     public async Task<List<CuentaPorCobrar>> ObtenerCuentasPorCobrarAsync()
     {
+        try
+        {
+            await CentralizarMovimientosPendientesAsync(Models.Auth.Sesion.UsuarioActual?.IdUsuario ?? 1);
+        }
+        catch { }
+
         var lista = new List<CuentaPorCobrar>();
         using var conexion = _dbService.CrearConexion();
         await conexion.OpenAsync();
 
         const string query = @"
-            SELECT c.id_cuenta_cobrar, c.id_venta, c.id_cliente,
+            SELECT c.id_cuenta_cobrar, c.id_venta, COALESCE(c.id_cliente, 0) AS id_cliente,
                    v.folio_documento, v.tipo_documento,
-                   cl.razon_social_nombre, cl.rut_cliente,
+                   COALESCE(cl.razon_social_nombre, 'Público General') AS razon_social_nombre,
+                   COALESCE(cl.rut_cliente, '66.666.666-6') AS rut_cliente,
                    IFNULL(cv.nombre_convenio, '') AS nombre_convenio,
                    DATE(v.fecha_hora_emision) AS fecha_emision,
                    c.fecha_vencimiento_pago, v.monto_total, c.monto_pendiente
             FROM cuentas_por_cobrar c
             INNER JOIN ventas_encabezado v ON v.id_venta = c.id_venta
-            INNER JOIN clientes cl ON cl.id_cliente = c.id_cliente
+            LEFT JOIN clientes cl ON cl.id_cliente = c.id_cliente
             LEFT JOIN convenios_salud cv ON cv.id_convenio = c.id_convenio
             WHERE c.estado_cobro <> 'ANULADA'
             ORDER BY (c.monto_pendiente > 0) DESC, c.fecha_vencimiento_pago ASC, v.folio_documento;";
@@ -727,6 +961,12 @@ public class ContabilidadService
 
     public async Task<List<CuentaPorPagar>> ObtenerCuentasPorPagarAsync()
     {
+        try
+        {
+            await CentralizarMovimientosPendientesAsync(Models.Auth.Sesion.UsuarioActual?.IdUsuario ?? 1);
+        }
+        catch { }
+
         var lista = new List<CuentaPorPagar>();
         using var conexion = _dbService.CrearConexion();
         await conexion.OpenAsync();
@@ -950,6 +1190,12 @@ public class ContabilidadService
 
     public async Task<List<LibroMayorItem>> ObtenerLibroMayorAsync(DateTime? desde = null, DateTime? hasta = null)
     {
+        try
+        {
+            await CentralizarMovimientosPendientesAsync(Models.Auth.Sesion.UsuarioActual?.IdUsuario ?? 1);
+        }
+        catch { }
+
         var lista = new List<LibroMayorItem>();
         using var conexion = _dbService.CrearConexion();
         await conexion.OpenAsync();
@@ -1010,6 +1256,12 @@ public class ContabilidadService
 
     public async Task<List<BalanceOchoColumnasItem>> ObtenerBalanceOchoColumnasAsync(DateTime? desde = null, DateTime? hasta = null)
     {
+        try
+        {
+            await CentralizarMovimientosPendientesAsync(Models.Auth.Sesion.UsuarioActual?.IdUsuario ?? 1);
+        }
+        catch { }
+
         var lista = new List<BalanceOchoColumnasItem>();
         using var conexion = _dbService.CrearConexion();
         await conexion.OpenAsync();
@@ -1086,6 +1338,12 @@ public class ContabilidadService
 
     public async Task<List<MayorCentralizadoItem>> ObtenerMayorCentralizadoAsync(int? idCuenta, DateTime fechaDesde, DateTime fechaHasta)
     {
+        try
+        {
+            await CentralizarMovimientosPendientesAsync(Models.Auth.Sesion.UsuarioActual?.IdUsuario ?? 1);
+        }
+        catch { }
+
         var lista = new List<MayorCentralizadoItem>();
         using var conexion = _dbService.CrearConexion();
         await conexion.OpenAsync();
@@ -1169,20 +1427,27 @@ public class ContabilidadService
 
     public async Task<(List<DocumentoLibroVentasItem> Ventas, List<DocumentoLibroComprasItem> Compras)> ObtenerLibrosImpuestosAsync(DateTime desde, DateTime hasta)
     {
+        try
+        {
+            await CentralizarMovimientosPendientesAsync(Models.Auth.Sesion.UsuarioActual?.IdUsuario ?? 1);
+        }
+        catch { }
+
         var ventas = new List<DocumentoLibroVentasItem>();
         var compras = new List<DocumentoLibroComprasItem>();
 
         using var conexion = _dbService.CrearConexion();
         await conexion.OpenAsync();
 
-        // 1. Libro de Ventas (excluye documentos anulados del cálculo tributario)
+        // 1. Libro de Ventas (incluye ventas a Público General con RUT genérico SII 66.666.666-6 y excluye documentos anulados)
         const string qVentas = @"
             SELECT v.id_venta, v.folio_documento, v.tipo_documento, v.fecha_hora_emision,
-                   cl.rut_cliente, cl.razon_social_nombre,
+                   COALESCE(cl.rut_cliente, '66.666.666-6') AS rut_cliente,
+                   COALESCE(cl.razon_social_nombre, 'Consumidor Final / Público General') AS razon_social_nombre,
                    v.monto_descuento, v.monto_neto, v.monto_iva, v.monto_total,
                    v.forma_pago, v.estado_documento
             FROM ventas_encabezado v
-            INNER JOIN clientes cl ON cl.id_cliente = v.id_cliente
+            LEFT JOIN clientes cl ON cl.id_cliente = v.id_cliente
             WHERE v.fecha_hora_emision BETWEEN @Desde AND @Hasta
               AND v.estado_documento <> 'ANULADO'
             ORDER BY v.fecha_hora_emision ASC, v.folio_documento ASC;";
@@ -1222,6 +1487,50 @@ public class ContabilidadService
                 });
             }
         }
+
+        // 1b. Notas de Crédito emitidas en el módulo de Devoluciones de Ventas (devoluciones_ventas)
+        try
+        {
+            const string qNotas = @"
+                SELECT dv.id_devolucion, dv.folio_nota_credito, dv.fecha_devolucion,
+                       COALESCE(cl.rut_cliente, '66.666.666-6') AS rut_cliente,
+                       COALESCE(cl.razon_social_nombre, 'Consumidor Final / Público General') AS razon_social_nombre,
+                       dv.monto_total, v.forma_pago, dv.estado
+                FROM devoluciones_ventas dv
+                INNER JOIN ventas_encabezado v ON v.id_venta = dv.id_venta_original
+                LEFT JOIN clientes cl ON cl.id_cliente = v.id_cliente
+                WHERE dv.fecha_devolucion BETWEEN @Desde AND @Hasta
+                  AND dv.estado = 'REGISTRADA'
+                ORDER BY dv.fecha_devolucion ASC;";
+
+            using var cmdNc = new MySqlCommand(qNotas, conexion);
+            cmdNc.Parameters.AddWithValue("@Desde", desde.Date);
+            cmdNc.Parameters.AddWithValue("@Hasta", hasta.Date.AddDays(1).AddTicks(-1));
+            using var rNc = await cmdNc.ExecuteReaderAsync();
+            while (await rNc.ReadAsync())
+            {
+                decimal totalNc = rNc.GetDecimal("monto_total");
+                decimal netoNc = Math.Round(totalNc / (1m + TasaIvaChile), 0);
+                decimal ivaNc = Math.Round(totalNc - netoNc, 0);
+
+                ventas.Add(new DocumentoLibroVentasItem
+                {
+                    IdVenta = rNc.GetInt32("id_devolucion"),
+                    Folio = rNc.GetString("folio_nota_credito"),
+                    TipoDocumento = "NOTA_CREDITO",
+                    FechaEmision = rNc.GetDateTime("fecha_devolucion"),
+                    RutCliente = rNc.GetString("rut_cliente"),
+                    RazonSocial = Formato.SanitizarTexto(rNc.GetString("razon_social_nombre")),
+                    MontoDescuento = 0,
+                    MontoNeto = netoNc,
+                    MontoIva = ivaNc,
+                    MontoTotal = totalNc,
+                    FormaPago = rNc.GetString("forma_pago"),
+                    Estado = rNc.GetString("estado")
+                });
+            }
+        }
+        catch { }
 
         // 2. Libro de Compras (Facturas de proveedores recepcionadas en el período)
         const string qCompras = @"

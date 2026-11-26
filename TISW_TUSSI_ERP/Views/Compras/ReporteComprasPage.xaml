@@ -27,8 +27,12 @@
                         <Label Text="Consolidado de facturas y adquisiciones filtrado por rango de fechas y RUT del proveedor."
                                Style="{StaticResource ErpSubtitle}" />
                     </VerticalStackLayout>
-                    <Button Grid.Column="1" Text="Exportar CSV" Style="{StaticResource ErpGhostButton}"
-                            Command="{Binding ComandoExportarCsv}" VerticalOptions="Center" />
+                    <HorizontalStackLayout Grid.Column="1" Spacing="8" VerticalOptions="Center">
+                        <Button Text="Exportar PDF" Style="{StaticResource ErpPrimaryButton}"
+                                Command="{Binding ComandoExportarPdf}" IsEnabled="{Binding NoEstaOcupado}" />
+                        <Button Text="Exportar Excel (CSV)" Style="{StaticResource ErpGhostButton}"
+                                Command="{Binding ComandoExportarCsv}" IsEnabled="{Binding NoEstaOcupado}" />
+                    </HorizontalStackLayout>
                 </Grid>
 
                 <!-- Filtros de Búsqueda -->
@@ -61,8 +65,8 @@
 
                         <!-- Botones -->
                         <HorizontalStackLayout Grid.Column="4" Spacing="10" VerticalOptions="End">
-                            <Button Text="Limpiar" Command="{Binding ComandoLimpiarFiltro}" Style="{StaticResource ErpGhostButton}" HeightRequest="46"/>
-                            <Button Text="Generar Reporte" Command="{Binding ComandoGenerar}" Style="{StaticResource ErpPrimaryButton}" HeightRequest="46"/>
+                            <Button Text="Limpiar" Command="{Binding ComandoLimpiarFiltro}" IsEnabled="{Binding NoEstaOcupado}" Style="{StaticResource ErpGhostButton}" HeightRequest="46"/>
+                            <Button Text="Generar Reporte" Command="{Binding ComandoGenerar}" IsEnabled="{Binding NoEstaOcupado}" Style="{StaticResource ErpPrimaryButton}" HeightRequest="46"/>
                         </HorizontalStackLayout>
                     </Grid>
                 </Border>

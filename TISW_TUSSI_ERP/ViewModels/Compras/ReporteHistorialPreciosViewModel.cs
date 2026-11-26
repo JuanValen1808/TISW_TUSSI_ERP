@@ -36,40 +36,68 @@ public class ReporteHistorialPreciosViewModel : BaseViewModel
 
     private bool _sinResultados;
     public bool SinResultados { get => _sinResultados; private set => SetProperty(ref _sinResultados, value); }
+    public bool NoEstaOcupado => !EstaOcupado;
 
     public ICommand ComandoGenerar { get; }
     public ICommand ComandoLimpiarFiltros { get; }
     public ICommand ComandoExportarCsv { get; }
+    public ICommand ComandoExportarPdf { get; }
 
     public ReporteHistorialPreciosViewModel(ComprasService servicio)
     {
         _servicio = servicio;
         Titulo = "Historial de Precios de Adquisición";
 
-        ComandoGenerar = new Command(async () => await GenerarReporteAsync());
+        ComandoGenerar = new Command(async () => await GenerarReporteAsync(), () => NoEstaOcupado);
         ComandoLimpiarFiltros = new Command(async () =>
         {
+            if (EstaOcupado) return;
             FechaDesde = DateTime.Today.AddDays(-180);
             FechaHasta = DateTime.Today;
             ProductoFiltro = null;
             await GenerarReporteAsync();
-        });
-        ComandoExportarCsv = new Command(async () => await ExportarCsvAsync());
+        }, () => NoEstaOcupado);
+        ComandoExportarCsv = new Command(async () => await ExportarCsvAsync(false), () => NoEstaOcupado);
+        ComandoExportarPdf = new Command(async () => await ExportarCsvAsync(true), () => NoEstaOcupado);
+
+        PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(EstaOcupado))
+            {
+                OnPropertyChanged(nameof(NoEstaOcupado));
+                (ComandoGenerar as Command)?.ChangeCanExecute();
+                (ComandoLimpiarFiltros as Command)?.ChangeCanExecute();
+                (ComandoExportarCsv as Command)?.ChangeCanExecute();
+            }
+        };
     }
 
     public async Task CargarInicialAsync()
     {
+        if (EstaOcupado) return;
+        EstaOcupado = true;
+        MensajeError = string.Empty;
+
         try
         {
+            int? idProdActual = ProductoFiltro?.Id;
             var prods = await _servicio.ObtenerProductosParaCompraAsync();
             Productos.Clear();
             foreach (var p in prods) Productos.Add(p);
 
-            await GenerarReporteAsync();
+            ProductoFiltro = idProdActual.HasValue
+                ? Productos.FirstOrDefault(p => p.Id == idProdActual.Value)
+                : null;
+
+            await GenerarInternoAsync();
         }
         catch (Exception ex)
         {
             MensajeError = "Error al iniciar: " + ex.Message;
+        }
+        finally
+        {
+            EstaOcupado = false;
         }
     }
 
@@ -88,17 +116,7 @@ public class ReporteHistorialPreciosViewModel : BaseViewModel
 
         try
         {
-            int? idProd = ProductoFiltro?.Id;
-            var (resumen, lista) = await _servicio.ObtenerReporteHistorialPreciosAsync(idProd, FechaDesde, FechaHasta);
-
-            Resumen = resumen;
-            Items.Clear();
-            foreach (var item in lista)
-            {
-                Items.Add(item);
-            }
-
-            SinResultados = Items.Count == 0;
+            await GenerarInternoAsync();
         }
         catch (Exception ex)
         {
@@ -110,16 +128,41 @@ public class ReporteHistorialPreciosViewModel : BaseViewModel
         }
     }
 
-    private async Task ExportarCsvAsync()
+    private async Task GenerarInternoAsync()
     {
-        if (Items.Count == 0)
+        if (FechaDesde > FechaHasta)
         {
-            await Shell.Current.DisplayAlert("Aviso", "No hay datos para exportar en el historial actual.", "OK");
+            MensajeError = "La fecha 'Desde' no puede ser posterior a la fecha 'Hasta'.";
             return;
         }
 
+        MensajeError = string.Empty;
+        int? idProd = ProductoFiltro?.Id;
+        var (resumen, lista) = await _servicio.ObtenerReporteHistorialPreciosAsync(idProd, FechaDesde, FechaHasta);
+
+        Resumen = resumen;
+        Items.Clear();
+        foreach (var item in lista)
+        {
+            Items.Add(item);
+        }
+
+        SinResultados = Items.Count == 0;
+    }
+
+    private async Task ExportarCsvAsync(bool pdf = false)
+    {
+        if (EstaOcupado) return;
+        EstaOcupado = true;
+
         try
         {
+            if (Items.Count == 0)
+            {
+                await Shell.Current.DisplayAlert("Aviso", "No hay datos para exportar en el historial actual.", "OK");
+                return;
+            }
+
             var headers = new[] { "Fecha", "Documento", "SKU", "Medicamento", "Proveedor", "Cantidad", "Costo Anterior", "Costo Unitario", "Variación ($)", "Variación (%)", "Tendencia" };
             var rows = Items.Select(i => new[]
             {
@@ -136,11 +179,18 @@ public class ReporteHistorialPreciosViewModel : BaseViewModel
                 i.IndicadorTendencia
             });
 
-            await CsvExportHelper.ExportarYCompartirAsync("Reporte_Historial_Precios", headers, rows);
+            if (pdf)
+                await CsvExportHelper.ExportarPdfAsync("Reporte_Historial_Precios", headers, rows);
+            else
+                await CsvExportHelper.ExportarYCompartirAsync("Reporte_Historial_Precios", headers, rows);
         }
         catch (Exception ex)
         {
             await Shell.Current.DisplayAlert("Error", "No se pudo exportar a CSV: " + ex.Message, "OK");
+        }
+        finally
+        {
+            EstaOcupado = false;
         }
     }
 }

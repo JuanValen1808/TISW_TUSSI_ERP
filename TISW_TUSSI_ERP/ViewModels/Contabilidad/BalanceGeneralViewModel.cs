@@ -18,7 +18,7 @@ public class BalanceGeneralViewModel : ReporteBaseViewModel
     public ObservableCollection<LineaBalanceGeneral> Pasivos { get; } = new();
     public ObservableCollection<LineaBalanceGeneral> Patrimonio { get; } = new();
 
-    private DateTime _fechaCorte = DateTime.Today;
+    private DateTime _fechaCorte = DateTime.Today.AddDays(1);
     public DateTime FechaCorte { get => _fechaCorte; set => SetProperty(ref _fechaCorte, value); }
 
     private decimal _totalActivos, _totalPasivos, _totalPatrimonio, _resultado;

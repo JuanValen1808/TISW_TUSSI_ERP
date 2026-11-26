@@ -4,6 +4,7 @@
        xmlns:dashboard="clr-namespace:TISW_TUSSI_ERP.Views.Dashboard"
        xmlns:compras="clr-namespace:TISW_TUSSI_ERP.Views.Compras"
        xmlns:ventas="clr-namespace:TISW_TUSSI_ERP.Views.Ventas"
+       xmlns:inventario="clr-namespace:TISW_TUSSI_ERP.Views.Inventario"
        xmlns:contabilidad="clr-namespace:TISW_TUSSI_ERP.Views.Contabilidad"
        xmlns:admin="clr-namespace:TISW_TUSSI_ERP.Views.Admin"
        x:Class="TISW_TUSSI_ERP.AppShell"
@@ -54,9 +55,11 @@
         </Grid>
     </Shell.FlyoutContent>
 
-    <!-- RUTAS PRINCIPALES Y OPERACIONALES -->
+    <!-- PRINCIPAL -->
     <ShellContent Route="DashboardPage" Shell.FlyoutItemIsVisible="False"
                   ContentTemplate="{DataTemplate dashboard:DashboardPage}" />
+
+    <!-- COMPRAS -->
     <ShellContent Route="OrdenesCompraPage" Shell.FlyoutItemIsVisible="False"
                   ContentTemplate="{DataTemplate compras:OrdenesCompraPage}" />
     <ShellContent Route="ProveedoresPage" Shell.FlyoutItemIsVisible="False"
@@ -69,14 +72,38 @@
                   ContentTemplate="{DataTemplate compras:ReporteCumplimientoPage}" />
     <ShellContent Route="ReporteHistorialPreciosPage" Shell.FlyoutItemIsVisible="False"
                   ContentTemplate="{DataTemplate compras:ReporteHistorialPreciosPage}" />
+
+    <!-- VENTAS -->
     <ShellContent Route="PosPage" Shell.FlyoutItemIsVisible="False"
                   ContentTemplate="{DataTemplate ventas:PosPage}" />
+    <ShellContent Route="HistorialVentasPage" Shell.FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate ventas:HistorialVentasPage}" />
     <ShellContent Route="ClientesPage" Shell.FlyoutItemIsVisible="False"
                   ContentTemplate="{DataTemplate ventas:ClientesPage}" />
     <ShellContent Route="ConveniosPage" Shell.FlyoutItemIsVisible="False"
                   ContentTemplate="{DataTemplate ventas:ConveniosPage}" />
     <ShellContent Route="RankingVentasPage" Shell.FlyoutItemIsVisible="False"
                   ContentTemplate="{DataTemplate ventas:RankingVentasPage}" />
+    <ShellContent Route="ReporteProductosPage" Shell.FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate ventas:ReporteProductosPage}" />
+    <ShellContent Route="CuentasPorCobrarVentasPage" Shell.FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate ventas:CuentasPorCobrarVentasPage}" />
+    <ShellContent Route="DevolucionesPage" Shell.FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate ventas:DevolucionesPage}" />
+    <ShellContent Route="CajaPage" Shell.FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate ventas:CajaPage}" />
+
+    <!-- INVENTARIO -->
+    <ShellContent Route="InventarioPage" Shell.FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate inventario:InventarioPage}" />
+    <ShellContent Route="KardexPage" Shell.FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate inventario:KardexPage}" />
+    <ShellContent Route="MermasPage" Shell.FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate inventario:MermasPage}" />
+    <ShellContent Route="UbicacionesBodegaPage" Shell.FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate inventario:UbicacionesBodegaPage}" />
+    <ShellContent Route="UbicacionesSalaPage" Shell.FlyoutItemIsVisible="False"
+                  ContentTemplate="{DataTemplate inventario:UbicacionesSalaPage}" />
 
     <!-- RUTAS DE CONTABILIDAD (RF-CON-01 A RF-CON-09) -->
     <ShellContent Route="PlanCuentasPage" Shell.FlyoutItemIsVisible="False"
@@ -111,4 +138,5 @@
                   ContentTemplate="{DataTemplate admin:PerfilesPage}" />
     <ShellContent Route="AccesosPage" Shell.FlyoutItemIsVisible="False"
                   ContentTemplate="{DataTemplate admin:AccesosPage}" />
+
 </Shell>

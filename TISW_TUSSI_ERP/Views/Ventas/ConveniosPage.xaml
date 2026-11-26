@@ -17,6 +17,7 @@
         <ResourceDictionary>
             <helpers:DecimalSeguroConverter
                 x:Key="DecimalSeguroConverter" />
+
             <helpers:MonedaClpConverter
                 x:Key="MonedaClpConverter" />
         </ResourceDictionary>
@@ -24,21 +25,145 @@
 
     <Grid RowDefinitions="Auto,*">
 
+        <!-- ENCABEZADO -->
         <ctrl:PageHeader
             Grid.Row="0"
-            Ruta="ERP › Ventas › Clientes"
+            Ruta="ERP › Ventas"
             Titulo="Convenios de salud" />
 
-        <ScrollView Grid.Row="1">
+        <!-- CONTENIDO PRINCIPAL -->
+        <ScrollView
+            Grid.Row="1"
+            x:Name="ContenidoScroll"
+            Orientation="Vertical">
 
-            <VerticalStackLayout Padding="24" Spacing="16">
+            <VerticalStackLayout
+                Padding="24"
+                Spacing="16">
 
-                <!-- CLIENTE -->
+                <!-- SELECCIONAR CLIENTE -->
                 <Border Style="{StaticResource ErpCard}">
-                    <Grid ColumnDefinitions="*,Auto"
-                          ColumnSpacing="12">
 
-                        <VerticalStackLayout Spacing="5">
+                    <VerticalStackLayout Spacing="12">
+
+                        <Label
+                            Text="Seleccionar cliente"
+                            Style="{StaticResource ErpCardTitle}" />
+
+                        <Label
+                            Text="Busca y selecciona un cliente registrado para administrar sus convenios."
+                            Style="{StaticResource ErpSubtitle}" />
+
+                        <!-- BUSCADOR -->
+                        <Border Style="{StaticResource ErpInputBox}">
+
+                            <Entry
+                                Text="{Binding BusquedaCliente, Mode=TwoWay}"
+                                Placeholder="Buscar por RUT o nombre del cliente..."
+                                Style="{StaticResource ErpEntry}"
+                                ClearButtonVisibility="WhileEditing" />
+
+                        </Border>
+
+                        <!--
+                            LISTA DE CLIENTES
+
+                            Ya no usamos CollectionView.
+                            BindableLayout no tiene selección
+                            automática mediante las flechas.
+
+                            El cliente se selecciona haciendo
+                            clic sobre su tarjeta.
+                        -->
+                        <ScrollView
+                            HeightRequest="205"
+                            Orientation="Vertical">
+
+                            <VerticalStackLayout
+                                Spacing="6"
+                                BindableLayout.ItemsSource="{Binding Clientes}">
+
+                                <BindableLayout.ItemTemplate>
+
+                                    <DataTemplate x:DataType="m:Cliente">
+
+                                        <Border
+                                            Padding="14,10"
+                                            BackgroundColor="#F8FAFC"
+                                            Stroke="#D8E2EF"
+                                            StrokeThickness="1"
+                                            StrokeShape="RoundRectangle 9">
+
+                                            <Border.GestureRecognizers>
+
+                                                <TapGestureRecognizer
+                                                    Tapped="OnClienteTarjetaTapped"
+                                                    CommandParameter="{Binding .}" />
+
+                                            </Border.GestureRecognizers>
+
+                                            <Grid
+                                                ColumnDefinitions="*,Auto"
+                                                ColumnSpacing="12">
+
+                                                <VerticalStackLayout Spacing="3">
+
+                                                    <Label
+                                                        Text="{Binding RazonSocialNombre}"
+                                                        FontSize="14"
+                                                        FontAttributes="Bold"
+                                                        TextColor="#111827" />
+
+                                                    <HorizontalStackLayout
+                                                        Spacing="12">
+
+                                                        <Label
+                                                            Text="{Binding RutCliente}"
+                                                            FontSize="12"
+                                                            TextColor="#64748B" />
+
+                                                        <Label
+                                                            Text="{Binding TipoCliente}"
+                                                            FontSize="11"
+                                                            FontAttributes="Bold"
+                                                            TextColor="#1D6FD8" />
+
+                                                    </HorizontalStackLayout>
+
+                                                </VerticalStackLayout>
+
+                                                <Label
+                                                    Grid.Column="1"
+                                                    Text="›"
+                                                    FontSize="24"
+                                                    TextColor="#1D6FD8"
+                                                    VerticalOptions="Center" />
+
+                                            </Grid>
+
+                                        </Border>
+
+                                    </DataTemplate>
+
+                                </BindableLayout.ItemTemplate>
+
+                            </VerticalStackLayout>
+
+                        </ScrollView>
+
+                    </VerticalStackLayout>
+
+                </Border>
+
+                <!-- CLIENTE SELECCIONADO -->
+                <Border Style="{StaticResource ErpCard}">
+
+                    <Grid
+                        ColumnDefinitions="*,Auto"
+                        ColumnSpacing="16">
+
+                        <VerticalStackLayout Spacing="7">
+
                             <Label
                                 Text="CLIENTE SELECCIONADO"
                                 Style="{StaticResource ErpCaption}" />
@@ -48,22 +173,65 @@
                                 FontSize="19"
                                 FontAttributes="Bold"
                                 TextColor="{StaticResource ErpText}" />
+
+                            <HorizontalStackLayout Spacing="16">
+
+                                <Label
+                                    Text="{Binding RutCliente,
+                                                   StringFormat='RUT: {0}'}"
+                                    FontSize="12"
+                                    TextColor="{StaticResource ErpMuted}" />
+
+                                <Label
+                                    Text="{Binding TipoCliente,
+                                                   StringFormat='Tipo: {0}'}"
+                                    FontSize="12"
+                                    TextColor="#1D6FD8" />
+
+                            </HorizontalStackLayout>
+
+                            <Label
+                                Text="{Binding EmailCliente}"
+                                FontSize="12"
+                                TextColor="{StaticResource ErpMuted}" />
+
+                            <Label
+                                Text="{Binding TelefonoCliente}"
+                                FontSize="12"
+                                TextColor="{StaticResource ErpMuted}" />
+
                         </VerticalStackLayout>
 
-                        <Button
+                        <HorizontalStackLayout
                             Grid.Column="1"
-                            Text="Volver a clientes"
-                            BackgroundColor="White"
-                            TextColor="{StaticResource ErpPrimary}"
-                            BorderColor="{StaticResource ErpPrimary}"
-                            BorderWidth="1"
-                            CornerRadius="9"
-                            Padding="16,10"
-                            Clicked="OnVolverClicked" />
+                            Spacing="10"
+                            VerticalOptions="Center">
+
+                            <Button
+                                Text="Ver todos los convenios"
+                                BackgroundColor="#EFF6FF"
+                                TextColor="#1D6FD8"
+                                CornerRadius="9"
+                                Padding="16,10"
+                                Command="{Binding VerTodosCommand}" />
+
+                            <Button
+                                Text="Volver a clientes"
+                                BackgroundColor="White"
+                                TextColor="#1D6FD8"
+                                BorderColor="#1D6FD8"
+                                BorderWidth="1"
+                                CornerRadius="9"
+                                Padding="16,10"
+                                Clicked="OnVolverClicked" />
+
+                        </HorizontalStackLayout>
+
                     </Grid>
+
                 </Border>
 
-                <!-- MENSAJES -->
+                <!-- MENSAJE -->
                 <Label
                     Text="{Binding Mensaje}"
                     Style="{StaticResource ErpSubtitle}" />
@@ -71,15 +239,17 @@
                 <ActivityIndicator
                     IsRunning="{Binding Cargando}"
                     IsVisible="{Binding Cargando}"
-                    Color="{StaticResource ErpPrimary}" />
+                    Color="#1D6FD8" />
 
-                <!-- CONTENIDO -->
-                <Grid ColumnDefinitions="*,1.15*"
-                      ColumnSpacing="16">
+                <!-- LISTADO Y FORMULARIO -->
+                <Grid
+                    ColumnDefinitions="*,1.15*"
+                    ColumnSpacing="16">
 
-                    <!-- LISTA DE CONVENIOS -->
-                    <Border Grid.Column="0"
-                            Style="{StaticResource ErpCard}">
+                    <!-- CONVENIOS REGISTRADOS -->
+                    <Border
+                        Grid.Column="0"
+                        Style="{StaticResource ErpCard}">
 
                         <VerticalStackLayout Spacing="14">
 
@@ -87,26 +257,31 @@
 
                                 <Label
                                     Text="Convenios registrados"
-                                    Style="{StaticResource ErpCardTitle}" />
+                                    Style="{StaticResource ErpCardTitle}"
+                                    VerticalOptions="Center" />
 
                                 <Button
                                     Grid.Column="1"
                                     Text="+ Nuevo convenio"
                                     Style="{StaticResource ErpPrimaryButton}"
                                     Clicked="OnNuevoConvenioClicked" />
+
                             </Grid>
 
                             <BoxView
                                 HeightRequest="1"
                                 Color="{StaticResource ErpBorder}" />
 
+                            <!-- LISTA DE CONVENIOS -->
                             <CollectionView
                                 ItemsSource="{Binding Convenios}"
-                                SelectedItem="{Binding ConvenioSeleccionado, Mode=TwoWay}"
+                                SelectedItem="{Binding ConvenioSeleccionado,
+                                               Mode=TwoWay}"
                                 SelectionMode="Single"
-                                HeightRequest="450">
+                                HeightRequest="410">
 
                                 <CollectionView.Header>
+
                                     <Grid
                                         ColumnDefinitions="*,85,85"
                                         ColumnSpacing="8"
@@ -125,28 +300,34 @@
                                             Grid.Column="2"
                                             Text="ESTADO"
                                             Style="{StaticResource ErpCaption}" />
+
                                     </Grid>
+
                                 </CollectionView.Header>
 
                                 <CollectionView.EmptyView>
+
                                     <VerticalStackLayout
                                         Padding="16,40"
                                         Spacing="8">
 
                                         <Label
-                                            Text="Este cliente no tiene convenios."
+                                            Text="No hay convenios para mostrar."
                                             HorizontalTextAlignment="Center"
                                             TextColor="{StaticResource ErpMuted}" />
 
                                         <Label
-                                            Text="Pulsa Nuevo convenio para registrar uno."
+                                            Text="Selecciona un cliente para consultar sus convenios."
                                             HorizontalTextAlignment="Center"
                                             FontSize="12"
                                             TextColor="{StaticResource ErpMuted}" />
+
                                     </VerticalStackLayout>
+
                                 </CollectionView.EmptyView>
 
                                 <CollectionView.ItemTemplate>
+
                                     <DataTemplate x:DataType="m:ConvenioSalud">
 
                                         <Border
@@ -161,15 +342,28 @@
                                                 ColumnDefinitions="*,85,85"
                                                 ColumnSpacing="8">
 
-                                                <Label
-                                                    Text="{Binding NombreConvenio}"
-                                                    Style="{StaticResource ErpBody}"
-                                                    LineBreakMode="TailTruncation"
-                                                    VerticalOptions="Center" />
+                                                <VerticalStackLayout
+                                                    Spacing="2"
+                                                    VerticalOptions="Center">
+
+                                                    <Label
+                                                        Text="{Binding NombreConvenio}"
+                                                        Style="{StaticResource ErpBody}"
+                                                        FontAttributes="Bold"
+                                                        LineBreakMode="TailTruncation" />
+
+                                                    <Label
+                                                        Text="{Binding NombreCliente}"
+                                                        FontSize="11"
+                                                        TextColor="#64748B"
+                                                        LineBreakMode="TailTruncation" />
+
+                                                </VerticalStackLayout>
 
                                                 <Label
                                                     Grid.Column="1"
-                                                    Text="{Binding PorcentajeDescuento, StringFormat='{0:N2}%'}"
+                                                    Text="{Binding PorcentajeDescuento,
+                                                           StringFormat='{0:N2}%'}"
                                                     TextColor="#1D6FD8"
                                                     FontAttributes="Bold"
                                                     FontSize="12"
@@ -182,24 +376,30 @@
                                                     FontAttributes="Bold"
                                                     FontSize="12"
                                                     VerticalOptions="Center" />
+
                                             </Grid>
+
                                         </Border>
+
                                     </DataTemplate>
+
                                 </CollectionView.ItemTemplate>
 
                             </CollectionView>
 
                             <Label
-                                Text="Selecciona un convenio para editar sus datos."
+                                Text="Selecciona un convenio para editarlo."
                                 Style="{StaticResource ErpSubtitle}"
                                 FontSize="12" />
 
                         </VerticalStackLayout>
+
                     </Border>
 
-                    <!-- FORMULARIO -->
-                    <Border Grid.Column="1"
-                            Style="{StaticResource ErpCard}">
+                    <!-- FORMULARIO DE CONVENIO -->
+                    <Border
+                        Grid.Column="1"
+                        Style="{StaticResource ErpCard}">
 
                         <VerticalStackLayout Spacing="14">
 
@@ -217,6 +417,7 @@
                                     Text="Configura las condiciones del convenio para el cliente seleccionado."
                                     TextColor="#1D4E89"
                                     FontSize="12" />
+
                             </Border>
 
                             <!-- NOMBRE -->
@@ -229,16 +430,21 @@
                                     TextColor="{StaticResource ErpText}" />
 
                                 <Border Style="{StaticResource ErpInputBox}">
+
                                     <Entry
-                                        Text="{Binding ConvenioFormulario.NombreConvenio, Mode=TwoWay}"
+                                        Text="{Binding ConvenioFormulario.NombreConvenio,
+                                                       Mode=TwoWay}"
                                         Style="{StaticResource ErpEntry}"
                                         Placeholder="Ej. Convenio institucional" />
+
                                 </Border>
+
                             </VerticalStackLayout>
 
-                            <!-- DESCUENTO Y CRÉDITO -->
-                            <Grid ColumnDefinitions="*,*"
-                                  ColumnSpacing="14">
+                            <!-- DESCUENTO Y LIMITE -->
+                            <Grid
+                                ColumnDefinitions="*,*"
+                                ColumnSpacing="14">
 
                                 <VerticalStackLayout Spacing="7">
 
@@ -249,6 +455,7 @@
                                         TextColor="{StaticResource ErpText}" />
 
                                     <Border Style="{StaticResource ErpInputBox}">
+
                                         <Entry
                                             Text="{Binding ConvenioFormulario.PorcentajeDescuento,
                                                            Mode=TwoWay,
@@ -256,7 +463,9 @@
                                             Style="{StaticResource ErpEntry}"
                                             Keyboard="Numeric"
                                             Placeholder="0" />
+
                                     </Border>
+
                                 </VerticalStackLayout>
 
                                 <VerticalStackLayout
@@ -270,6 +479,7 @@
                                         TextColor="{StaticResource ErpText}" />
 
                                     <Border Style="{StaticResource ErpInputBox}">
+
                                         <Entry
                                             Text="{Binding ConvenioFormulario.LimiteCredito,
                                                            Mode=TwoWay,
@@ -277,9 +487,9 @@
                                             Style="{StaticResource ErpEntry}"
                                             Keyboard="Numeric"
                                             Placeholder="0" />
+
                                     </Border>
 
-                                    <!-- FORMATO CLP SOLO VISUAL -->
                                     <Label
                                         Text="{Binding ConvenioFormulario.LimiteCredito,
                                                        Converter={StaticResource MonedaClpConverter}}"
@@ -287,9 +497,10 @@
                                         TextColor="{StaticResource ErpMuted}" />
 
                                 </VerticalStackLayout>
+
                             </Grid>
 
-                            <!-- DÍAS -->
+                            <!-- DIAS -->
                             <VerticalStackLayout Spacing="7">
 
                                 <Label
@@ -299,12 +510,16 @@
                                     TextColor="{StaticResource ErpText}" />
 
                                 <Border Style="{StaticResource ErpInputBox}">
+
                                     <Entry
-                                        Text="{Binding ConvenioFormulario.DiasCreditoMorosidad, Mode=TwoWay}"
+                                        Text="{Binding ConvenioFormulario.DiasCreditoMorosidad,
+                                                       Mode=TwoWay}"
                                         Style="{StaticResource ErpEntry}"
                                         Keyboard="Numeric"
                                         Placeholder="0" />
+
                                 </Border>
+
                             </VerticalStackLayout>
 
                             <!-- ESTADO -->
@@ -321,16 +536,19 @@
                                         TextColor="{StaticResource ErpText}" />
 
                                     <Label
-                                        Text="Permite habilitar o deshabilitar este convenio."
+                                        Text="Habilita o deshabilita el convenio."
                                         FontSize="11"
                                         TextColor="{StaticResource ErpMuted}" />
+
                                 </VerticalStackLayout>
 
                                 <Switch
                                     Grid.Column="1"
-                                    IsToggled="{Binding ConvenioFormulario.Activo, Mode=TwoWay}"
+                                    IsToggled="{Binding ConvenioFormulario.Activo,
+                                                        Mode=TwoWay}"
                                     OnColor="{StaticResource ErpPrimary}"
                                     VerticalOptions="Center" />
+
                             </Grid>
 
                             <BoxView
@@ -355,12 +573,19 @@
                                     CornerRadius="9"
                                     Padding="18,10"
                                     Clicked="OnEliminarConvenioClicked" />
+
                             </HorizontalStackLayout>
 
                         </VerticalStackLayout>
+
                     </Border>
+
                 </Grid>
+
             </VerticalStackLayout>
+
         </ScrollView>
+
     </Grid>
+
 </ContentPage>

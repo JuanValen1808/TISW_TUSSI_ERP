@@ -15,6 +15,13 @@ public partial class OrdenesCompraPage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        await _vm.CargarAsync();
+        try
+        {
+            await _vm.CargarAsync();
+        }
+        catch
+        {
+            // Evita excepciones no controladas en ciclo de vida de la vista
+        }
     }
 }
