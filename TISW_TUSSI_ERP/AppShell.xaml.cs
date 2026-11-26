@@ -133,11 +133,13 @@ public partial class AppShell : Shell
 
         Navigating += (sender, args) =>
         {
-            var loc = args.Target?.Location?.ToString()?.TrimStart('/') ?? "";
-            if (string.IsNullOrWhiteSpace(loc) || loc.Contains("DashboardPage", StringComparison.OrdinalIgnoreCase))
+            var loc = args.Target?.Location?.ToString()?.Trim('/') ?? "";
+            var rutaDestino = loc.Split('/', StringSplitOptions.RemoveEmptyEntries).LastOrDefault() ?? "";
+            if (string.IsNullOrWhiteSpace(rutaDestino) || rutaDestino.Equals("DashboardPage", StringComparison.OrdinalIgnoreCase))
                 return;
 
-            var item = Secciones.SelectMany(s => s.Items).FirstOrDefault(i => loc.Contains(i.Ruta, StringComparison.OrdinalIgnoreCase));
+            var item = Secciones.SelectMany(s => s.Items)
+                .FirstOrDefault(i => rutaDestino.Equals(i.Ruta, StringComparison.OrdinalIgnoreCase));
             if (item != null && !Sesion.PuedeAccederVista(item.Permiso, item.Seccion))
             {
                 args.Cancel();
@@ -232,9 +234,10 @@ public partial class AppShell : Shell
 
     private void Resaltar(string ubicacion)
     {
+        var rutaActual = ubicacion.Trim('/').Split('/', StringSplitOptions.RemoveEmptyEntries).LastOrDefault() ?? ubicacion;
         foreach (var (borde, texto, ruta) in _items)
         {
-            var activo = ubicacion.Contains(ruta);
+            var activo = rutaActual.Equals(ruta, StringComparison.OrdinalIgnoreCase);
             borde.BackgroundColor = activo ? Color.FromArgb("#E8F1FD") : Colors.Transparent;
             texto.TextColor = activo ? Color.FromArgb("#1D6FD8") : Color.FromArgb("#374151");
             texto.FontAttributes = activo ? FontAttributes.Bold : FontAttributes.None;
