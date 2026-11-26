@@ -102,7 +102,7 @@ public partial class AppShell : Shell
             new ItemMenu("", "Cuentas por Pagar (RF-07)", "CuentasPorPagarPage", "CONTABILIDAD", "CONTAB_CXC_CXP"),
             new ItemMenu("", "Antigüedad de Saldos (RF-08)", "AntiguedadSaldosPage", "CONTABILIDAD", "CONTAB_CXC_CXP"),
             new ItemMenu("", "Impuestos y F29 SII (RF-09)", "CentralizadorImpuestosPage", "CONTABILIDAD", "CONTAB_IMPUESTOS_SII"),
-            new ItemMenu("", "Flujo de Caja", "FlujoCajaPage", "CONTABILIDAD", "CONTAB_CXC_CXP"),
+            new ItemMenu("", "Flujo de Caja (NIC 7)", "FlujoCajaPage", "CONTABILIDAD", "CONTAB_FLUJO_CAJA"),
         }),
         new("ADMINISTRACIÓN", new[]
         {
@@ -177,7 +177,7 @@ public partial class AppShell : Shell
                 FontSize = 10,
                 FontAttributes = FontAttributes.Bold,
                 TextColor = Color.FromArgb("#9CA3AF"),
-                Margin = new Thickness(12, 14, 0, 4)
+                Margin = new Thickness(12, 10, 0, 2)
             });
 
             foreach (var item in itemsPermitidos)
@@ -185,7 +185,7 @@ public partial class AppShell : Shell
                 var texto = new Label
                 {
                     Text = string.IsNullOrEmpty(item.Icono) ? item.Titulo : $"{item.Icono}   {item.Titulo}",
-                    FontSize = 13,
+                    FontSize = 12.5,
                     TextColor = Color.FromArgb("#374151")
                 };
 
@@ -193,7 +193,7 @@ public partial class AppShell : Shell
                 {
                     StrokeThickness = 0,
                     StrokeShape = new RoundRectangle { CornerRadius = 8 },
-                    Padding = new Thickness(12, 9),
+                    Padding = new Thickness(12, 6),
                     BackgroundColor = Colors.Transparent,
                     Content = texto
                 };

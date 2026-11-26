@@ -20,6 +20,11 @@ public static class Sesion
         if (u.Permisos.Contains(codigoPermiso))
             return true;
 
+        // Flujo de Caja también se habilita si el Contador tiene CONTAB_CXC_CXP o CONTAB_MAYOR_BALANCES
+        if (codigoPermiso.Equals("CONTAB_FLUJO_CAJA", StringComparison.OrdinalIgnoreCase) &&
+            (u.Permisos.Contains("CONTAB_CXC_CXP") || u.Permisos.Contains("CONTAB_MAYOR_BALANCES")))
+            return true;
+
         // Compatibilidad con permisos generales heredados si aún no se han desglosado
         if (codigoPermiso.StartsWith("VENTAS_", StringComparison.OrdinalIgnoreCase) && u.Permisos.Contains("VENTAS_CREAR"))
             return true;
