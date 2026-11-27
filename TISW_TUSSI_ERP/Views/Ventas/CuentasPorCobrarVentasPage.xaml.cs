@@ -3,8 +3,10 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
+using System.Linq;
 using System.Threading.Tasks;
 using MySqlConnector;
+using TISW_TUSSI_ERP.Helpers;
 using TISW_TUSSI_ERP.Services.Api;
 using TISW_TUSSI_ERP.ViewModels.Ventas;
 
@@ -112,6 +114,70 @@ public partial class CuentasPorCobrarVentasPage : ContentPage
         EventArgs e)
     {
         await CargarNotasAsync();
+    }
+
+    private async void OnExportarNotasPdfClicked(
+        object sender,
+        EventArgs e)
+    {
+        await ExportarNotasAsync(true);
+    }
+
+    private async void OnExportarNotasCsvClicked(
+        object sender,
+        EventArgs e)
+    {
+        await ExportarNotasAsync(false);
+    }
+
+    private async Task ExportarNotasAsync(bool pdf)
+    {
+        if (_notas.Count == 0)
+            await CargarNotasAsync();
+        if (_notas.Count == 0)
+        {
+            await DisplayAlertAsync("Exportar", "No hay notas de crédito internas para exportar.", "Aceptar");
+            return;
+        }
+
+        try
+        {
+            var sec = new SeccionReporte(
+                "Notas de Crédito Internas por Devoluciones de Venta",
+                new ColumnaReporte("Folio Nota"),
+                new ColumnaReporte("Venta Original"),
+                new ColumnaReporte("Fecha Emisión"),
+                new ColumnaReporte("Motivo de Devolución"),
+                new ColumnaReporte("Estado"),
+                new ColumnaReporte("Monto Total", TipoColumna.Moneda));
+
+            foreach (var n in _notas)
+                sec.Fila(n.Folio, n.FolioVenta, n.FechaTexto, n.Motivo, n.Estado, n.Total);
+
+            sec.Total("TOTAL NOTAS INTERNAS", "", "", "", $"{_notas.Count} docs.", _notas.Sum(x => x.Total));
+
+            var doc = new DocumentoReporte
+            {
+                Titulo = "Reporte de Devoluciones y Notas de Crédito Internas",
+                Subtitulo = "Trazabilidad de devoluciones de clientes enviadas a cuarentena farmacéutica",
+                Horizontal = true,
+                Kpis =
+                {
+                    ("Notas Emitidas", _notas.Count.ToString("N0")),
+                    ("Monto Total Devuelto", Dinero(_notas.Sum(x => x.Total)))
+                },
+                Secciones = { sec }
+            };
+
+            if (pdf)
+                await ExportadorReportes.ExportarPdfAsync(doc);
+            else
+                await ExportadorReportes.ExportarCsvAsync(doc);
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlertAsync("Error al exportar", ex.Message, "Aceptar");
+        }
     }
 
     private async void OnBuscarNotasCompleted(

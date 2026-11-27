@@ -61,6 +61,10 @@ public class CuentasPorCobrarVentasViewModel : BaseViewModel
 
     public ICommand ComandoRegistrarAbono { get; }
 
+    public ICommand ExportarPdfCommand { get; }
+
+    public ICommand ExportarCsvCommand { get; }
+
     public CuentasPorCobrarVentasViewModel(
         CuentasPorCobrarVentasService servicio,
         CajaService cajaService)
@@ -76,6 +80,60 @@ public class CuentasPorCobrarVentasViewModel : BaseViewModel
         ComandoRegistrarAbono =
             new Command<CuentaPorCobrarVenta>(
                 async cuenta => await RegistrarAbonoAsync(cuenta));
+
+        ExportarPdfCommand =
+            new Command(async () => await ExportarAsync(true));
+
+        ExportarCsvCommand =
+            new Command(async () => await ExportarAsync(false));
+    }
+
+    private async Task ExportarAsync(bool pdf)
+    {
+        if (!Cuentas.Any())
+            await CargarAsync();
+        if (!Cuentas.Any())
+        {
+            MensajeError = "No hay cuentas por cobrar para exportar.";
+            return;
+        }
+
+        var sec = new SeccionReporte(
+            "Cartera de Cuentas por Cobrar · Ventas a Crédito",
+            new ColumnaReporte("Folio Venta"),
+            new ColumnaReporte("Cliente / Institución"),
+            new ColumnaReporte("RUT"),
+            new ColumnaReporte("Convenio de Salud"),
+            new ColumnaReporte("Vencimiento"),
+            new ColumnaReporte("Estado"),
+            new ColumnaReporte("Saldo Pendiente", TipoColumna.Moneda));
+
+        foreach (var c in Cuentas)
+        {
+            sec.Fila(c.Folio, c.Cliente, c.Rut, c.Convenio, c.VencimientoTexto, c.Estado, c.Saldo);
+        }
+
+        sec.Total("TOTAL SALDO PENDIENTE", "", "", "", "", $"{Cuentas.Count} docs.", Cuentas.Sum(x => x.Saldo));
+
+        var doc = new DocumentoReporte
+        {
+            Titulo = "Reporte de Cuentas por Cobrar · Ventas",
+            Subtitulo = "Control de cartera por convenios de salud, vencimientos y saldos por recaudar",
+            Horizontal = true,
+            Kpis =
+            {
+                ("Documentos", Cuentas.Count.ToString("N0")),
+                ("Saldo Total Pendiente", TotalPendienteTexto),
+                ("Pendientes", Cuentas.Count(x => x.Saldo > 0).ToString("N0")),
+                ("Saldadas", Cuentas.Count(x => x.Saldo <= 0).ToString("N0"))
+            },
+            Secciones = { sec }
+        };
+
+        if (pdf)
+            await ExportadorReportes.ExportarPdfAsync(doc);
+        else
+            await ExportadorReportes.ExportarCsvAsync(doc);
     }
 
     public async Task CargarAsync()
