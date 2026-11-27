@@ -49,6 +49,9 @@
 		<MauiXaml Update="Views\Inventario\GestionUbicacionesSalaModalPage.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
+		<MauiXaml Update="Views\Inventario\RegistrarMermaModalPage.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</MauiXaml>
 		<MauiXaml Update="Views\Inventario\UbicacionesBodegaPage.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</MauiXaml>

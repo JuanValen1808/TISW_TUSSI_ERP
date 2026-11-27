@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:m="clr-namespace:TISW_TUSSI_ERP.Models.Inventario"
+             x:Class="TISW_TUSSI_ERP.Views.Inventario.RegistrarMermaModalPage"
+             BackgroundColor="#80000000"
+             Title="Registrar Merma">
+
+    <Grid VerticalOptions="Center" HorizontalOptions="Center" WidthRequest="620" Padding="16">
+        <Border BackgroundColor="White" Stroke="{StaticResource ErpBorder}" StrokeShape="RoundRectangle 12" Padding="24">
+            <VerticalStackLayout Spacing="14">
+
+                <!-- Cabecera -->
+                <Grid ColumnDefinitions="*,Auto">
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="Registrar Baja por Merma (CU-INV-03)" FontSize="18" FontAttributes="Bold" TextColor="{StaticResource ErpText}" />
+                        <Label Text="Seleccione el lote, cantidad y motivo para descontar stock y registrar en Kárdex" FontSize="12" TextColor="{StaticResource ErpMuted}" />
+                    </VerticalStackLayout>
+                    <Button Grid.Column="1" Text="✕" Clicked="OnCerrarClicked" Style="{StaticResource ErpGhostButton}" WidthRequest="36" HeightRequest="36" />
+                </Grid>
+
+                <!-- Selección de Lote -->
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="Producto / Lote con Stock *" Style="{StaticResource ErpCaption}" />
+                    <Border Stroke="{StaticResource ErpBorder}" StrokeShape="RoundRectangle 6" Padding="8,0" BackgroundColor="White">
+                        <Picker x:Name="PkrLote"
+                                Title="Seleccione un lote..."
+                                SelectedIndexChanged="OnLoteChanged"
+                                TextColor="Black"
+                                TitleColor="#6B7280"
+                                FontSize="12" />
+                    </Border>
+                    <Label x:Name="LblInfoLote" Text="Seleccione un lote para ver stock disponible y vencimiento." FontSize="11" TextColor="{StaticResource ErpMuted}" />
+                </VerticalStackLayout>
+
+                <!-- Cantidad y Costo Estimado -->
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Cantidad a Dar de Baja *" Style="{StaticResource ErpCaption}" />
+                        <Entry x:Name="TxtCantidad"
+                               Keyboard="Numeric"
+                               Placeholder="Ej: 5"
+                               TextChanged="OnCantidadChanged"
+                               BackgroundColor="White"
+                               TextColor="Black"
+                               FontSize="13" />
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Grid.Column="1" Spacing="4">
+                        <Label Text="Costo Total Pérdida Estimado" Style="{StaticResource ErpCaption}" />
+                        <Entry x:Name="TxtCostoPerdida"
+                               Keyboard="Numeric"
+                               Placeholder="0.00"
+                               BackgroundColor="#F8FAFC"
+                               TextColor="Black"
+                               FontSize="13" />
+                    </VerticalStackLayout>
+                </Grid>
+
+                <!-- Motivo existente o motivo nuevo -->
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="Motivo de Merma *" Style="{StaticResource ErpCaption}" />
+                    <Border Stroke="{StaticResource ErpBorder}" StrokeShape="RoundRectangle 6" Padding="8,0" BackgroundColor="White">
+                        <Picker x:Name="PkrMotivoExistente"
+                                Title="Seleccionar motivo registrado..."
+                                SelectedIndexChanged="OnMotivoPickerChanged"
+                                TextColor="Black"
+                                TitleColor="#6B7280"
+                                FontSize="12" />
+                    </Border>
+
+                    <Label Text="O ingrese un motivo nuevo / detalle:" FontSize="11" TextColor="{StaticResource ErpMuted}" />
+                    <Entry x:Name="TxtMotivoPersonalizado"
+                           Placeholder="Ej: DANO, PERDIDA, ROTURA DE ENVASE o CADENA DE FRIO..."
+                           BackgroundColor="White"
+                           TextColor="Black"
+                           FontSize="12" />
+                </VerticalStackLayout>
+
+                <!-- Botones -->
+                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10" Margin="0,6,0,0">
+                    <Button Grid.Column="1" Text="Cancelar" Clicked="OnCerrarClicked" Style="{StaticResource ErpGhostButton}" HeightRequest="38" />
+                    <Button Grid.Column="2" Text="💾 Registrar Merma" Clicked="OnGuardarMermaClicked" Style="{StaticResource ErpPrimaryButton}" HeightRequest="38" />
+                </Grid>
+
+            </VerticalStackLayout>
+        </Border>
+    </Grid>
+</ContentPage>
